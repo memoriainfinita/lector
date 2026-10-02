@@ -21,8 +21,6 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 
 ## TODO
 
-- [ ] Confirmar las propuestas del lienzo marcadas "sin confirmar" en `design.md`
-- [ ] Decidir: límites de marcadores de Simple ABP (propuesta: sin límites) y "Download file" (propuesta: descartar)
-- [ ] Pantallas sin dibujar: widget, visor de portada, búsqueda, menú de ordenar, estados vacío y error, aviso de cierre con pantalla apagada
+- [ ] Decidir color de fondo del icono adaptativo (en la pantalla de inicio la forma la pone el lanzador)
 - [ ] Decidir stack y acceso a archivos (`design.md` › Recomendaciones técnicas)
 - [ ] Instalar Android Studio
