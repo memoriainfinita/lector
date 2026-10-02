@@ -181,12 +181,29 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 
 ## Recomendaciones técnicas
 
-Sin aprobar.
+Aprobado 2026-10-02.
 
-- Stack: Kotlin, Jetpack Compose, Media3, Room
-- Acceso a archivos: `MANAGE_EXTERNAL_STORAGE` (SAF es lento recorriendo bibliotecas grandes). Instalación por adb, sin Google Play. En duda: Simple ABP funciona solo con permisos de medios (`READ_MEDIA_AUDIO`); decidir con el stack
+- Stack: Kotlin, Jetpack Compose, Media3 1.11, Room, Navigation3, Coil. Sin extensión FFmpeg de momento (biblioteca en mp3 y m4b)
+- Descartados: Flutter, React Native y Capacitor. Las funciones propias (notificación, auricular, widgets, ecualizador, escaneo, sensor, Android Auto) son Android nativo y acabarían en Kotlin igualmente
+- Acceso a archivos: `MANAGE_EXTERNAL_STORAGE` (SAF es lento recorriendo bibliotecas grandes y tiene fallos de permisos conocidos). Instalación por adb, sin Google Play
+- Botones de la notificación con `CommandButton` de Media3
+- Pulsaciones del auricular (1, 2, 3): conteo propio en `MediaSession.Callback.onMediaButtonEvent`
+- Proyecto de un módulo, o de dos o tres, sin analítica
+- Herramientas: compilar por línea de comandos (Gradle + adb); Android Studio para pruebas
 - Android mínimo: 8.0
 - Libro con campo de tipo (de momento solo audio), para añadir lectura sin rehacer la base de datos
+
+## Referencia: Voice
+
+Voice (PaulWoitaschek/Voice, GPLv3): reproductor de audiolibros de código abierto con el mismo stack. Solo inspiración: no se copia código.
+
+- Fundido de volumen al final del temporizador, siempre activo, sin ajuste
+- Reanudar por movimiento: una sola función con la de Simple ABP, ventana de 30 s. Probar en el Xiaomi del usuario (Voice avisa de fallos en algunos móviles)
+- Marcador automático al saltar el temporizador: tag de sistema filtrable, oculto por defecto en la recopilación, y solo el último por libro
+- Velocidad y ganancia por libro. La velocidad de los libros nuevos sale del ajuste global; la ganancia por libro se suma a la preamplificación global
+- Saltar silencios: por libro, desactivado por defecto
+- Autor, narrador, serie y parte leídos de las etiquetas: para búsqueda y ficha del libro
+- [PENDIENTE: ubicación en el lienzo de ganancia por libro y saltar silencios; propuesta: hoja de velocidad del reproductor]
 
 ## Limitaciones conocidas
 
@@ -194,4 +211,5 @@ Sin aprobar.
 
 ## Riesgos técnicos
 
-- Formatos y capítulos: Simple ABP decodifica con FFmpeg. Media3 de serie no cubre algunos formatos (p. ej. wma) ni lee bien capítulos de m4b. Requiere lector de capítulos propio o la extensión FFmpeg de Media3
+- Formatos: Simple ABP decodifica con FFmpeg. Media3 de serie no cubre algunos formatos (p. ej. wma). Si aparecen, extensión FFmpeg de Media3 (la precompilada de Jellyfin va por detrás de Media3: comprobar compatibilidad)
+- Capítulos m4b: resuelto. Media3 1.11 (agosto 2026) extrae capítulos QuickTime y Nero de mp4/m4a/m4b

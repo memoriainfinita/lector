@@ -13,7 +13,7 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 
 ## Status
 
-- Fase de diseño. Sin código
+- Fase de diseño. Sin código. Stack aprobado: Kotlin, Compose, Media3 1.11, Room (`design.md` › Recomendaciones técnicas). Voice como referencia de inspiración, sin copiar código (`design.md` › Referencia: Voice)
 - Inventario de Simple ABP hecho (en `design.md`). Capturas, árboles de UI y textos del APK en `ref/sabp/`
 - Diseño de pantallas cerrado en el lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC. Todas las decisiones en `design.md` › "Decisiones de diseño (lienzo)", con icono, color de acento y sistemas de botones y texto
 - Git local, rama `main`, sin remoto. `.gitignore` excluye `.backups/`. `ref/` contiene nombres de libros del usuario: revisar antes de publicar
@@ -21,5 +21,5 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 
 ## TODO
 
-- [ ] Decidir stack y acceso a archivos (`design.md` › Recomendaciones técnicas)
-- [ ] Instalar Android Studio
+- [ ] Instalar JDK, SDK de línea de comandos y Android Studio
+- [ ] Ubicar en el lienzo ganancia por libro y saltar silencios (`design.md` › Referencia: Voice)
