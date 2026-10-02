@@ -72,7 +72,7 @@ Origen: textos del APK y capturas de la app en el móvil del usuario.
   - Libro ancho 30, alto 38, curvatura 3.5, separación del lomo 0
   - Play (hueco): tamaño 16.5, proporción 0.85, desplazamiento X 0, Y −2.5
   - Cinta (M2, hueco): centro X 73.5, ancho 6.5, final en Y 47, nace en el borde superior de la página
-  - En la pantalla de inicio la forma la pone el lanzador de Android. [PENDIENTE: color de fondo del icono adaptativo]
+  - Pantalla de inicio: F5, cuadrado redondeado con fondo #0A0A0A; play y cinta en hueco se ven negros. El redondeo final lo pone el lanzador (HyperOS en el móvil del usuario). Dentro de la app y en otros usos: F1 sin fondo
   - Resto de propuestas archivadas en el artboard "Icono: propuestas archivadas"
 - Descartado: copia de seguridad automática (en Android no se puede elegir OneDrive como destino)
 

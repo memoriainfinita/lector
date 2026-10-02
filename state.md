@@ -21,6 +21,5 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 
 ## TODO
 
-- [ ] Decidir color de fondo del icono adaptativo (en la pantalla de inicio la forma la pone el lanzador)
 - [ ] Decidir stack y acceso a archivos (`design.md` › Recomendaciones técnicas)
 - [ ] Instalar Android Studio
