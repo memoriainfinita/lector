@@ -131,7 +131,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 - Pantallas añadidas el 2026-10-02, aprobadas como están en el lienzo:
   - Widget 4×1 (portada, título y barra, −10, play, +10) y 4×2 (añade capítulo o archivo, tiempos y marcar). Botones configurables en Ajustes › Botones
   - Visor de portada: desde "Ver portada" en el menú del libro y tocando la portada del reproductor; se cierra con × o deslizando hacia abajo
-  - Búsqueda en la biblioteca (título, autor, carpeta) y en marcadores (título, nota, tag), con lo encontrado resaltado
+  - Búsqueda en la biblioteca (título, autor, narrador, serie, carpeta) y en marcadores (título, nota, tag), con lo encontrado resaltado
   - Ordenar: escuchados recientemente (por defecto), añadidos recientemente, título, autor, tiempo restante
   - Estados vacíos: biblioteca sin carpetas con "Añadir carpeta"; marcadores vacíos con cómo marcar
   - Libro inaccesible: aviso con "Volver a buscar" y "Quitar"; conserva posición y marcadores
@@ -145,7 +145,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Pausa diferida: hoja con 20, 30, 35, 40 min u otro valor, al terminar el capítulo, alargar hasta el final del capítulo y enlace a horario automático
   - Marcadores del libro (desde la fila bajo los controles): hoja con "Marcar aquí", la posición actual marcada como "estás aquí" entre los marcadores, "Ver todos los marcadores" y "Exportar"
   - Notificación desplegada (−30, anterior, pausa, siguiente, marcar, barra) y recogida
-  - Menú del libro: marcadores, ver portada, ir a la carpeta, separar en libros, unir con otros libros, marcar como terminado, reiniciar posición, quitar de recientes, renombrar, abrir con…, borrar del móvil
+  - Menú del libro: cabecera con título, "autor · narrador · serie n" (lo que haya en las etiquetas) y tiempos; marcadores, ver portada, ir a la carpeta, separar en libros, unir con otros libros, marcar como terminado, reiniciar posición, quitar de recientes, renombrar, abrir con…, borrar del móvil
   - Biblioteca: tarjeta "Seguir escuchando" con el libro actual sobre los filtros. Vista Carpetas con ruta, carpetas de autor y progreso o número de marcadores por libro
   - Recopilación con filtro activo: "n marcadores con [tag]", "Quitar filtro"; exportar exporta solo los filtrados
   - Horizontal: reproductor a la izquierda y panel con pestañas Archivos y Marcadores a la derecha
@@ -200,10 +200,20 @@ Voice (PaulWoitaschek/Voice, GPLv3): reproductor de audiolibros de código abier
 - Fundido de volumen al final del temporizador, siempre activo, sin ajuste
 - Reanudar por movimiento: una sola función con la de Simple ABP, ventana de 30 s. Probar en el Xiaomi del usuario (Voice avisa de fallos en algunos móviles)
 - Marcador automático al saltar el temporizador: tag de sistema filtrable, oculto por defecto en la recopilación, y solo el último por libro
-- Velocidad y ganancia por libro. La velocidad de los libros nuevos sale del ajuste global; la ganancia por libro se suma a la preamplificación global
+- Velocidad por libro; la de los libros nuevos sale del ajuste global
+- Sonido propio por libro (amplía la ganancia por libro de Voice): cada libro usa el sonido global (preamplificación y ecualizador de Ajustes) o uno propio. El volumen es siempre global
 - Saltar silencios: por libro, desactivado por defecto
 - Autor, narrador, serie y parte leídos de las etiquetas: para búsqueda y ficha del libro
-- [PENDIENTE: ubicación en el lienzo de ganancia por libro y saltar silencios; propuesta: hoja de velocidad del reproductor]
+
+En el lienzo (2026-10-02):
+
+- Fundido: sin interfaz
+- Ajustes › Pausa diferida: sección "Al pausar", fuera de "Automática por horario", válida para toda pausa diferida. Contiene "Marcar dónde se pausó" (activado, solo el último por libro, tag pausa) y "Seguir si muevo el móvil" (30 s)
+- Marcadores del libro: el marcador de pausa aparece en su posición con icono de luna, "Pausa diferida · hace [n] h", en gris
+- Recopilación: filtro de sistema "pausa" con luna y borde discontinuo, como "sin tag". Sin ese filtro, los marcadores de pausa no aparecen
+- Hoja Sonido (⋯ del reproductor › Ecualizador y volumen): volumen arriba; debajo, interruptor "Sonido propio para este libro". Activado, la preamplificación y el ecualizador de la hoja son solo de ese libro, partiendo de los globales; desactivado, el libro vuelve al global. Ajustes › Ecualizador y volumen edita el sonido global
+- Hoja Velocidad: interruptor "Saltar silencios" sobre "Se guarda para este libro"
+- Menú del libro: línea "autor · narrador · serie n" bajo el título
 
 ## Limitaciones conocidas
 

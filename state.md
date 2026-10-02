@@ -22,4 +22,3 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 ## TODO
 
 - [ ] Instalar JDK, SDK de línea de comandos y Android Studio
-- [ ] Ubicar en el lienzo ganancia por libro y saltar silencios (`design.md` › Referencia: Voice)
