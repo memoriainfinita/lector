@@ -198,7 +198,7 @@ Aprobado 2026-10-02.
 Voice (PaulWoitaschek/Voice, GPLv3): reproductor de audiolibros de código abierto con el mismo stack. Solo inspiración: no se copia código.
 
 - Fundido de volumen al final del temporizador, siempre activo, sin ajuste
-- Reanudar por movimiento: una sola función con la de Simple ABP, ventana de 30 s. Probar en el Xiaomi del usuario (Voice avisa de fallos en algunos móviles)
+- Reanudar por movimiento: una sola función con la de Simple ABP, ventana de 30 s. En el Xiaomi del usuario funciona con Simple ABP: el sistema lo permite
 - Marcador automático al saltar el temporizador: tag de sistema filtrable, oculto por defecto en la recopilación, y solo el último por libro
 - Velocidad por libro; la de los libros nuevos sale del ajuste global
 - Sonido propio por libro (amplía la ganancia por libro de Voice): cada libro usa el sonido global (preamplificación y ecualizador de Ajustes) o uno propio. El volumen es siempre global
