@@ -9,6 +9,7 @@ data class NowPlaying(
     val bookId: String,
     val title: String,
     val author: String?,
+    val narrator: String?,
     val coverPath: String?,
     val positionMs: Long,
     val durationMs: Long,
@@ -21,7 +22,11 @@ data class NowPlaying(
     val segmentStartMs: Long,
     val segmentEndMs: Long,
     val hasChapters: Boolean,
+    /** Todos los tramos del libro: marcas de la barra y lista de capítulos. */
+    val segments: List<Segment>,
     val isPlaying: Boolean,
+    /** Sonará en cuanto pueda (el botón de play no parpadea mientras carga). */
+    val playWhenReady: Boolean,
     val speed: Float,
     val skipSilence: Boolean,
     /** Sonido propio del libro; si no, usa el global. */
@@ -30,6 +35,8 @@ data class NowPlaying(
     val sound: SoundSettings,
     /** Hasta cuándo se ofrece "Deshacer" tras un salto grande (reloj del sistema), o null. */
     val undoUntil: Long?,
+    /** Posición previa al primer salto de la cadena, para "Saltado desde…". */
+    val undoFromMs: Long?,
 )
 
 sealed interface PlaybackError {

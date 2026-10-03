@@ -454,6 +454,7 @@ class BookEngine(
                 bookId = b.id,
                 title = b.customName ?: b.title,
                 author = b.author,
+                narrator = b.narrator,
                 coverPath = covers.file(b.id).takeIf { it.exists() }?.path,
                 positionMs = pos,
                 durationMs = timeline.totalMs,
@@ -465,12 +466,15 @@ class BookEngine(
                 segmentStartMs = seg?.startMs ?: 0,
                 segmentEndMs = seg?.endMs ?: 0,
                 hasChapters = timeline.hasChapters,
+                segments = timeline.segments,
                 isPlaying = exo.isPlaying,
+                playWhenReady = exo.playWhenReady,
                 speed = exo.playbackParameters.speed,
                 skipSilence = exo.skipSilenceEnabled,
                 ownSound = b.ownSound,
                 sound = effectiveSound(),
                 undoUntil = undo.origin?.let { undo.lastJumpAt + UndoWindowMs },
+                undoFromMs = undo.origin,
             ),
         )
     }

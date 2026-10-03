@@ -47,14 +47,17 @@ class LibraryScanner(
     private var job: Job? = null
     private val readers = Semaphore(4)
 
-    /** Rápido: solo relee lo que cambió. Completo ([full]): relee todo y rehace las portadas. */
-    fun start(full: Boolean = false) {
-        if (job?.isActive == true) return
-        job = scope.launch(Dispatchers.IO) {
+    /**
+     * Rápido: solo relee lo que cambió. Completo ([full]): relee todo y rehace las portadas.
+     * Devuelve el trabajo en curso (el que ya corría, si lo había) para esperar a que termine.
+     */
+    fun start(full: Boolean = false): Job {
+        job?.takeIf { it.isActive }?.let { return it }
+        return scope.launch(Dispatchers.IO) {
             runCatching { scan(full) }.onFailure { e ->
                 _state.update { it.copy(running = false, currentFolder = null, error = e.message ?: e.toString()) }
             }
-        }
+        }.also { job = it }
     }
 
     private suspend fun scan(full: Boolean) {

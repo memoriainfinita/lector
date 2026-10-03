@@ -207,18 +207,23 @@ fun MenuRow(
     icon: Painter? = null,
     trailing: String? = null,
     danger: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val c = LectorTheme.colors
-    val color = if (danger) c.danger else c.text
+    val color = when {
+        !enabled -> c.inactive
+        danger -> c.danger
+        else -> c.text
+    }
     Row(
         modifier = modifier
             .height(44.dp)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (icon != null) Icon(icon, null, Modifier.size(20.dp), tint = if (danger) c.danger else c.iconSoft)
+        if (icon != null) Icon(icon, null, Modifier.size(20.dp), tint = if (enabled && !danger) c.iconSoft else color)
         Text(text, style = LectorTheme.type.row, color = color, modifier = Modifier.weight(1f))
         if (trailing != null) Text(trailing, style = LectorTheme.type.meta, color = c.textSecondary)
     }

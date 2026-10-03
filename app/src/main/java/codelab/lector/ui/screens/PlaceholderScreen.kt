@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import codelab.lector.R
 import codelab.lector.ui.components.IconAction
+import codelab.lector.ui.components.LocalBottomInset
 import codelab.lector.ui.components.MenuRow
 import codelab.lector.ui.theme.LectorTheme
 
@@ -56,5 +57,6 @@ fun PlaceholderScreen(
             Text(subtitle, style = t.secondary, color = c.textSecondary, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
         }
         links.forEach { MenuRow(it.text, it.onClick, Modifier.fillMaxWidth()) }
+        Spacer(Modifier.height(LocalBottomInset.current))
     }
 }

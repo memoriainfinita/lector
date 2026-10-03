@@ -13,27 +13,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -47,6 +42,18 @@ import codelab.lector.R
 import codelab.lector.container
 import codelab.lector.library.hasStorageAccess
 import codelab.lector.playback.NowPlaying
+import codelab.lector.playback.PlaybackError
+import codelab.lector.playback.PlayerAction
+import codelab.lector.ui.formatDuration
+import codelab.lector.ui.player.CoverViewer
+import codelab.lector.ui.player.MiniPlayer
+import codelab.lector.ui.player.MiniPlayerHeight
+import codelab.lector.ui.components.LocalBottomInset
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import codelab.lector.ui.player.PlayerScreen
+import codelab.lector.ui.player.PlayerViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.components.UndoBar
 import codelab.lector.ui.components.rememberUndoState
@@ -54,7 +61,6 @@ import codelab.lector.ui.screens.PlaceholderLink
 import codelab.lector.ui.screens.PlaceholderScreen
 import codelab.lector.ui.theme.LectorTheme
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 private enum class StartMode { LOADING, ONBOARDING_PERMISSION, ONBOARDING_FOLDERS, MAIN }
 
@@ -125,29 +131,64 @@ private fun MainTabs(openPlayer: Flow<Unit>) {
     val app = LocalContext.current.container
     val state = rememberNavigationState()
     val navigator = remember(state) { Navigator(state) }
-    val nowPlaying by app.playback.state.collectAsStateWithLifecycle()
+    // Del ámbito de la Activity: minirreproductor y aviso de salto, fuera de las pantallas.
+    val player: PlayerViewModel = viewModel { PlayerViewModel(app) }
+    val nowPlaying by player.nowPlaying.collectAsStateWithLifecycle()
+    val error by player.error.collectAsStateWithLifecycle()
+    val settings by player.settings.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { app.playback.connect() }
     LaunchedEffect(openPlayer) { openPlayer.collect { navigator.selectTab(ListeningRoute) } }
+    JumpUndo(nowPlaying, onUndo = { player.act(PlayerAction.UNDO_JUMP) })
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val showBar = !state.showsFullScreen && !(landscape && state.tab == ListeningRoute)
     val playing = nowPlaying
+    // El libro inaccesible se muestra en Escuchando, aunque no haya libro cargado.
+    val listeningEnabled = playing != null || error is PlaybackError.Inaccessible
+    val showMini = showBar && playing != null && state.tab != ListeningRoute
     Column(Modifier.fillMaxSize()) {
+        // El minirreproductor va superpuesto: el área de las pantallas no cambia de tamaño al
+        // aparecer, así la transición entre pestañas no desplaza nada. Las pestañas reservan su hueco.
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            NavDisplay(
-                entries = state.toDecoratedEntries(routeEntries(state, navigator, playing)),
-                onBack = navigator::goBack,
+            CompositionLocalProvider(LocalBottomInset provides if (showMini) MiniPlayerHeight else 0.dp) {
+                NavDisplay(
+                    entries = state.toDecoratedEntries(routeEntries(state, navigator, playing)),
+                    onBack = navigator::goBack,
+                )
+            }
+            androidx.compose.animation.AnimatedVisibility(showMini, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) {
+                playing?.let { np ->
+                    MiniPlayer(
+                        np,
+                        skipBack = settings.appSkipBackSec,
+                        skipForward = settings.appSkipForwardSec,
+                        onAct = player::act,
+                        onOpen = { navigator.selectTab(ListeningRoute) },
+                    )
+                }
+            }
+            UndoBar(
+                LocalUndoState.current,
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp + if (showMini) MiniPlayerHeight else 0.dp),
             )
-            UndoBar(LocalUndoState.current, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
         }
-        if (showBar && playing != null && state.tab != ListeningRoute) {
-            MiniPlayer(playing, onOpen = { navigator.selectTab(ListeningRoute) })
-        }
-        if (showBar) BottomBar(state.tab, listeningEnabled = playing != null, onSelect = navigator::selectTab)
+        if (showBar) BottomBar(state.tab, listeningEnabled = listeningEnabled, onSelect = navigator::selectTab)
     }
 }
 
-/** Una entrada por ruta. De momento, pantallas vacías con sus enlaces. */
+/** Tras un salto grande, "Saltado desde…" con Deshacer mientras el motor lo permite. */
+@Composable
+private fun JumpUndo(playing: NowPlaying?, onUndo: () -> Unit) {
+    val undo = LocalUndoState.current
+    val until = playing?.undoUntil
+    val from = playing?.undoFromMs
+    val text = from?.let { stringResource(R.string.jumped_from, formatDuration(it)) }
+    LaunchedEffect(until) {
+        if (until != null && text != null && until > System.currentTimeMillis()) undo.show(text, onUndo)
+    }
+}
+
+/** Una entrada por ruta. Las que aún no están hechas son pantallas vacías con sus enlaces. */
 @Composable
 private fun routeEntries(
     state: NavigationState,
@@ -155,7 +196,6 @@ private fun routeEntries(
     playing: NowPlaying?,
 ): (NavKey) -> NavEntry<NavKey> {
     val app = LocalContext.current.container
-    val scope = rememberCoroutineScope()
     val back = navigator::goBack
     val bookId = playing?.bookId
     val settings = listOf(
@@ -184,20 +224,12 @@ private fun routeEntries(
             )
         }
         entry<ListeningRoute> {
-            PlaceholderScreen(
-                stringResource(R.string.tab_listening),
-                subtitle = playing?.title,
-                links = listOfNotNull(
-                    PlaceholderLink(stringResource(R.string.minimize_player), navigator::minimizePlayer),
-                    link(R.string.settings, SettingsRoute),
-                    bookId?.let { link(R.string.cover_viewer, CoverViewerRoute(it)) },
-                    bookId?.let { id ->
-                        PlaceholderLink(stringResource(R.string.go_to_book_folder)) {
-                            scope.launch { app.database.books().get(id)?.path?.let(navigator::showFolder) }
-                        }
-                    },
-                    PlaceholderLink(stringResource(R.string.see_all_bookmarks), navigator::showAllBookmarks),
-                ),
+            PlayerScreen(
+                viewModel = viewModel { PlayerViewModel(app) },
+                onMinimize = navigator::minimizePlayer,
+                onOpenSettings = { navigator.open(SettingsRoute) },
+                onOpenCover = { navigator.open(CoverViewerRoute(it)) },
+                onShowFolder = navigator::showFolder,
             )
         }
         entry<BookmarksRoute> {
@@ -220,28 +252,7 @@ private fun routeEntries(
         entry<FolderPickerRoute> { PlaceholderScreen(stringResource(R.string.folder_picker), onBack = back) }
         entry<MergeBooksRoute> { PlaceholderScreen(stringResource(R.string.merge_books), onBack = back) }
         entry<SplitBookRoute> { PlaceholderScreen(stringResource(R.string.split_book), onBack = back) }
-        entry<CoverViewerRoute> {
-            PlaceholderScreen(stringResource(R.string.cover_viewer), onBack = back, backIcon = R.drawable.ic_close)
-        }
-    }
-}
-
-/** Hueco del minirreproductor: de momento, título del libro; tocarlo abre Escuchando. */
-@Composable
-private fun MiniPlayer(playing: NowPlaying, onOpen: () -> Unit) {
-    val c = LectorTheme.colors
-    Row(
-        Modifier
-            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-            .fillMaxWidth()
-            .height(60.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(c.surface)
-            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.open_player), onClick = onOpen)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(playing.title, style = LectorTheme.type.body, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        entry<CoverViewerRoute> { key -> CoverViewer(key.bookId, onClose = back) }
     }
 }
 
