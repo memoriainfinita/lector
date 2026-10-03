@@ -81,17 +81,22 @@ Origen: textos del APK y capturas de la app en el móvil del usuario.
 - Carpeta raíz con carpetas por libro
 - A veces varios libros en una carpeta
 - A veces agrupados por autores
+- Lo que hay en el móvil (2026-10-03) es una muestra de la biblioteca: `Audiobooks` y `Music/AUDIOBOOKS`, mp3 y m4b. Casos reales: carpetas `readed` con muchos libros sueltos de un archivo, partes m4b sin capítulos (116 en un libro), subcarpetas de disco, volúmenes en subcarpetas, sagas de libros largos con el mismo álbum
 
 ## Recomendaciones aceptadas en planteamiento
 
 Pendientes de confirmar en el lienzo de diseño.
 
-- Detección de libros:
-  - Carpeta con partes sin capítulos = un libro
-  - Carpeta con varios m4b o archivos con capítulos = un libro por archivo
-  - Carpeta sin audio con subcarpetas = agrupador (autor)
-  - Excepción: subcarpetas con nombre de disco (CD, Disc, Parte + número) = un solo libro
+- Detección de libros (revisada 2026-10-03 con la biblioteca real; la versión anterior unía todos los archivos sueltos de una carpeta y trataba todo m4b como libro):
+  - Subcarpetas con nombre de disco (CD, Disc, Disk, Disco, Part, Parte + número, al final del nombre) = un solo libro con la carpeta
+  - Archivo con capítulos = un libro
+  - Mismo álbum = un libro, salvo dos o más archivos de 3 h o más: libros distintos de una saga, y el álbum no se usa como título. Un archivo sin álbum se une al grupo con el que comparte nombre
+  - Mismo nombre salvo la numeración ("… - 001", "01_…", "Part 1") = un libro
+  - El resto: un libro por archivo
+  - Carpeta sin audio con subcarpetas = agrupador (autor); las demás subcarpetas se recorren por separado
+  - Las clases de carpeta mandan sobre estas reglas
   - Corrección manual "separar / unir", persistente
+  - Riesgo aceptado: volúmenes distintos que solo difieren en el número ("Saga 1", "Saga 2") se unen; se corrige con "Separar"
 - Portadas: imagen incrustada en el archivo; si no, imagen de la carpeta. Sin búsqueda en internet
 - Navegación: biblioteca plana en cuadrícula de portadas (recientes primero) + vista por carpetas
 - Portadas en la cuadrícula de la biblioteca y en el reproductor
@@ -236,6 +241,20 @@ Aprobado 2026-10-03. Código en `ui/theme` y `ui/components`; catálogo de depur
 - Componentes: los diez tipos de botón, interruptor, hoja, diálogo, cabecera de sección y aviso "Deshacer" (5 s, sobre el menú inferior). Diálogo con radio 14; segmentado con radio 10 / 7
 - Icono: adaptativo, fondo #0A0A0A y libro L2 con play y cinta M2 en hueco (huecos reales, también en el icono temático monocromo). Dentro de la app, F1 sin fondo
 
+## Escaneo
+
+Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR escaneo".
+
+- Permiso: acceso a todos los archivos (Android 11+), lectura clásica en 8–10
+- Recorre almacenamiento principal y SD. Formatos: mp3, m4a, m4b, aac, ogg, oga, opus, flac, wav. Salta carpetas ocultas y `Android/`; no salta carpetas con `.nomedia`
+- Metadatos con `media3-inspector` (`MetadataRetriever`): duración (también mp3 de tasa constante sin cabecera), etiquetas y capítulos (interfaz `Chapter`: ID3 CHAP y MP4). Título: álbum, título de pista (libro de un archivo) o carpeta / archivo. Autor: artista del álbum o artista. Narrador: compositor. Serie y número: TXXX SERIES / SERIES-PART, MVNM / MVIN
+- Portadas: miniatura (lado mayor 1024) en almacenamiento de la app, de la imagen incrustada o, si no hay, de cover / folder / front o la única imagen de la carpeta (solo si la carpeta tiene un único libro)
+- Caché `file_meta` por ruta: el escaneo rápido (al abrir) solo relee archivos con tamaño o fecha distintos; "Volver a buscar" relee todo y rehace portadas
+- Dos fases: recorrer y leer (progreso: encontrados y carpeta actual), después detectar, aplicar correcciones, reconciliar y guardar en una transacción. Los libros aparecen al terminar
+- Reconciliación: por firma; si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos
+- Carpetas candidatas para el primer arranque: niveles 1 y 2 con audio bajo cada almacenamiento
+- Pendiente: `00.05 Mentats of Dune.m4b` (1,1 GB) da duración 0 con Media3; revisar al hacer la reproducción
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.
@@ -259,7 +278,8 @@ Aprobado 2026-10-03.
 - Marcador: UUID, libro, posición (nombre de archivo relativo + punto), título y nota opcionales sin límite, clase (normal o pausa; pausa única por libro, filtro de sistema y no tag), fecha de creación y de última modificación
 - Tag: ID y nombre. Relación muchos a muchos con marcadores; el orden por uso se calcula, no se guarda
 - Carpeta de la biblioteca: ruta raíz
-- Corrección: tipo (separar o unir), libros afectados por firma de identidad, fecha. Se aplica sobre cada escaneo y se puede deshacer
+- Caché de archivo (`file_meta`): ruta, tamaño, fecha, duración, etiquetas, portada sí / no, capítulos
+- Corrección: tipo (separar o unir), libros afectados por firma de identidad, archivos donde empieza cada libro (separar), fecha. Se aplica sobre cada escaneo y se puede deshacer
 - Regla de carpeta: carpeta y dos ajustes, qué es una obra (la carpeta o cada archivo) y qué pasa al terminar (queda terminada o vuelve al inicio). La heredan las subcarpetas; vale para lo que se añada después
 
 ### Clases de carpeta

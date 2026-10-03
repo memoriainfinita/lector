@@ -12,6 +12,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".debug.ScanActivity"
+            android:exported="true"
+            android:label="LECTOR escaneo"
+            android:taskAffinity="codelab.lector.scan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

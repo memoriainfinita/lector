@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ffa1d62833ebfb51bbcd07d31d513e0f",
+    "identityHash": "b57fde5fb0a9efaec2f57c3bb78bd734",
     "entities": [
       {
         "tableName": "book",
@@ -587,11 +587,94 @@
             "id"
           ]
         }
+      },
+      {
+        "tableName": "file_meta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`path` TEXT NOT NULL, `sizeBytes` INTEGER NOT NULL, `modifiedAt` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `title` TEXT, `album` TEXT, `artist` TEXT, `albumArtist` TEXT, `composer` TEXT, `series` TEXT, `seriesPart` TEXT, `hasArtwork` INTEGER NOT NULL, `chapters` TEXT NOT NULL, PRIMARY KEY(`path`))",
+        "fields": [
+          {
+            "fieldPath": "path",
+            "columnName": "path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "sizeBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAt",
+            "columnName": "modifiedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "album",
+            "columnName": "album",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "artist",
+            "columnName": "artist",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "albumArtist",
+            "columnName": "albumArtist",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "composer",
+            "columnName": "composer",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "series",
+            "columnName": "series",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "seriesPart",
+            "columnName": "seriesPart",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hasArtwork",
+            "columnName": "hasArtwork",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapters",
+            "columnName": "chapters",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "path"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ffa1d62833ebfb51bbcd07d31d513e0f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b57fde5fb0a9efaec2f57c3bb78bd734')"
     ]
   }
 }

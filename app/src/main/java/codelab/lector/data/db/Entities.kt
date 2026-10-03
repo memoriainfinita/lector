@@ -119,6 +119,31 @@ data class FolderRule(
     val onFinish: OnFinish,
 )
 
+data class ChapterInfo(val startMs: Long, val endMs: Long, val title: String)
+
+data class ChapterList(val items: List<ChapterInfo> = emptyList())
+
+/**
+ * Caché de lo leído de cada archivo de audio, por ruta. Si tamaño y fecha no cambian,
+ * el escaneo rápido no vuelve a leer el archivo.
+ */
+@Entity(tableName = "file_meta")
+data class FileMeta(
+    @PrimaryKey val path: String,
+    val sizeBytes: Long,
+    val modifiedAt: Long,
+    val durationMs: Long,
+    val title: String? = null,
+    val album: String? = null,
+    val artist: String? = null,
+    val albumArtist: String? = null,
+    val composer: String? = null,
+    val series: String? = null,
+    val seriesPart: String? = null,
+    val hasArtwork: Boolean = false,
+    val chapters: ChapterList = ChapterList(),
+)
+
 @Entity(tableName = "correction")
 data class Correction(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

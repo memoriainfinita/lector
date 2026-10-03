@@ -24,6 +24,18 @@ interface BookDao {
     @Query("SELECT * FROM book ORDER BY lastPlayedAt DESC")
     fun observeAll(): Flow<List<Book>>
 
+    @Query("SELECT * FROM book")
+    suspend fun all(): List<Book>
+
+    @Query("UPDATE book SET inaccessible = 1 WHERE id IN (:ids)")
+    suspend fun markInaccessible(ids: List<String>)
+
+    @Query("DELETE FROM book_file WHERE bookId = :bookId")
+    suspend fun deleteFiles(bookId: String)
+
+    @Insert
+    suspend fun insertFile(file: BookFile): Long
+
     @Query("DELETE FROM book WHERE id = :id")
     suspend fun delete(id: String)
 
@@ -103,6 +115,12 @@ interface FolderDao {
     @Query("SELECT * FROM library_folder ORDER BY path")
     fun observeFolders(): Flow<List<LibraryFolder>>
 
+    @Query("SELECT * FROM library_folder ORDER BY path")
+    suspend fun folders(): List<LibraryFolder>
+
+    @Query("SELECT * FROM folder_rule")
+    suspend fun rules(): List<FolderRule>
+
     @Upsert
     suspend fun setRule(rule: FolderRule)
 
@@ -116,6 +134,18 @@ interface FolderDao {
             "ORDER BY length(folderPath) DESC LIMIT 1"
     )
     suspend fun ruleFor(path: String): FolderRule?
+}
+
+@Dao
+interface FileMetaDao {
+    @Query("SELECT * FROM file_meta")
+    suspend fun all(): List<FileMeta>
+
+    @Upsert
+    suspend fun upsert(items: List<FileMeta>)
+
+    @Query("DELETE FROM file_meta WHERE path IN (:paths)")
+    suspend fun delete(paths: List<String>)
 }
 
 @Dao

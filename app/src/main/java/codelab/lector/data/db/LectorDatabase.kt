@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
     entities = [
         Book::class, BookFile::class, Chapter::class,
         Bookmark::class, Tag::class, BookmarkTag::class,
-        LibraryFolder::class, FolderRule::class, Correction::class,
+        LibraryFolder::class, FolderRule::class, Correction::class, FileMeta::class,
     ],
     version = 1,
     exportSchema = true,
@@ -24,6 +24,7 @@ abstract class LectorDatabase : RoomDatabase() {
     abstract fun tags(): TagDao
     abstract fun folders(): FolderDao
     abstract fun corrections(): CorrectionDao
+    abstract fun fileMeta(): FileMetaDao
 
     companion object {
         fun create(context: Context): LectorDatabase =
