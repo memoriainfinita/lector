@@ -208,6 +208,34 @@ Aprobado 2026-10-03.
 - Un único sistema de acciones (las asignables a botones) que usan reproductor, notificación, widget, auricular y teclas multimedia
 - Desde el sistema visual: tema, acento e idioma dinámicos (nada fijo en código, textos en recursos) y el aviso con "Deshacer" como pieza común
 
+## Sistema visual
+
+Aprobado 2026-10-03. Código en `ui/theme` y `ui/components`; catálogo de depuración "LECTOR catálogo".
+
+| Uso | Oscuro | Claro |
+|---|---|---|
+| Fondo | #0A0A0A | #F5F3EF |
+| Hojas, tarjetas, segmentado | #161616 | #FFFFFF |
+| Menús emergentes y diálogos | #1F1F1F | #FFFFFF |
+| Separadores (fondo / hojas) | #222222 / #262626 | #DDD8D0 |
+| Pistas, seleccionado | #2A2A2A | #DDD8D0 |
+| Bordes | #3A3A3A | #C9C3B9 |
+| Marcas de barra, inactivo | #5A5A5A | #A8A29A |
+| Texto principal / secundario / terciario | #EDEDED / #9A9A9A / #7A7A7A | #1A1A1A / #6B6B6B / #8A8580 |
+| Iconos suaves | #CFCFCF | #3A3A3A |
+| Texto sobre acento | #0A0A0A | #FFFFFF |
+| Peligro (Borrar) | #E5484D | #B3261E |
+| Velo | negro 50 % | negro 50 % |
+
+- Claro: hojas, menús, bordes, terciario y peligro propuestos sobre lo que había en el lienzo (solo el reproductor en claro)
+- Peligro en rojo, no coral: se distingue del acento coral. Lienzo actualizado (versión 144)
+- Acentos (oscuro / claro): ámbar #F58F00 / #B86E0E, azul #7FB8E0 / #2F6F9E, verde #9BC67A / #4F7F2E, coral #E08A7F / #B0493C. Personalizado: el claro se deriva con el mismo tono, oscurecido hasta contraste 3:1 sobre el fondo claro. "Poco contraste" y "Ajustar" con el mismo umbral sobre el fondo oscuro. Color del sistema en Android 12+
+- Tema por hora, cuando está activo, manda sobre Oscuro / Claro / Sistema. Por defecto: claro a las 08:00, oscuro a las 21:00
+- Tema y acento en DataStore. Idioma con el selector por app de AppCompat; inglés como base y español traducido
+- Fuentes IBM Plex Sans (variable) y Plex Mono, incluidas en la app (OFL)
+- Componentes: los diez tipos de botón, interruptor, hoja, diálogo, cabecera de sección y aviso "Deshacer" (5 s, sobre el menú inferior). Diálogo con radio 14; segmentado con radio 10 / 7
+- Icono: adaptativo, fondo #0A0A0A y libro L2 con play y cinta M2 en hueco (huecos reales, también en el icono temático monocromo). Dentro de la app, F1 sin fondo
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.
