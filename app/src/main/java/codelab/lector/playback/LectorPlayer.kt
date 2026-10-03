@@ -2,6 +2,7 @@ package codelab.lector.playback
 
 import androidx.annotation.OptIn
 import androidx.media3.common.ForwardingSimpleBasePlayer
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
@@ -30,6 +31,12 @@ class LectorPlayer(player: Player, private val engine: BookEngine) : ForwardingS
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
         if (playWhenReady) engine.beforePlay()
         return super.handleSetPlayWhenReady(playWhenReady)
+    }
+
+    /** Velocidad desde la app, la notificación o el coche: se guarda en el libro. */
+    override fun handleSetPlaybackParameters(playbackParameters: PlaybackParameters): ListenableFuture<*> {
+        engine.setSpeed(playbackParameters.speed)
+        return Futures.immediateVoidFuture()
     }
 
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {

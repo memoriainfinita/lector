@@ -1,5 +1,6 @@
 package codelab.lector.data.db
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
@@ -37,6 +38,8 @@ data class Book(
     val skipSilence: Boolean = false,
     val ownSound: Boolean = false,
     val preampDb: Float? = null,
+    /** Ecualizador activado en el sonido propio. Versión 2 de la base de datos. */
+    @ColumnInfo(defaultValue = "0") val eqEnabled: Boolean = false,
     val eqBands: List<Float>? = null,
 )
 

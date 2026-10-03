@@ -44,6 +44,7 @@ import codelab.lector.playback.ActionCall
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlaybackError
 import codelab.lector.playback.PlayerAction
+import codelab.lector.playback.SoundSettings
 import codelab.lector.ui.components.ListDivider
 import codelab.lector.ui.components.OutlineButton
 import codelab.lector.ui.components.PrimaryButton
@@ -78,6 +79,19 @@ class PlaybackActivity : ComponentActivity() {
             }
         }
         if (intent.hasExtra("jump")) playback.jumpTo(intent.getLongExtra("jump", 0))
+        if (intent.hasExtra("speed")) playback.setSpeed(intent.getFloatExtra("speed", 1f))
+        if (intent.hasExtra("skipSilence")) playback.setSkipSilence(intent.getBooleanExtra("skipSilence", false))
+        if (intent.hasExtra("ownSound")) playback.setOwnSound(intent.getBooleanExtra("ownSound", false))
+        if (intent.hasExtra("volume")) container.volume.set(intent.getIntExtra("volume", 0))
+        // Sonido: --ef preamp <dB> --ez eq <bool> --es bands "0,2,0,-1,3" [--ez global true]
+        if (intent.hasExtra("preamp") || intent.hasExtra("eq") || intent.hasExtra("bands")) {
+            val sound = SoundSettings(
+                preampDb = intent.getFloatExtra("preamp", 0f),
+                eqEnabled = intent.getBooleanExtra("eq", false),
+                bandsDb = intent.getStringExtra("bands")?.split(",")?.mapNotNull(String::toFloatOrNull) ?: SoundSettings().bandsDb,
+            )
+            if (intent.getBooleanExtra("global", false)) playback.setGlobalSound(sound) else playback.setBookSound(sound)
+        }
     }
 }
 
@@ -174,6 +188,9 @@ private fun Player(now: NowPlaying) {
             OutlineButton("Marcar", { playback.act(PlayerAction.ADD_BOOKMARK) })
             OutlineButton("Marcador anterior", { playback.act(PlayerAction.PREVIOUS_BOOKMARK) })
             OutlineButton("Siguiente libro", { playback.act(PlayerAction.NEXT_BOOK) })
+        }
+        Sound(now)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val undoLeft = now.undoUntil?.let { it - System.currentTimeMillis() }
             if (undoLeft != null && undoLeft > 0) OutlineButton("Deshacer salto", { playback.act(PlayerAction.UNDO_JUMP) })
         }
@@ -192,4 +209,50 @@ private fun Cover(path: String) {
 private fun hms(ms: Long): String {
     val s = ms.coerceAtLeast(0) / 1000
     return "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60)
+}
+
+/** Velocidad, silencios, volumen y sonido (global o propio). */
+@Composable
+private fun Sound(now: NowPlaying) {
+    val app = LocalContext.current.container
+    val playback = app.playback
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val volume by app.volume.volume.collectAsStateWithLifecycle(app.volume.current())
+    val global by playback.globalSound.collectAsStateWithLifecycle(SoundSettings())
+    val s = now.sound
+    fun edit(change: SoundSettings) = if (now.ownSound) playback.setBookSound(change) else playback.setGlobalSound(change)
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("x%.2f · silencios %s · volumen %d/%d".format(now.speed, if (now.skipSilence) "sí" else "no", volume.level, volume.max), style = t.meta, color = c.text)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlineButton("x−", { playback.setSpeed(now.speed - 0.05f) })
+            listOf(0.8f, 1f, 1.25f, 1.5f, 2f).forEach { v -> OutlineButton("$v", { playback.setSpeed(v) }) }
+            OutlineButton("x+", { playback.setSpeed(now.speed + 0.05f) })
+            OutlineButton("Silencios", { playback.setSkipSilence(!now.skipSilence) })
+            OutlineButton("Vol−", { app.volume.set(volume.level - 1) })
+            OutlineButton("Vol+", { app.volume.set(volume.level + 1) })
+        }
+        Text(
+            "${if (now.ownSound) "Sonido propio" else "Sonido global"} · pre ${s.preampDb.toInt()} dB · EQ ${if (s.eqEnabled) "sí" else "no"} " +
+                s.bandsDb.joinToString(" ") { it.toInt().toString() } + "\nGlobal: pre ${global.preampDb.toInt()} dB · EQ ${if (global.eqEnabled) "sí" else "no"}",
+            style = t.meta, color = c.textSecondary,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlineButton(if (now.ownSound) "Quitar propio" else "Sonido propio", { playback.setOwnSound(!now.ownSound) })
+            OutlineButton("Pre−5", { edit(s.copy(preampDb = s.preampDb - 5)) })
+            OutlineButton("Pre+5", { edit(s.copy(preampDb = s.preampDb + 5)) })
+            OutlineButton("EQ", { edit(s.copy(eqEnabled = !s.eqEnabled)) })
+            OutlineButton("Restablecer", { edit(SoundSettings()) })
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            s.bandsDb.forEachIndexed { i, g ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlineButton("+", { edit(s.copy(bandsDb = s.bandsDb.toMutableList().also { it[i] = g + 3 })) })
+                    Text("${g.toInt()}", style = t.meta, color = c.text)
+                    OutlineButton("−", { edit(s.copy(bandsDb = s.bandsDb.toMutableList().also { it[i] = g - 3 })) })
+                }
+            }
+        }
+    }
 }

@@ -37,6 +37,7 @@ class BookEngine(
     private val covers: CoverStore,
     private val settings: PlaybackSettingsRepository,
     private val holder: PlaybackStateHolder,
+    private val sound: SoundProcessor,
     private val scope: CoroutineScope,
     private val appScope: CoroutineScope,
 ) : Player.Listener {
@@ -51,6 +52,7 @@ class BookEngine(
     private var prefs = PlaybackSettings()
     private var ticker: Job? = null
     private var lastSaveAt = 0L
+    private var globalSound = SoundSettings()
 
     val loaded: Boolean get() = book != null
     val currentPrefs: PlaybackSettings get() = prefs
@@ -58,6 +60,12 @@ class BookEngine(
     init {
         exo.addListener(this)
         scope.launch { settings.settings.collect { prefs = it } }
+        scope.launch {
+            settings.globalSound.collect {
+                globalSound = it
+                applySound()
+            }
+        }
     }
 
     // ---- Abrir ----
@@ -97,8 +105,9 @@ class BookEngine(
 
         val segment = timeline.segments.getOrNull(timeline.segmentIndexAt(timeline.toBook(start)))
         exo.setMediaItems(fs.indices.map { mediaItem(it, segment) }, start.index, start.ms)
-        exo.setPlaybackSpeed(b.speed)
+        exo.setPlaybackSpeed(b.speed.coerceIn(MinSpeed, MaxSpeed))
         exo.skipSilenceEnabled = b.skipSilence
+        applySound()
         exo.prepare()
         settings.setLastBook(bookId)
         if (play) play() else publish()
@@ -225,6 +234,59 @@ class BookEngine(
         val b = book ?: return
         nextBook(b, db.books().all())?.let { open(it.id, play) }
     }
+
+    // ---- Velocidad y sonido ----
+
+    /** Velocidad del libro, de 0.5x a 3.5x en pasos de 0.05. Se guarda en el libro. */
+    fun setSpeed(speed: Float) {
+        val b = book ?: return
+        val s = (Math.round(speed * 20) / 20f).coerceIn(MinSpeed, MaxSpeed)
+        exo.setPlaybackSpeed(s)
+        book = b.copy(speed = s)
+        appScope.launch { db.books().setSpeed(b.id, s) }
+        publish()
+    }
+
+    fun setSkipSilence(enabled: Boolean) {
+        val b = book ?: return
+        exo.skipSilenceEnabled = enabled
+        book = b.copy(skipSilence = enabled)
+        appScope.launch { db.books().setSkipSilence(b.id, enabled) }
+        publish()
+    }
+
+    /** Sonido propio: al activarlo parte del global; al desactivarlo el libro vuelve al global. */
+    fun setOwnSound(enabled: Boolean) {
+        val b = book ?: return
+        val updated = if (enabled) {
+            b.copy(ownSound = true, preampDb = globalSound.preampDb, eqEnabled = globalSound.eqEnabled, eqBands = globalSound.bandsDb)
+        } else b.copy(ownSound = false)
+        storeSound(updated)
+    }
+
+    /** Cambia el sonido propio del libro; sin sonido propio no hace nada (se edita el global). */
+    fun setBookSound(value: SoundSettings) {
+        val b = book ?: return
+        if (!b.ownSound) return
+        val s = value.clamped()
+        storeSound(b.copy(preampDb = s.preampDb, eqEnabled = s.eqEnabled, eqBands = s.bandsDb))
+    }
+
+    private fun storeSound(b: Book) {
+        book = b
+        appScope.launch { db.books().setSound(b.id, b.ownSound, b.preampDb, b.eqEnabled, b.eqBands) }
+        applySound()
+        publish()
+    }
+
+    private fun effectiveSound(): SoundSettings {
+        val b = book
+        return if (b != null && b.ownSound) {
+            SoundSettings(b.preampDb ?: 0f, b.eqEnabled, b.eqBands ?: SoundSettings().bandsDb).clamped()
+        } else globalSound
+    }
+
+    private fun applySound() = sound.setSettings(effectiveSound())
 
     // ---- Posición ----
 
@@ -405,6 +467,9 @@ class BookEngine(
                 hasChapters = timeline.hasChapters,
                 isPlaying = exo.isPlaying,
                 speed = exo.playbackParameters.speed,
+                skipSilence = exo.skipSilenceEnabled,
+                ownSound = b.ownSound,
+                sound = effectiveSound(),
                 undoUntil = undo.origin?.let { undo.lastJumpAt + UndoWindowMs },
             ),
         )
@@ -424,5 +489,7 @@ class BookEngine(
         const val SaveEveryMs = 5_000L
         const val UndoWindowMs = 5_000L
         const val EndToleranceMs = 1_000L
+        const val MinSpeed = 0.5f
+        const val MaxSpeed = 3.5f
     }
 }

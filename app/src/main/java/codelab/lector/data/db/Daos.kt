@@ -57,6 +57,15 @@ interface BookDao {
     @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, lastPlayedAt = :at WHERE id = :id")
     suspend fun savePosition(id: String, file: String, ms: Long, at: Long)
 
+    @Query("UPDATE book SET speed = :speed WHERE id = :id")
+    suspend fun setSpeed(id: String, speed: Float)
+
+    @Query("UPDATE book SET skipSilence = :skipSilence WHERE id = :id")
+    suspend fun setSkipSilence(id: String, skipSilence: Boolean)
+
+    @Query("UPDATE book SET ownSound = :ownSound, preampDb = :preampDb, eqEnabled = :eqEnabled, eqBands = :eqBands WHERE id = :id")
+    suspend fun setSound(id: String, ownSound: Boolean, preampDb: Float?, eqEnabled: Boolean, eqBands: List<Float>?)
+
     @Query("UPDATE book SET finished = :finished WHERE id = :id")
     suspend fun setFinished(id: String, finished: Boolean)
 

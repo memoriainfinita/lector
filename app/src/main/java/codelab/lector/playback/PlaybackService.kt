@@ -46,7 +46,8 @@ class PlaybackService : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
         val app = container
-        exo = ExoPlayer.Builder(this)
+        val sound = SoundProcessor()
+        exo = ExoPlayer.Builder(this, SoundRenderersFactory(this, sound))
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(),
                 /* handleAudioFocus = */ true,
@@ -54,7 +55,7 @@ class PlaybackService : MediaLibraryService() {
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
-        engine = BookEngine(exo, app.database, app.covers, app.playbackSettings, app.nowPlaying, scope, app.appScope)
+        engine = BookEngine(exo, app.database, app.covers, app.playbackSettings, app.nowPlaying, sound, scope, app.appScope)
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
@@ -150,6 +151,9 @@ class PlaybackService : MediaLibraryService() {
                     engine.open(it, args.getBoolean(LectorCommands.ARG_PLAY))
                 }
                 LectorCommands.JUMP_TO -> engine.jumpTo(args.getLong(LectorCommands.ARG_BOOK_MS))
+                LectorCommands.SET_SKIP_SILENCE -> engine.setSkipSilence(args.getBoolean(LectorCommands.ARG_ENABLED))
+                LectorCommands.SET_OWN_SOUND -> engine.setOwnSound(args.getBoolean(LectorCommands.ARG_ENABLED))
+                LectorCommands.SET_BOOK_SOUND -> engine.setBookSound(LectorCommands.readSound(args))
                 else -> return@future SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED)
             }
             SessionResult(SessionResult.RESULT_SUCCESS)

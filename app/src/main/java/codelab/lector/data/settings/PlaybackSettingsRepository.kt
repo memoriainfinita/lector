@@ -4,9 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import codelab.lector.playback.SoundSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -20,6 +23,8 @@ data class PlaybackSettings(
     val appSkipForwardSec: Int = 10,
     /** Segundos del salto atrás de la notificación (−30). */
     val notificationSkipBackSec: Int = 30,
+    /** Velocidad con la que empiezan los libros nuevos. */
+    val newBookSpeed: Float = 1f,
 )
 
 /** Libro que sonaba cuando el proceso murió sin pasar por una pausa o un cierre normal. */
@@ -36,8 +41,27 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             appSkipBackSec = p[APP_BACK] ?: d.appSkipBackSec,
             appSkipForwardSec = p[APP_FORWARD] ?: d.appSkipForwardSec,
             notificationSkipBackSec = p[NOTIF_BACK] ?: d.notificationSkipBackSec,
+            newBookSpeed = p[NEW_BOOK_SPEED] ?: d.newBookSpeed,
         )
     }
+
+    /** Sonido global (Ajustes › Ecualizador y volumen); lo usan los libros sin sonido propio. */
+    val globalSound: Flow<SoundSettings> = store.data.map { p ->
+        SoundSettings(
+            preampDb = p[PREAMP] ?: 0f,
+            eqEnabled = p[EQ_ON] ?: false,
+            bandsDb = p[EQ_BANDS]?.split(",")?.mapNotNull(String::toFloatOrNull) ?: SoundSettings().bandsDb,
+        ).clamped()
+    }.distinctUntilChanged()
+
+    suspend fun setGlobalSound(sound: SoundSettings) = store.edit {
+        val s = sound.clamped()
+        it[PREAMP] = s.preampDb
+        it[EQ_ON] = s.eqEnabled
+        it[EQ_BANDS] = s.bandsDb.joinToString(",")
+    }
+
+    suspend fun setNewBookSpeed(speed: Float) = store.edit { it[NEW_BOOK_SPEED] = speed }
 
     suspend fun current(): PlaybackSettings = settings.first()
 
@@ -66,5 +90,9 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val NOTIF_BACK = intPreferencesKey("notification_skip_back_sec")
         val LAST_BOOK = stringPreferencesKey("last_book_id")
         val PLAYING_BOOK = stringPreferencesKey("playing_book_id")
+        val NEW_BOOK_SPEED = floatPreferencesKey("new_book_speed")
+        val PREAMP = floatPreferencesKey("sound_preamp_db")
+        val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
+        val EQ_BANDS = stringPreferencesKey("sound_eq_bands")
     }
 }

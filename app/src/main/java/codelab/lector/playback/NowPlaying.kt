@@ -23,6 +23,11 @@ data class NowPlaying(
     val hasChapters: Boolean,
     val isPlaying: Boolean,
     val speed: Float,
+    val skipSilence: Boolean,
+    /** Sonido propio del libro; si no, usa el global. */
+    val ownSound: Boolean,
+    /** Sonido que se está aplicando (propio o global). */
+    val sound: SoundSettings,
     /** Hasta cuándo se ofrece "Deshacer" tras un salto grande (reloj del sistema), o null. */
     val undoUntil: Long?,
 )

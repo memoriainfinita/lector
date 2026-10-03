@@ -1,6 +1,7 @@
 package codelab.lector.data.db
 
 import android.content.Context
+import androidx.room3.AutoMigration
 import androidx.room3.ColumnTypeConverters
 import androidx.room3.Database
 import androidx.room3.Room
@@ -14,8 +15,9 @@ import kotlinx.coroutines.Dispatchers
         Bookmark::class, Tag::class, BookmarkTag::class,
         LibraryFolder::class, FolderRule::class, Correction::class, FileMeta::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @ColumnTypeConverters(Converters::class)
 abstract class LectorDatabase : RoomDatabase() {

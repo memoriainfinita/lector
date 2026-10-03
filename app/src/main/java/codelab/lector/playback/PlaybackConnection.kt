@@ -11,6 +11,7 @@ import codelab.lector.data.settings.PlaybackSettingsRepository
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -57,6 +58,28 @@ class PlaybackConnection(
 
     /** Salto grande a una posición del libro (barra, capítulo, marcador). */
     fun jumpTo(bookMs: Long) = send(LectorCommands.JUMP_TO, Bundle().apply { putLong(LectorCommands.ARG_BOOK_MS, bookMs) })
+
+    /** Velocidad del libro actual (0.5x–3.5x); se guarda en el libro. */
+    fun setSpeed(speed: Float) {
+        scope.launch(Dispatchers.Main.immediate) { controller().setPlaybackSpeed(speed) }
+    }
+
+    fun setSkipSilence(enabled: Boolean) =
+        send(LectorCommands.SET_SKIP_SILENCE, Bundle().apply { putBoolean(LectorCommands.ARG_ENABLED, enabled) })
+
+    /** Sonido propio del libro actual: activarlo copia el global. */
+    fun setOwnSound(enabled: Boolean) =
+        send(LectorCommands.SET_OWN_SOUND, Bundle().apply { putBoolean(LectorCommands.ARG_ENABLED, enabled) })
+
+    /** Sonido propio del libro actual (hoja Sonido con el interruptor activado). */
+    fun setBookSound(sound: SoundSettings) = send(LectorCommands.SET_BOOK_SOUND, LectorCommands.soundArgs(sound))
+
+    /** Sonido global (Ajustes, o la hoja Sonido sin sonido propio). El motor lo aplica al cambiar. */
+    val globalSound: Flow<SoundSettings> get() = settings.globalSound
+
+    fun setGlobalSound(sound: SoundSettings) {
+        scope.launch { settings.setGlobalSound(sound) }
+    }
 
     fun clearError() = holder.clearError()
 

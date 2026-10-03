@@ -13,6 +13,7 @@ import codelab.lector.library.LibraryScanner
 import codelab.lector.library.Media3MetadataReader
 import codelab.lector.playback.PlaybackConnection
 import codelab.lector.playback.PlaybackStateHolder
+import codelab.lector.playback.VolumeControl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import java.io.File
@@ -27,11 +28,14 @@ class AppContainer(context: Context) {
     val database: LectorDatabase by lazy { LectorDatabase.create(context) }
     val appearance = AppearanceRepository(context.settingsStore)
     val covers = CoverStore(File(context.filesDir, "covers"))
-    val scanner by lazy { LibraryScanner(database, Media3MetadataReader(context), covers, appScope) }
+    val scanner by lazy {
+        LibraryScanner(database, Media3MetadataReader(context), covers, appScope) { playbackSettings.current().newBookSpeed }
+    }
     val playbackSettings = PlaybackSettingsRepository(context.settingsStore)
     /** Lo publica el servicio de reproducción; lo leen pantallas y widgets. */
     val nowPlaying = PlaybackStateHolder()
     val playback = PlaybackConnection(context, nowPlaying, playbackSettings, appScope)
+    val volume = VolumeControl(context)
 }
 
 class LectorApp : Application() {

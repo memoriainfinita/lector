@@ -40,7 +40,7 @@ class LibraryScanner(
     private val reader: MetadataReader,
     private val covers: CoverStore,
     private val scope: CoroutineScope,
-    private val newBookSpeed: () -> Float = { 1f },
+    private val newBookSpeed: suspend () -> Float = { 1f },
 ) {
     private val _state = MutableStateFlow(ScanState())
     val state: StateFlow<ScanState> = _state.asStateFlow()
