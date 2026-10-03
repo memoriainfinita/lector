@@ -22,6 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".debug.PlaybackActivity"
+            android:exported="true"
+            android:label="LECTOR reproducción"
+            android:launchMode="singleTop"
+            android:taskAffinity="codelab.lector.playback">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

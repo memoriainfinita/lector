@@ -1,0 +1,75 @@
+package codelab.lector.playback
+
+import android.content.ComponentName
+import android.content.Context
+import android.os.Bundle
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionToken
+import codelab.lector.data.settings.InterruptedPlayback
+import codelab.lector.data.settings.PlaybackSettingsRepository
+import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
+
+/**
+ * Conexión de las pantallas con el servicio: órdenes por la sesión (MediaController) y estado
+ * desde [PlaybackStateHolder], que el motor publica en el mismo proceso.
+ */
+class PlaybackConnection(
+    private val context: Context,
+    private val holder: PlaybackStateHolder,
+    private val settings: PlaybackSettingsRepository,
+    private val scope: CoroutineScope,
+) {
+    val state: StateFlow<NowPlaying?> get() = holder.state
+    val error: StateFlow<PlaybackError?> get() = holder.error
+
+    private var controller: ListenableFuture<MediaController>? = null
+
+    /** MediaController se crea y se usa en el hilo principal. */
+    private suspend fun controller(): MediaController {
+        val future = controller ?: MediaController.Builder(
+            context, SessionToken(context, ComponentName(context, PlaybackService::class.java)),
+        ).buildAsync().also { controller = it }
+        return future.await()
+    }
+
+    /** Arranca la sesión: el servicio carga el último libro en pausa. Las pantallas lo llaman al abrirse. */
+    fun connect() {
+        scope.launch(Dispatchers.Main.immediate) { controller() }
+    }
+
+    fun open(bookId: String, play: Boolean = true) = send(
+        LectorCommands.OPEN_BOOK,
+        Bundle().apply {
+            putString(LectorCommands.ARG_BOOK_ID, bookId)
+            putBoolean(LectorCommands.ARG_PLAY, play)
+        },
+    )
+
+    fun act(call: ActionCall) = send(LectorCommands.ACTION, LectorCommands.action(call).customExtras)
+
+    fun act(action: PlayerAction) = act(ActionCall(action))
+
+    /** Salto grande a una posición del libro (barra, capítulo, marcador). */
+    fun jumpTo(bookMs: Long) = send(LectorCommands.JUMP_TO, Bundle().apply { putLong(LectorCommands.ARG_BOOK_MS, bookMs) })
+
+    fun clearError() = holder.clearError()
+
+    /**
+     * Libro que sonaba cuando el sistema cerró la app con la pantalla apagada. Solo se comprueba
+     * antes de que el servicio publique estado: con el proceso vivo, la marca es de la sesión en curso.
+     */
+    suspend fun takeInterrupted(): InterruptedPlayback? =
+        if (holder.state.value != null) null else settings.takeInterrupted()
+
+    private fun send(action: String, args: Bundle) {
+        scope.launch(Dispatchers.Main.immediate) {
+            controller().sendCustomCommand(SessionCommand(action, Bundle.EMPTY), args)
+        }
+    }
+}

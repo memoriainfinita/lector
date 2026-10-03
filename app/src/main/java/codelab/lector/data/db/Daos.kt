@@ -47,6 +47,34 @@ interface BookDao {
 
     @Insert
     suspend fun insertChapters(chapters: List<Chapter>)
+
+    @Query(
+        "SELECT chapter.* FROM chapter JOIN book_file ON chapter.fileId = book_file.id " +
+            "WHERE book_file.bookId = :bookId ORDER BY book_file.sortIndex, chapter.startMs"
+    )
+    suspend fun chapters(bookId: String): List<Chapter>
+
+    @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, lastPlayedAt = :at WHERE id = :id")
+    suspend fun savePosition(id: String, file: String, ms: Long, at: Long)
+
+    @Query("UPDATE book SET finished = :finished WHERE id = :id")
+    suspend fun setFinished(id: String, finished: Boolean)
+
+    @Query("UPDATE book SET inaccessible = :inaccessible WHERE id = :id")
+    suspend fun setInaccessible(id: String, inaccessible: Boolean)
+
+    /** Duración leída por el reproductor cuando el escaneo no la obtuvo. Recalcula el total del libro. */
+    @Transaction
+    suspend fun fixFileDuration(fileId: Long, bookId: String, durationMs: Long) {
+        setFileDuration(fileId, durationMs)
+        recomputeTotal(bookId)
+    }
+
+    @Query("UPDATE book_file SET durationMs = :durationMs WHERE id = :fileId")
+    suspend fun setFileDuration(fileId: Long, durationMs: Long)
+
+    @Query("UPDATE book SET totalDurationMs = (SELECT sum(durationMs) FROM book_file WHERE bookId = :bookId) WHERE id = :bookId")
+    suspend fun recomputeTotal(bookId: String)
 }
 
 @Dao
@@ -146,6 +174,9 @@ interface FileMetaDao {
 
     @Query("DELETE FROM file_meta WHERE path IN (:paths)")
     suspend fun delete(paths: List<String>)
+
+    @Query("UPDATE file_meta SET durationMs = :durationMs WHERE path = :path")
+    suspend fun setDuration(path: String, durationMs: Long)
 }
 
 @Dao

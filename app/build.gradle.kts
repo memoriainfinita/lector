@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.media3.inspector)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.sqlite.bundled)
