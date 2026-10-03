@@ -160,6 +160,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Primer arranque: pantalla de permiso ("No sube nada a internet", con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
   - Tema Oscuro / Claro / Sistema; idioma Español / English / Sistema
 - Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual; los libros aparecen a medida que se encuentran. Artboard "Biblioteca: buscando"
+- Iconos en uso (versión 146): artboard con el logo definitivo y los iconos de la app, generado desde res/drawable. Las demás propuestas de icono, archivadas
 - Sin pantalla propia (2026-10-03): Ajustes › Permisos abre los ajustes de Android; Acerca de es solo texto
 - Widget: dos botones de salto, izquierda −10 s y derecha +10 s, iguales en 4×1 y 4×2. Sustituye el modelo de Simple ABP (pequeño, grande izquierda, grande derecha)
 - Acciones asignables a botones (reproductor, notificación, widget, auricular, teclas multimedia): saltar atrás, saltar adelante, capítulo o archivo anterior, capítulo o archivo siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, nada. "Ir al marcador anterior" corresponde a "Previous mark" de Simple ABP (comportamiento exacto sin comprobar). Se eligen en una hoja al tocar cada botón en Ajustes › Botones
@@ -315,6 +316,28 @@ Aprobado 2026-10-03.
 - Primer arranque: pila propia (permiso → carpetas) en lugar de las pestañas cuando falta el permiso o no hay carpetas. "Empezar" la sustituye por las pestañas. "Importar una copia de otro móvil" usa el selector de archivos de Android
 - Horizontal: el reproductor ocupa toda la pantalla, sin menú inferior; las demás pestañas mantienen el menú. El doble panel se hace con la pantalla del reproductor
 - Un ViewModel por pantalla, ligado a su entrada de navegación y creado desde `AppContainer`
+
+## Pantallas
+
+Se hacen una a una sobre la navegación; las que faltan son pantallas vacías con sus enlaces.
+
+### Escuchando
+
+Hecha 2026-10-03.
+
+- Primera pantalla, antes que la Biblioteca: solo depende del motor; la Biblioteca necesita abrir libros en el reproductor
+- Portada: marco de 358 × 411 hasta cargar la imagen; después toma la proporción de la imagen en el mismo espacio, sin recortar. Sin portada: superficie con el título. Tocarla abre el visor
+- Barra del libro con marcas al inicio de cada tramo (capítulo o archivo); sin marcas si quedan a menos de 4 dp de media. Las dos barras se arrastran, los tiempos siguen al dedo y al soltar salta con "Deshacer"
+- Aviso de salto: "Saltado desde [posición]" con Deshacer
+- Play / pausa según "va a sonar": no parpadea mientras carga
+- ⋯ en la fila bajo los controles, a la derecha (su menú sale por abajo). Cabecera solo con la flecha y "Escuchando". Lienzo actualizado (versión 146)
+- Pausa diferida y marcadores del libro: inactivos hasta sus funciones. Marcar guarda sin hoja hasta Marcadores
+- Menú ⋯: Tema alterna oscuro y claro a partir del que se ve
+- Velocidad: − / + en pasos de 0.05
+- Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
+- Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
+- Minirreproductor: superpuesto sobre el menú inferior, con fundido; las pestañas reservan su alto (70) abajo, así el cambio de pestaña no desplaza nada. Muestra tramo · posición en el tramo
+- Horizontal: pendiente
 
 ## Modelo de datos
 
