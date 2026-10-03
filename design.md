@@ -154,6 +154,8 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Datos: exportar copia completa (JSON) o marcadores como texto; importar y combinar con resumen previo (marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados) e "Importar también los ajustes" opcional
   - Primer arranque: pantalla de permiso ("No sube nada a internet", con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
   - Tema Oscuro / Claro / Sistema; idioma Español / English / Sistema
+- Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual; los libros aparecen a medida que se encuentran. Artboard "Biblioteca: buscando"
+- Sin pantalla propia (2026-10-03): Ajustes › Permisos abre los ajustes de Android; Acerca de es solo texto
 - Widget: dos botones de salto, izquierda −10 s y derecha +10 s, iguales en 4×1 y 4×2. Sustituye el modelo de Simple ABP (pequeño, grande izquierda, grande derecha)
 - Acciones asignables a botones (reproductor, notificación, widget, auricular, teclas multimedia): saltar atrás, saltar adelante, capítulo o archivo anterior, capítulo o archivo siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, nada. "Ir al marcador anterior" corresponde a "Previous mark" de Simple ABP (comportamiento exacto sin comprobar). Se eligen en una hoja al tocar cada botón en Ajustes › Botones
 - Exportar marcadores: hoja con vista previa en texto y tres destinos: copiar, guardar como archivo (.txt), compartir con otra app (menú de Android). Respeta el filtro activo
@@ -242,7 +244,9 @@ Aprobado 2026-10-03.
 | Sesiones | cada archivo | vuelve al inicio, nunca terminada, sin pasar a otra obra | meditación, yoga nidra |
 
 - Marcadores, velocidad, sonido y pausa diferida iguales en todas las clases
-- Se elige en el ⋮ de la carpeta (vista Carpetas), con una hoja de cuatro opciones. [PENDIENTE: añadir la hoja al lienzo]
+- Se elige en el ⋮ de cada fila de carpeta (vista Carpetas), que abre directamente la hoja "Clase de carpeta": cabecera con nombre y ruta, cuatro opciones con una línea de explicación, nota "Vale para sus subcarpetas y para lo que se añada después". Se aplica al tocar, sin Listo. Artboard "Carpetas › Clase de carpeta" (lienzo, versión 143)
+- Fila de carpeta con clase distinta de Libros: el subtítulo la indica ("Sesiones · 12")
+- Cuadrícula de la biblioteca: una carpeta de Episodios o Sesiones es una sola tarjeta (portada apilada, "12 sesiones", sin barra de progreso) que abre la carpeta; su ⋮ abre la hoja de clase. Los álbumes son obras normales
 - Fuera de alcance: aleatorio, listas de reproducción, navegar por artista
 
 ## Referencia: Voice

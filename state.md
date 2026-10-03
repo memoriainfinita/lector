@@ -17,10 +17,9 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 - Arquitectura y modelo de datos aprobados (`design.md` › Arquitectura, Modelo de datos). Base de datos Room 3 hecha y probada (6 pruebas en el ordenador: gradlew testDebugUnitTest). Siguiente: sistema visual
 - Stack aprobado: Kotlin, Compose, Media3 1.11, Room (`design.md` › Recomendaciones técnicas). Voice como referencia de inspiración, sin copiar código (`design.md` › Referencia: Voice)
 - Inventario de Simple ABP hecho (en `design.md`). Capturas, árboles de UI y textos del APK en `ref/sabp/`
-- Diseño de pantallas cerrado en el lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC. Todas las decisiones en `design.md` › "Decisiones de diseño (lienzo)", con icono, color de acento y sistemas de botones y texto. Ideas de Voice ubicadas en el lienzo (versión 141); su ubicación en `design.md` › "Referencia: Voice"
+- Diseño de pantallas cerrado en el lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC. Todas las decisiones en `design.md` › "Decisiones de diseño (lienzo)", con icono, color de acento y sistemas de botones y texto. Ideas de Voice ubicadas en el lienzo (versión 141); su ubicación en `design.md` › "Referencia: Voice". Clases de carpeta y escaneo añadidos en la versión 143
 - Git local, rama `main`, sin remoto. `.gitignore` excluye `.backups/`. `ref/` contiene nombres de libros del usuario: revisar antes de publicar
 - Entorno: Android Studio 2026.2 en C:\Program Files\Android\Android Studio (el instalador ignora --location), JDK incluido OpenJDK 25.0.3 en su jbr\. SDK en D:\Android\Sdk (android-37.0, build-tools 36.0.0, sin cmdline-tools). Variables de usuario ANDROID_HOME=D:\Android\Sdk y GRADLE_USER_HOME=D:\Android\gradle. adb de scrcpy en el PATH; el del SDK no. Móvil Xiaomi (Android 15): adb no puede inyectar toques sin "Depuración USB (ajustes de seguridad)". Xiaomi: requiere "Instalar vía USB" activado en Opciones de desarrollador
 
 ## TODO
 
-- [ ] Lienzo: hoja "Clase de carpeta" (Libros, Episodios, Álbumes, Sesiones) en el ⋮ de la vista Carpetas
