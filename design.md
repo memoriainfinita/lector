@@ -193,6 +193,58 @@ Aprobado 2026-10-02.
 - Android mínimo: 8.0
 - Libro con campo de tipo (de momento solo audio), para añadir lectura sin rehacer la base de datos
 
+## Arquitectura
+
+Aprobado 2026-10-03.
+
+- Orden de construcción por dependencias: datos → sistema visual → escaneo → reproducción → navegación y pantallas → resto de funciones. Sin atajos para tener antes algo usable
+- Un módulo `app` con paquetes `data`, `library`, `playback`, `ui`
+- Capa de datos con repositorios y capa de interfaz; coroutines y flows entre capas; un ViewModel por pantalla; flujo unidireccional. Sin capa de dominio
+- Una sola Activity con Navigation3
+- Inyección de dependencias manual, sin Hilt
+- Reproducción con `MediaLibraryService` desde el principio (lo exige Android Auto)
+- Un único sistema de acciones (las asignables a botones) que usan reproductor, notificación, widget, auricular y teclas multimedia
+- Desde el sistema visual: tema, acento e idioma dinámicos (nada fijo en código, textos en recursos) y el aviso con "Deshacer" como pieza común
+
+## Modelo de datos
+
+Aprobado 2026-10-03.
+
+- Room: biblioteca, posiciones, marcadores, tags, correcciones y reglas de carpeta. DataStore: ajustes globales
+- Libro:
+  - ID interno estable, independiente de la ruta
+  - Tipo (de momento solo audio)
+  - Firma de identidad: nombre de carpeta + lista ordenada de nombres de archivo; si no coincide, duración total con margen de 1 s. Nunca la ruta
+  - Ruta actual, actualizada al volver a buscar
+  - Título de etiquetas o carpeta; nombre propio si se renombra en LECTOR
+  - Autor, narrador, serie y número en la serie (etiquetas)
+  - Duración total
+  - Origen de portada: incrustada o imagen de la carpeta
+  - Fecha de añadido y de última escucha
+  - Oculto de recientes, terminado, inaccesible
+  - Posición: archivo y punto dentro de él, con su fecha (en conflicto gana la más reciente)
+  - Velocidad, saltar silencios, sonido propio (activado, preamplificación, bandas del ecualizador)
+- Archivo: libro, ruta relativa, orden, duración, tamaño
+- Capítulo: archivo, título, inicio, fin
+- Marcador: UUID, libro, posición (nombre de archivo relativo + punto), título y nota opcionales sin límite, clase (normal o pausa; pausa única por libro, filtro de sistema y no tag), fecha de creación y de última modificación
+- Tag: ID y nombre. Relación muchos a muchos con marcadores; el orden por uso se calcula, no se guarda
+- Carpeta de la biblioteca: ruta raíz
+- Corrección: tipo (separar o unir), libros afectados por firma de identidad, fecha. Se aplica sobre cada escaneo y se puede deshacer
+- Regla de carpeta: carpeta y dos ajustes, qué es una obra (la carpeta o cada archivo) y qué pasa al terminar (queda terminada o vuelve al inicio). La heredan las subcarpetas; vale para lo que se añada después
+
+### Clases de carpeta
+
+| Clase | Obra | Al terminar | Uso |
+|---|---|---|---|
+| Libros (por defecto) | reglas de detección | terminada; siguiente libro si está activado | audiolibros, lectures |
+| Episodios | cada archivo | terminada, sin pasar a otra obra | podcasts, cursos por lecciones |
+| Álbumes | la carpeta | vuelve al inicio, nunca terminada, sin pasar a otra obra | música |
+| Sesiones | cada archivo | vuelve al inicio, nunca terminada, sin pasar a otra obra | meditación, yoga nidra |
+
+- Marcadores, velocidad, sonido y pausa diferida iguales en todas las clases
+- Se elige en el ⋮ de la carpeta (vista Carpetas), con una hoja de cuatro opciones. [PENDIENTE: añadir la hoja al lienzo]
+- Fuera de alcance: aleatorio, listas de reproducción, navegar por artista
+
 ## Referencia: Voice
 
 Voice (PaulWoitaschek/Voice, GPLv3): reproductor de audiolibros de código abierto con el mismo stack. Solo inspiración: no se copia código.
