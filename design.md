@@ -253,7 +253,32 @@ Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR esca
 - Dos fases: recorrer y leer (progreso: encontrados y carpeta actual), después detectar, aplicar correcciones, reconciliar y guardar en una transacción. Los libros aparecen al terminar
 - Reconciliación: por firma; si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos
 - Carpetas candidatas para el primer arranque: niveles 1 y 2 con audio bajo cada almacenamiento
-- Pendiente: `00.05 Mentats of Dune.m4b` (1,1 GB) da duración 0 con Media3; revisar al hacer la reproducción
+
+## Reproducción
+
+Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR reproducción".
+
+- Dos entregas: A (servicio, posición, navegación, acciones, sesión, conexión con la interfaz) y B (velocidad y procesamiento de sonido)
+- `MediaLibraryService` con ExoPlayer; foco de audio; pausa al desconectar el auricular. Todo en el hilo principal (Media3 1.11 lo exige)
+- Libro = lista de reproducción con un elemento por archivo. Capítulos calculados sobre la posición desde la tabla `chapter`, sin cortar el audio. Posición global del libro ↔ archivo + punto
+- Posición guardada cada ~5 s sonando, al pausar, al saltar y al cerrar el servicio, con `positionUpdatedAt` y `lastPlayedAt`. Al abrir un libro se restauran posición, velocidad y saltar silencios
+- Saltos ±N s cruzando archivos. Anterior / siguiente: capítulo si el libro tiene capítulos, si no archivo; anterior con más de 3 s vuelve al inicio. Ajustes de salto: segundos por botón, dividir el tiempo por la velocidad, siguiente archivo desde posición distinta de cero
+- Deshacer salto: solo saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo). Con saltos encadenados vuelve a la posición previa al primero
+- Tramo repetido al reanudar tras una pausa: valor en DataStore, 3 s por defecto
+- Al terminar, según la clase de carpeta: Libros, terminado y siguiente libro si está activado (desactivado por defecto); Episodios, terminado sin pasar a otra obra; Álbumes y Sesiones, vuelve al inicio, nunca terminado
+- Acciones: un solo conjunto con ejecutor (saltar atrás, saltar adelante, anterior, siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, siguiente libro). Marcar guarda en la posición actual; la hoja llega con las pantallas. Ir al marcador anterior: el inmediatamente anterior a la posición
+- Notificación: −30, anterior, play, siguiente, marcar. −30 y marcar con `setMediaButtonPreferences` y `CommandButton`; anterior y siguiente son los del sistema, que `LectorPlayer` pasa por los tramos (como botones propios, Media3 los quita de las acciones estándar que leen coches y pantallas de bloqueo). Acciones propias como `SessionCommand`, concedidas en `onConnectAsync`
+- Sesión con título, autor, capítulo y portada (notificación y pantalla de bloqueo)
+- Conexión con la interfaz (`PlaybackConnection`): un punto que expone el estado (libro, posición, capítulo, sonando, velocidad) para reproductor, minirreproductor, horizontal y widgets. `connect()` al abrir la app arranca el servicio, que carga el último libro en pausa
+- Cierre del sistema: se guarda que estaba sonando, para el aviso al abrir
+- Archivo que falta al reproducir: libro inaccesible, conserva posición y marcadores
+- Velocidad 0.5x–3.5x por libro; libros nuevos con la global (entrega B)
+- Sonido: procesador de audio propio dentro de ExoPlayer (ganancia −20 a +50 dB, ecualizador por bandas, limitador), global o propio por libro. No el ecualizador del sistema (depende del móvil, no llega a +50 dB) (entrega B)
+- Fuera: pausa diferida, auricular 1/2/3 y teclas asignables, reanudar al reconectar en 10 s, widgets, Android Auto, pantallas
+- Duración 0 en el escaneo: el reproductor la lee al cargar el archivo y se guarda en `book_file`, `book` y `file_meta`. Casos (2026-10-03): `00.12 The Heir of Caladan.m4b` y `00.13 Princess of Dune.m4b`, MP4 de ~1 GB con el índice (`moov`) al final
+- `00.05 Mentats of Dune.m4b` no es audio: es un ZIP (cabecera `PK`) con el m4b dentro. Ningún extractor lo lee; error de reproducción
+- Pendiente: capítulos de los MP4 con el índice al final (el escaneo no los lee; Heir of Caladan sin capítulos en la base de datos, sin comprobar si los tiene)
+- Pendiente: "siguiente archivo desde posición distinta de cero" (ajuste de Simple ABP, comportamiento sin comprobar); sin implementar
 
 ## Modelo de datos
 
