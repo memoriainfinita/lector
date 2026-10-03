@@ -1,45 +1,47 @@
 package codelab.lector
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import codelab.lector.data.settings.AppearanceSettings
+import codelab.lector.ui.navigation.AppRoot
 import codelab.lector.ui.theme.LectorTheme
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 
-/** AppCompatActivity: necesaria para el idioma por app en Android 8–12. */
+/** AppCompatActivity: necesaria para el idioma por app en Android 8–12. Única Activity (singleTask). */
 class MainActivity : AppCompatActivity() {
+    /** Peticiones de abrir Escuchando (notificación, widget). */
+    private val openPlayer = Channel<Unit>(Channel.CONFLATED)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) handle(intent)
         val appearance = container.appearance
         setContent {
             val settings by appearance.settings.collectAsStateWithLifecycle(AppearanceSettings())
             LectorTheme(settings) {
                 SystemBars()
-                Box(
-                    Modifier.fillMaxSize().background(LectorTheme.colors.background),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Image(painterResource(R.drawable.ic_lector_logo), stringResource(R.string.app_name), Modifier.size(144.dp))
-                }
+                AppRoot(openPlayer.receiveAsFlow())
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handle(intent)
+    }
+
+    private fun handle(intent: Intent?) {
+        if (intent?.action == ACTION_OPEN_PLAYER) openPlayer.trySend(Unit)
     }
 
     /** Iconos de la barra de estado según el tema activo. */
@@ -51,5 +53,9 @@ class MainActivity : AppCompatActivity() {
             val style = if (dark) SystemBarStyle.dark(transparent) else SystemBarStyle.light(transparent, transparent)
             enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
         }
+    }
+
+    companion object {
+        const val ACTION_OPEN_PLAYER = "codelab.lector.action.OPEN_PLAYER"
     }
 }

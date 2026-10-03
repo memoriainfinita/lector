@@ -57,7 +57,8 @@ class PlaybackService : MediaLibraryService() {
             .build()
         engine = BookEngine(exo, app.database, app.covers, app.playbackSettings, app.nowPlaying, sound, scope, app.appScope)
         val openApp = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            this, 0, Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_PLAYER),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         session = MediaLibrarySession.Builder(this, LectorPlayer(exo, engine), Callback())
             .setSessionActivity(openApp)

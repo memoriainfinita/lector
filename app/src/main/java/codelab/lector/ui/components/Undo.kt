@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -47,6 +48,9 @@ class UndoState {
 
 @Composable
 fun rememberUndoState() = remember { UndoState() }
+
+/** El aviso único de la app; lo pone la raíz y lo usan las pantallas. */
+val LocalUndoState = staticCompositionLocalOf<UndoState> { error("UndoState sin proveer") }
 
 const val UndoDurationMs = 5_000L
 
