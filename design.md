@@ -287,6 +287,35 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Pendiente: capítulos de los MP4 con el índice al final (el escaneo no los lee; Heir of Caladan sin capítulos en la base de datos, sin comprobar si los tiene)
 - Pendiente: "siguiente archivo desde posición distinta de cero" (ajuste de Simple ABP, comportamiento sin comprobar); sin implementar
 
+## Navegación
+
+Aprobado 2026-10-03.
+
+- Dependencias: Navigation3 1.2.0 (`navigation3-runtime`, `navigation3-ui`), `lifecycle-viewmodel-navigation3` 2.11.0, plugin de serialización de Kotlin 2.4.20 y `kotlinx-serialization-core`
+- Menú inferior con tres pestañas: Biblioteca, Escuchando, Marcadores. Cada pestaña con su pila, que se conserva al cambiar de pestaña
+- Atrás en la raíz de Escuchando o de Marcadores lleva a Biblioteca; en la raíz de Biblioteca sale de la app. Tocar la pestaña activa vuelve a su raíz
+- Todo Atrás pasa por un punto único, para aplicar "Retrasar el botón Atrás" (comportamiento en Simple ABP sin comprobar)
+- Dentro de una pestaña, con menú inferior: búsqueda en la biblioteca y búsqueda en marcadores
+- Biblioteca: Libros / Carpetas es un selector de la misma pantalla. En Carpetas se entra en subcarpetas con la ruta arriba; Atrás sube un nivel
+- Pantallas completas sin menú inferior, encima de las pestañas: Ajustes y sus subpáginas (Pausa diferida, Botones, Ecualizador y volumen, Carpetas, Gestionar tags, Apariencia, Datos), explorador de carpetas, unir libros, separar en libros, visor de portada. El visor se cierra con × o deslizando hacia abajo
+- Hojas, menús emergentes y diálogos: estado de su pantalla, no entradas de navegación. Atrás cierra primero la hoja
+- De hoja a pantalla completa: "Horario automático y más" → Ajustes › Pausa diferida; "Gestionar" en la lista de tags → Ajustes › Gestionar tags; "Ajustes" en el ⋯ del reproductor → Ajustes. Al volver, la pantalla de origen sin la hoja
+- Explorador de carpetas desde Ajustes › Carpetas, la biblioteca vacía ("Añadir carpeta") y el primer arranque ("Elegir otra carpeta")
+- Saltos entre pestañas:
+  - "Ir a la carpeta" (menú del libro y ⋯ del reproductor) → Biblioteca › Carpetas, en esa carpeta
+  - "Ver todos los marcadores" (hoja de marcadores del libro) → pestaña Marcadores
+  - Tocar un libro en la cuadrícula o en la búsqueda lo carga y abre Escuchando
+- "Marcadores" en el menú del libro abre la hoja de marcadores de ese libro
+- "Escuchar desde aquí" en un marcador salta y se queda en Marcadores, con el minirreproductor y "Deshacer"
+- Minirreproductor sobre el menú inferior en todas las pestañas salvo Escuchando, con un libro cargado. La flecha del reproductor vuelve a la pestaña anterior; tocar el minirreproductor abre Escuchando
+- Escuchando sin libro cargado: icono inactivo, no responde
+- Aviso "Deshacer" único para toda la app, encima del minirreproductor y del menú inferior
+- Libro inaccesible: tarjeta dentro de Escuchando
+- Entradas desde fuera: widget y notificación abren Escuchando. El aviso de cierre del sistema aparece al abrir, sobre Escuchando
+- Primer arranque: pila propia (permiso → carpetas) en lugar de las pestañas cuando falta el permiso o no hay carpetas. "Empezar" la sustituye por las pestañas. "Importar una copia de otro móvil" usa el selector de archivos de Android
+- Horizontal: el reproductor ocupa toda la pantalla, sin menú inferior; las demás pestañas mantienen el menú. El doble panel se hace con la pantalla del reproductor
+- Un ViewModel por pantalla, ligado a su entrada de navegación y creado desde `AppContainer`
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.
