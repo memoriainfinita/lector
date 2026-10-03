@@ -272,8 +272,15 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Conexión con la interfaz (`PlaybackConnection`): un punto que expone el estado (libro, posición, capítulo, sonando, velocidad) para reproductor, minirreproductor, horizontal y widgets. `connect()` al abrir la app arranca el servicio, que carga el último libro en pausa
 - Cierre del sistema: se guarda que estaba sonando, para el aviso al abrir
 - Archivo que falta al reproducir: libro inaccesible, conserva posición y marcadores
-- Velocidad 0.5x–3.5x por libro; libros nuevos con la global (entrega B)
-- Sonido: procesador de audio propio dentro de ExoPlayer (ganancia −20 a +50 dB, ecualizador por bandas, limitador), global o propio por libro. No el ecualizador del sistema (depende del móvil, no llega a +50 dB) (entrega B)
+- Velocidad 0.5x–3.5x por libro en pasos de 0.05, sin cambiar el tono; también desde la sesión (`setPlaybackSpeed`). Libros nuevos con la velocidad global (DataStore), que usa el escaneo
+- Volumen: el volumen multimedia del móvil (`AudioManager`, sin mostrar el control del sistema), como Simple ABP: el 0..17 del inventario es el rango del móvil del usuario. Global
+- Sonido: procesador de audio propio dentro de ExoPlayer, antes de saltar silencios y de la velocidad. No el ecualizador del sistema (depende del móvil, no llega a +50 dB):
+  - Preamplificación −20 a +50 dB
+  - Ecualizador de 5 bandas para voz: estantería grave 100 Hz, picos 300 Hz, 1 kHz y 3 kHz (Q 1), estantería aguda 8 kHz; ±12 dB
+  - Limitador siempre activo a −1 dBFS (solo actúa si satura)
+  - Cambios en vivo con fundido de 20 ms; en neutro no toca la señal
+- Sonido global en DataStore (preamplificación, ecualizador activado, bandas). Sonido propio en el libro; al activarlo copia el global, al desactivarlo vuelve al global y al reactivarlo copia de nuevo. Base de datos versión 2: `book.eqEnabled` (migración automática), porque la hoja tiene interruptor del ecualizador también en el sonido propio
+- Fundido de volumen del temporizador: con la pausa diferida, sobre el volumen del reproductor
 - Fuera: pausa diferida, auricular 1/2/3 y teclas asignables, reanudar al reconectar en 10 s, widgets, Android Auto, pantallas
 - Duración 0 en el escaneo: el reproductor la lee al cargar el archivo y se guarda en `book_file`, `book` y `file_meta`. Casos (2026-10-03): `00.12 The Heir of Caladan.m4b` y `00.13 Princess of Dune.m4b`, MP4 de ~1 GB con el índice (`moov`) al final
 - `00.05 Mentats of Dune.m4b` no es audio: es un ZIP (cabecera `PK`) con el m4b dentro. Ningún extractor lo lee; error de reproducción
