@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-04 — Sin menú inferior: una sola pila
+
+**Qué cambió:** la navegación aprobada el 2026-10-03 (menú inferior con Biblioteca, Escuchando y Marcadores, una pila por pestaña) se sustituyó por una sola pila con Biblioteca en la raíz. Marcadores y Ajustes se abren desde la cabecera de Biblioteca; Escuchando, desde el minirreproductor.
+**Por qué:** el usuario quería ganar espacio. Escuchando ya tenía acceso por el minirreproductor y la barra solo aportaba Marcadores, que cabe en un icono. Antes de quitarla se redujo de 48 a 40.
+
 ### 2026-10-02 — Inventario de Simple ABP con adb en un Xiaomi
 
 **Qué cambió:** el inventario se sacó de los textos del APK (`resources.arsc` leído con un script Python, sin androguard) y de capturas automáticas (`uiautomator dump` + `screencap` cada vez que cambiaba la pantalla) mientras el usuario navegaba a mano.
