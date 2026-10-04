@@ -81,6 +81,15 @@ class PlaybackConnection(
         scope.launch { settings.setGlobalSound(sound) }
     }
 
+    /** Menú del libro: solo actúan si [bookId] es el libro cargado. */
+    fun reset(bookId: String) = send(LectorCommands.RESET_BOOK, bookArgs(bookId))
+
+    fun refresh(bookId: String) = send(LectorCommands.REFRESH_BOOK, bookArgs(bookId))
+
+    fun unload(bookId: String) = send(LectorCommands.UNLOAD_BOOK, bookArgs(bookId))
+
+    private fun bookArgs(bookId: String) = Bundle().apply { putString(LectorCommands.ARG_BOOK_ID, bookId) }
+
     fun clearError() = holder.clearError()
 
     /**

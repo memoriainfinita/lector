@@ -19,6 +19,18 @@ fun formatSpeed(speed: Float): String {
     return "${text}x"
 }
 
+/** Tamaño con dos decimales, en unidades de 1000 como Android: "200.42 MB", "1.27 GB". */
+fun formatSize(bytes: Long): String {
+    val units = listOf("B", "KB", "MB", "GB", "TB")
+    var value = bytes.coerceAtLeast(0).toDouble()
+    var unit = 0
+    while (value >= 1000 && unit < units.lastIndex) {
+        value /= 1000
+        unit++
+    }
+    return if (unit == 0) "${bytes.coerceAtLeast(0)} B" else String.format(Locale.ROOT, "%.2f %s", value, units[unit])
+}
+
 /** Decibelios con signo: +3 dB, 0 dB, −1.5 dB (signo menos tipográfico). */
 fun formatDb(db: Float): String {
     val tenths = Math.round(db * 10)

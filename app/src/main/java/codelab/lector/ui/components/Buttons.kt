@@ -25,12 +25,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import codelab.lector.R
 import codelab.lector.ui.theme.LectorTheme
 
 /*
@@ -274,6 +276,21 @@ fun IconAction(
         contentAlignment = Alignment.Center,
     ) {
         Icon(painter, contentDescription, Modifier.size(iconSize), tint = tint)
+    }
+}
+
+/** Casilla del lienzo: 20 / radio 3; marcada, acento con la marca. Solo dibujo: la fila la hace pulsable. */
+@Composable
+fun CheckBox(checked: Boolean, modifier: Modifier = Modifier) {
+    val c = LectorTheme.colors
+    val shape = RoundedCornerShape(3.dp)
+    Box(
+        modifier = modifier
+            .size(20.dp)
+            .then(if (checked) Modifier.background(c.accent, shape) else Modifier.border(1.dp, c.outline, shape)),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) Icon(painterResource(R.drawable.ic_check), null, Modifier.size(12.dp), tint = c.onAccent)
     }
 }
 

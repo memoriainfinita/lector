@@ -3,6 +3,7 @@ package codelab.lector.ui.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import codelab.lector.AppContainer
+import codelab.lector.data.db.Book
 import codelab.lector.data.db.FolderRule
 import codelab.lector.data.db.LibraryItem
 import codelab.lector.library.FolderClass
@@ -11,6 +12,7 @@ import codelab.lector.library.LibraryEntry
 import codelab.lector.library.LibraryFilter
 import codelab.lector.library.LibrarySort
 import codelab.lector.library.ScanState
+import codelab.lector.library.baseFolder
 import codelab.lector.library.buildLibrary
 import codelab.lector.library.continueListening
 import codelab.lector.library.displayPath
@@ -27,6 +29,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 data class LibraryUiState(
     /** null mientras se lee la base de datos: ni cuadrícula ni estado vacío. */
@@ -149,5 +153,78 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
     fun playPause(bookId: String) {
         if (bookId == app.playback.state.value?.bookId) app.playback.act(PlayerAction.PLAY_PAUSE)
         else app.playback.open(bookId, play = true)
+    }
+
+    // ---- Menú del libro (design.md › Pantallas › Biblioteca › C). Las que se deshacen devuelven el "Deshacer". ----
+
+    private val books get() = app.database.books()
+
+    private fun isLoaded(bookId: String) = bookId == app.playback.state.value?.bookId
+
+    /** Escribe y, si es el libro cargado, el motor lo relee (título de la notificación, terminado). */
+    private fun update(bookId: String, write: suspend () -> Unit) {
+        viewModelScope.launch {
+            write()
+            if (isLoaded(bookId)) app.playback.refresh(bookId)
+        }
+    }
+
+    suspend fun sizeBytes(bookId: String): Long = books.sizeBytes(bookId)
+
+    fun setFinished(bookId: String, finished: Boolean) = update(bookId) { books.setFinished(bookId, finished) }
+
+    /** Nombre propio solo en LECTOR; vacío o igual al título lo quita. */
+    fun rename(book: Book, name: String) {
+        val custom = name.trim().takeIf { it.isNotEmpty() && it != book.title }
+        update(book.id) { books.setCustomName(book.id, custom) }
+    }
+
+    /** Al inicio. El libro cargado, además, en pausa. */
+    fun resetPosition(item: LibraryItem): () -> Unit {
+        val b = item.book
+        if (isLoaded(b.id)) app.playback.reset(b.id)
+        else viewModelScope.launch { books.setPosition(b.id, null, 0, System.currentTimeMillis()) }
+        return {
+            if (isLoaded(b.id)) app.playback.jumpTo(item.positionInBookMs)
+            else viewModelScope.launch { books.setPosition(b.id, b.positionFile, b.positionMs, b.positionUpdatedAt) }
+        }
+    }
+
+    fun hideFromRecents(bookId: String): () -> Unit {
+        viewModelScope.launch { books.setHiddenFromRecents(bookId, true) }
+        return { viewModelScope.launch { books.setHiddenFromRecents(bookId, false) } }
+    }
+
+    /** Archivo para "Abrir con…": el que está en curso o, si no, el primero. */
+    suspend fun fileToOpen(book: Book): File? {
+        val relative = book.positionFile ?: books.files(book.id).firstOrNull()?.relativePath ?: return null
+        return File(baseFolder(book), relative)
+    }
+
+    class DeleteInfo(val files: Int, val bytes: Long)
+
+    suspend fun deleteInfo(bookId: String): DeleteInfo {
+        val files = books.files(bookId)
+        return DeleteInfo(files.size, files.sumOf { it.sizeBytes })
+    }
+
+    /**
+     * Borrar del móvil: solo los archivos del libro. Si suena, primero se descarga. El libro queda
+     * inaccesible con su posición, marcadores y portada. False si alguno no se pudo borrar.
+     */
+    suspend fun deleteFromPhone(book: Book): Boolean {
+        if (isLoaded(book.id)) app.playback.unload(book.id)
+        val base = baseFolder(book)
+        val deleted = withContext(Dispatchers.IO) {
+            books.files(book.id).map { File(base, it.relativePath) }.map { !it.exists() || it.delete() }
+        }
+        books.setInaccessible(book.id, true)
+        return deleted.all { it }
+    }
+
+    /** Quitar (o devolver) un libro sin archivos: no borra nada. */
+    fun setRemoved(bookId: String, removed: Boolean): () -> Unit {
+        viewModelScope.launch { books.setRemoved(bookId, removed) }
+        return { viewModelScope.launch { books.setRemoved(bookId, !removed) } }
     }
 }

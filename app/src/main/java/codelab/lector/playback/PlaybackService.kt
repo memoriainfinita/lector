@@ -70,9 +70,13 @@ class PlaybackService : MediaLibraryService() {
                 session?.setMediaButtonPreferences(notificationButtons(it))
             }
         }
-        // Al arrancar, el último libro queda cargado y en pausa.
+        // Al arrancar, el último libro queda cargado y en pausa; uno quitado de la biblioteca, no.
         scope.launch {
-            if (!engine.loaded) app.playbackSettings.lastBookId()?.let { engine.open(it, play = false) }
+            if (!engine.loaded) {
+                app.playbackSettings.lastBookId()
+                    ?.takeIf { app.database.books().get(it)?.removed == false }
+                    ?.let { engine.open(it, play = false) }
+            }
         }
     }
 
@@ -155,6 +159,9 @@ class PlaybackService : MediaLibraryService() {
                 LectorCommands.SET_SKIP_SILENCE -> engine.setSkipSilence(args.getBoolean(LectorCommands.ARG_ENABLED))
                 LectorCommands.SET_OWN_SOUND -> engine.setOwnSound(args.getBoolean(LectorCommands.ARG_ENABLED))
                 LectorCommands.SET_BOOK_SOUND -> engine.setBookSound(LectorCommands.readSound(args))
+                LectorCommands.RESET_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let(engine::reset)
+                LectorCommands.REFRESH_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.refresh(it) }
+                LectorCommands.UNLOAD_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.unload(it) }
                 else -> return@future SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED)
             }
             SessionResult(SessionResult.RESULT_SUCCESS)

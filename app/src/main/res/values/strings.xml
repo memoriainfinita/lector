@@ -137,4 +137,34 @@
     </plurals>
     <string name="book_row_not_started">%1$s · not started</string>
     <string name="book_row_finished">%1$s · finished</string>
+    <!-- Book menu (Library C) -->
+    <string name="unavailable">Unavailable</string>
+    <string name="book_unavailable">unavailable · %1$s</string>
+    <string name="book_menu_times">%1$s / %2$s · %3$d%% · %4$s</string>
+    <string name="go_to_folder">Go to folder</string>
+    <string name="merge_with_books">Merge with other books</string>
+    <string name="mark_finished">Mark as finished</string>
+    <string name="mark_unfinished">Mark as not finished</string>
+    <string name="reset_position">Reset position</string>
+    <string name="position_reset">Position reset</string>
+    <string name="hide_from_recents">Remove from recents</string>
+    <string name="hidden_from_recents">Removed from recents</string>
+    <string name="rename">Rename</string>
+    <string name="name">Name</string>
+    <string name="rename_note">Only changes the name in LECTOR. The folder and files are not touched.</string>
+    <string name="save">Save</string>
+    <string name="open_with">Open with…</string>
+    <string name="delete_from_phone">Delete from phone</string>
+    <string name="remove_from_library">Remove from library</string>
+    <string name="restore_to_library">Return to library</string>
+    <string name="removed_from_library">Removed from library</string>
+    <string name="restored_to_library">Returned to library</string>
+    <string name="delete_book_title">Delete “%1$s” from the phone?</string>
+    <plurals name="delete_book_body">
+        <item quantity="one">%1$d file (%2$s) will be deleted from the folder. This can’t be undone.</item>
+        <item quantity="other">%1$d files (%2$s) will be deleted from the folder. This can’t be undone.</item>
+    </plurals>
+    <string name="delete_book_marks">Bookmarks are kept in the collection.</string>
+    <string name="delete">Delete</string>
+    <string name="delete_failed">Not all files could be deleted</string>
 </resources>

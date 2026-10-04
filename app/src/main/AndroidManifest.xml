@@ -41,6 +41,17 @@
             </intent-filter>
         </service>
 
+        <!-- "Abrir con…" del menú del libro: comparte un archivo de audio con otra app. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Idioma por app en Android 8–12: AppCompat lo guarda y lo restaura. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

@@ -55,6 +55,7 @@ import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlayerAction
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.IconAction
+import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.components.PrimaryButton
 import codelab.lector.ui.components.SeekBar
 import codelab.lector.ui.components.TextButton
@@ -81,6 +82,8 @@ fun PlayerScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val bookmarks by viewModel.bookmarkCount.collectAsStateWithLifecycle()
     var sheet by remember { mutableStateOf<PlayerSheet?>(null) }
+    val undo = LocalUndoState.current
+    val removedText = stringResource(R.string.removed_from_library)
 
     Column(Modifier.fillMaxSize()) {
         Header(onMinimize)
@@ -100,7 +103,16 @@ fun PlayerScreen(
                 onSpeed = { sheet = PlayerSheet.SPEED },
                 onMenu = { sheet = PlayerSheet.MENU },
             )
-            lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), viewModel::rescan, viewModel::dismissInaccessible, onMinimize)
+            lost != null -> Inaccessible(
+                lost,
+                viewModel.coverPath(lost.id),
+                viewModel::rescan,
+                onRemove = {
+                    undo.show(removedText, viewModel.removeInaccessible(lost.id))
+                    onMinimize()
+                },
+                onMinimize,
+            )
         }
     }
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Libros en el almacenamiento principal o en la tarjeta SD (/storage/XXXX-XXXX): root-path cubre los dos. -->
+<paths>
+    <root-path name="storage" path="storage" />
+</paths>

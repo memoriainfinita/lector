@@ -99,6 +99,13 @@ class PlayerViewModel(private val app: AppContainer) : ViewModel() {
 
     fun coverPath(bookId: String): String? = app.covers.file(bookId).takeIf { it.exists() }?.path
 
-    /** "Quitar": deja de mostrar el libro inaccesible; conserva posición y marcadores. */
-    fun dismissInaccessible() = playback.clearError()
+    /**
+     * "Quitar": lo quita de la biblioteca como el menú del libro, sin borrar nada. Devuelve el
+     * "Deshacer", que lo devuelve a la biblioteca.
+     */
+    fun removeInaccessible(bookId: String): () -> Unit {
+        playback.clearError()
+        viewModelScope.launch { app.database.books().setRemoved(bookId, true) }
+        return { viewModelScope.launch { app.database.books().setRemoved(bookId, false) } }
+    }
 }

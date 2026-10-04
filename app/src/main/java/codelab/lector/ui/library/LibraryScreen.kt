@@ -1,8 +1,19 @@
 package codelab.lector.ui.library
 
+import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
+import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import codelab.lector.ui.components.CheckBox
+import java.io.File
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,8 +131,8 @@ private fun Modifier.pinchToZoom(onZoom: (bigger: Boolean) -> Unit) = pointerInp
 }
 
 /**
- * Biblioteca: cabecera, Libros / Carpetas, "Seguir escuchando", filtros, ordenar, cuadrícula y vista
- * Carpetas. El menú ⋮ del libro y la búsqueda llegan en las entregas C y D.
+ * Biblioteca: cabecera, Libros / Carpetas, "Seguir escuchando", filtros, ordenar, cuadrícula, vista
+ * Carpetas y menú ⋮ del libro. La búsqueda llega en la entrega D.
  */
 @Composable
 fun LibraryScreen(
@@ -133,6 +144,9 @@ fun LibraryScreen(
     onOpenPlayer: () -> Unit,
     onOpenFolder: (String) -> Unit,
     onAddFolder: () -> Unit,
+    onOpenCover: (String) -> Unit,
+    onSplit: (String) -> Unit,
+    onMerge: (String) -> Unit,
     /** Sin sesión de escucha en curso: con ella, el minirreproductor ya enseña el libro. */
     showContinue: Boolean,
     /** La carpeta pedida por "Ir a la carpeta" ya se ha abierto. */
@@ -146,6 +160,23 @@ fun LibraryScreen(
     // Carpeta abierta en la vista Carpetas; null = raíz.
     var folder by rememberSaveable { mutableStateOf<String?>(null) }
     var classSheetFor by remember { mutableStateOf<String?>(null) }
+    // Menú del libro y sus diálogos, por id: muestran siempre el libro al día.
+    var menuFor by remember { mutableStateOf<String?>(null) }
+    var renameFor by remember { mutableStateOf<String?>(null) }
+    var deleteFor by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val openWithTitle = stringResource(R.string.open_with)
+    val deleteFailed = stringResource(R.string.delete_failed)
+    val menuActions = BookMenuActions(
+        onCover = onOpenCover,
+        onFolder = onOpenFolder,
+        onSplit = onSplit,
+        onMerge = onMerge,
+        onRename = { renameFor = it },
+        onOpenWith = { book -> scope.launch { viewModel.fileToOpen(book)?.let { openWith(context, it, openWithTitle) } } },
+        onDelete = { deleteFor = it },
+    )
     LaunchedEffect(pendingFolder, state.hasFolders) {
         if (pendingFolder != null && state.hasFolders == true) {
             folder = folderToShow(pendingFolder, state.items)
@@ -185,8 +216,9 @@ fun LibraryScreen(
         } else null
         when {
             state.hasFolders == null -> Unit
+            // Los quitados no tienen sitio en Carpetas: su carpeta puede no existir ya.
             segment == 1 -> FoldersView(
-                content = folderContent(folder, state.items, state.roots, state.rules),
+                content = folderContent(folder, state.items.filterNot { it.book.removed }, state.roots, state.rules),
                 roots = state.roots,
                 storage = storage,
                 loadedBookId = state.loadedBookId,
@@ -198,12 +230,42 @@ fun LibraryScreen(
                     onOpenPlayer()
                 },
                 onFolderOptions = { classSheetFor = it },
+                onBookOptions = { menuFor = it.book.id },
                 top = top,
             )
-            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, landscape, showContinue, top = top)
+            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue, top = top)
         }
     }
     classSheetFor?.let { path -> FolderClassSheet(path, viewModel, state.rules, onDismiss = { classSheetFor = null }) }
+    fun itemOf(id: String?) = id?.let { state.items.firstOrNull { item -> item.book.id == it } }
+    itemOf(menuFor)?.let { item ->
+        BookMenuSheet(item, state.covers[item.book.id].takeIf { state.showCovers }, viewModel, menuActions, onDismiss = { menuFor = null })
+    }
+    itemOf(renameFor)?.let { item ->
+        RenameDialog(item.book, onSave = { viewModel.rename(item.book, it) }, onDismiss = { renameFor = null })
+    }
+    itemOf(deleteFor)?.let { item ->
+        DeleteBookDialog(
+            item.book,
+            path = viewModel.relativePath(item.book.path),
+            viewModel = viewModel,
+            onConfirm = {
+                deleteFor = null
+                scope.launch {
+                    if (!viewModel.deleteFromPhone(item.book)) Toast.makeText(context, deleteFailed, Toast.LENGTH_LONG).show()
+                }
+            },
+            onDismiss = { deleteFor = null },
+        )
+    }
+}
+
+/** "Abrir con…": el archivo por FileProvider, con el selector de Android. */
+private fun openWith(context: Context, file: File, title: String) {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+    val type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension.lowercase()) ?: "audio/*"
+    val view = Intent(Intent.ACTION_VIEW).setDataAndType(uri, type).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    runCatching { context.startActivity(Intent.createChooser(view, title)) }
 }
 
 @Composable
@@ -248,6 +310,7 @@ private fun BookGrid(
     onOpenPlayer: () -> Unit,
     onOpenFolder: (String) -> Unit,
     onFolderOptions: (String) -> Unit,
+    onBookOptions: (String) -> Unit,
     landscape: Boolean,
     showContinue: Boolean,
     /** Cabecera que se desplaza con la cuadrícula (horizontal), con la línea de búsqueda debajo. */
@@ -285,7 +348,15 @@ private fun BookGrid(
             }
         }
         item(key = "filters", span = full) {
-            FilterRow(state.filters, state.sort, viewModel::toggleFilter, viewModel::setSort, Modifier.padding(top = if (continueItem == null) 10.dp else 2.dp))
+            FilterRow(
+                state.filters,
+                state.sort,
+                state.showUnavailable,
+                viewModel::toggleFilter,
+                viewModel::setSort,
+                viewModel::setShowUnavailable,
+                Modifier.padding(top = if (continueItem == null) 10.dp else 2.dp),
+            )
         }
         items(state.entries, key = { it.key }) { entry ->
             when (entry) {
@@ -293,10 +364,14 @@ private fun BookGrid(
                     entry.item,
                     cover = state.covers[entry.item.book.id].takeIf { state.showCovers },
                     loaded = entry.item.book.id == state.loadedBookId,
-                    onOpen = {
-                        viewModel.open(entry.item.book.id)
-                        onOpenPlayer()
+                    // Quitado: nada que reproducir. Abrirá sus marcadores cuando existan; hasta entonces, su ⋮.
+                    onOpen = if (entry.item.book.removed) null else {
+                        {
+                            viewModel.open(entry.item.book.id)
+                            onOpenPlayer()
+                        }
                     },
+                    onOptions = { onBookOptions(entry.item.book.id) },
                 )
                 is LibraryEntry.FolderEntry -> FolderCard(
                     entry,
@@ -356,8 +431,10 @@ private fun ContinueCard(
 private fun FilterRow(
     filters: Set<LibraryFilter>,
     sort: LibrarySort,
+    showUnavailable: Boolean,
     onToggle: (LibraryFilter) -> Unit,
     onSort: (LibrarySort) -> Unit,
+    onShowUnavailable: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val labels = mapOf(
@@ -368,12 +445,13 @@ private fun FilterRow(
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         labels.forEach { (filter, label) -> TagChip(stringResource(label), filter in filters, { onToggle(filter) }) }
         Spacer(Modifier.weight(1f))
-        SortButton(sort, onSort)
+        SortButton(sort, showUnavailable, onSort, onShowUnavailable)
     }
 }
 
+/** Popup "Ordenar por" y, debajo, la casilla "No disponibles" (libros quitados). */
 @Composable
-private fun SortButton(sort: LibrarySort, onSort: (LibrarySort) -> Unit) {
+private fun SortButton(sort: LibrarySort, showUnavailable: Boolean, onSort: (LibrarySort) -> Unit, onShowUnavailable: (Boolean) -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     var open by remember { mutableStateOf(false) }
@@ -417,18 +495,33 @@ private fun SortButton(sort: LibrarySort, onSort: (LibrarySort) -> Unit) {
                     if (option == sort) Icon(painterResource(R.drawable.ic_check), null, Modifier.size(16.dp), tint = c.accent)
                 }
             }
+            Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(c.track))
+            // Casilla: se queda abierto el popup, para ver el cambio sin volver a abrirlo.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .toggleable(showUnavailable, role = Role.Checkbox, onValueChange = onShowUnavailable)
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(stringResource(R.string.unavailable), style = t.body, color = c.text, modifier = Modifier.weight(1f))
+                CheckBox(showUnavailable)
+            }
         }
     }
 }
 
 @Composable
-private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: () -> Unit) {
+private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
     val title = book.displayTitle
     val status = item.status
+    val unavailable = book.inaccessible || book.removed
     val meta = when {
+        book.removed -> unavailableMeta(item)
         book.inaccessible -> stringResource(R.string.book_missing)
         status == LibraryFilter.FINISHED -> stringResource(R.string.book_finished, formatDuration(book.totalDurationMs))
         status == LibraryFilter.NOT_STARTED -> stringResource(R.string.book_not_started, formatDuration(book.totalDurationMs))
@@ -437,8 +530,8 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
     val accent = c.accent
     Column(
         Modifier
-            .alpha(if (book.inaccessible) 0.4f else 1f)
-            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.listen_to, title), onClick = onOpen),
+            .alpha(if (unavailable) 0.4f else 1f)
+            .then(if (onOpen != null) Modifier.clickable(role = Role.Button, onClickLabel = stringResource(R.string.listen_to, title), onClick = onOpen) else Modifier),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
@@ -462,11 +555,19 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
         ) {
             BookCover(cover, title, Modifier.fillMaxSize())
         }
-        if (status == LibraryFilter.IN_PROGRESS && !book.inaccessible) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
+        if (status == LibraryFilter.IN_PROGRESS && !unavailable) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
         else Spacer(Modifier.height(3.dp))
-        CardFooter(title, meta, optionsLabel = stringResource(R.string.book_options, title))
+        CardFooter(title, meta, optionsLabel = stringResource(R.string.book_options, title), onOptions = onOptions)
     }
 }
+
+/** Libro quitado: "no disponible · 3 marcadores", o el porcentaje si no tiene. */
+@Composable
+internal fun unavailableMeta(item: LibraryItem): String = stringResource(
+    R.string.book_unavailable,
+    if (item.bookmarkCount > 0) pluralStringResource(R.plurals.bookmarks_count, item.bookmarkCount, item.bookmarkCount)
+    else "${(item.progress * 100).roundToInt()}%",
+)
 
 @Composable
 private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit) {
@@ -492,7 +593,7 @@ private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: 
     }
 }
 
-/** Título, línea mono y ⋮. Sin [onOptions] (libros, hasta el menú del libro) el ⋮ queda inactivo. */
+/** Título, línea mono y ⋮. Sin [onOptions] el ⋮ queda inactivo. */
 @Composable
 private fun CardFooter(title: String, meta: String, optionsLabel: String, onOptions: (() -> Unit)? = null) {
     val c = LectorTheme.colors

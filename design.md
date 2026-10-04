@@ -387,11 +387,11 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 - Hoja con cabecera: portada 52, título, "autor · narrador · serie n" y línea mono "posición / total · % · tamaño"
 - Opciones: Marcadores [n], Ver portada, Ir a la carpeta, Separar en libros, Unir con otros libros, Marcar como terminado / no terminado, Reiniciar posición, Quitar de recientes; separador; Renombrar, Abrir con…, Borrar del móvil en coral
-- Marcadores, Separar y Unir: enlazados a sus pantallas vacías hasta que se hagan; Marcadores inactivo
+- Marcadores, Separar y Unir: enlazados a sus pantallas vacías hasta que se hagan; Marcadores inactivo. Hasta la hoja de marcadores, tocar un libro quitado no hace nada: se usa su ⋮
 - Reiniciar posición y Quitar de recientes: aviso con "Deshacer". Reiniciar el libro que suena lo lleva al inicio en pausa
 - Renombrar: diálogo con Cancelar y Guardar; solo cambia el nombre en LECTOR
 - Abrir con…: comparte el primer archivo del libro, o el que está en curso, por FileProvider
-- Borrar del móvil: confirmación con número de archivos, tamaño, ruta y "No se puede deshacer"; conserva los marcadores. Si es el libro que suena, primero se descarga del reproductor
+- Borrar del móvil: confirmación con número de archivos, tamaño, ruta y "No se puede deshacer"; conserva los marcadores. Si es el libro que suena, primero se descarga del reproductor. Borra solo los archivos del libro; el libro queda inaccesible con posición, marcadores y portada
 - Libro sin archivos (inaccesible o quitado): sin Ir a la carpeta, Separar, Unir, Abrir con… ni Borrar del móvil. En su lugar, "Quitar de la biblioteca" (inaccesible) o "Devolver a la biblioteca" (quitado), sin coral y con "Deshacer": no borra nada (2026-10-05)
 
 #### D. Búsqueda

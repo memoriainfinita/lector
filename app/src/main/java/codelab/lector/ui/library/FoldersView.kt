@@ -87,6 +87,7 @@ fun FoldersView(
     onFolder: (String?) -> Unit,
     onBook: (LibraryItem) -> Unit,
     onFolderOptions: (String) -> Unit,
+    onBookOptions: (LibraryItem) -> Unit,
     /** Cabecera que se desplaza con la lista (horizontal). */
     top: (@Composable () -> Unit)?,
 ) {
@@ -112,6 +113,7 @@ fun FoldersView(
                 cover = covers[item.book.id].takeIf { showCovers },
                 loaded = item.book.id == loadedBookId,
                 onOpen = { onBook(item) },
+                onOptions = { onBookOptions(item) },
             )
         }
     }
@@ -173,7 +175,7 @@ private fun FolderRowItem(row: FolderRow, onOpen: () -> Unit, onOptions: () -> U
 }
 
 @Composable
-private fun BookRowItem(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: () -> Unit) {
+private fun BookRowItem(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: () -> Unit, onOptions: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
@@ -212,10 +214,7 @@ private fun BookRowItem(item: LibraryItem, cover: String?, loaded: Boolean, onOp
             Text(meta, style = t.meta, color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (status == LibraryFilter.IN_PROGRESS && !book.inaccessible) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
         }
-        // ⋮ del libro: inactivo hasta el menú del libro (entrega C).
-        Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-            Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.book_options, title), Modifier.size(20.dp), tint = c.inactive)
-        }
+        IconAction(painterResource(R.drawable.ic_more_vert), stringResource(R.string.book_options, title), onOptions, tint = c.textSecondary, iconSize = 20.dp)
     }
     RowDivider()
 }

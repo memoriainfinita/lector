@@ -136,4 +136,34 @@
     </plurals>
     <string name="book_row_not_started">%1$s · sin empezar</string>
     <string name="book_row_finished">%1$s · terminado</string>
+    <!-- Menú del libro (Biblioteca C) -->
+    <string name="unavailable">No disponibles</string>
+    <string name="book_unavailable">no disponible · %1$s</string>
+    <string name="book_menu_times">%1$s / %2$s · %3$d%% · %4$s</string>
+    <string name="go_to_folder">Ir a la carpeta</string>
+    <string name="merge_with_books">Unir con otros libros</string>
+    <string name="mark_finished">Marcar como terminado</string>
+    <string name="mark_unfinished">Marcar como no terminado</string>
+    <string name="reset_position">Reiniciar posición</string>
+    <string name="position_reset">Posición reiniciada</string>
+    <string name="hide_from_recents">Quitar de recientes</string>
+    <string name="hidden_from_recents">Quitado de recientes</string>
+    <string name="rename">Renombrar</string>
+    <string name="name">Nombre</string>
+    <string name="rename_note">Solo cambia el nombre en LECTOR. La carpeta y los archivos no se tocan.</string>
+    <string name="save">Guardar</string>
+    <string name="open_with">Abrir con…</string>
+    <string name="delete_from_phone">Borrar del móvil</string>
+    <string name="remove_from_library">Quitar de la biblioteca</string>
+    <string name="restore_to_library">Devolver a la biblioteca</string>
+    <string name="removed_from_library">Quitado de la biblioteca</string>
+    <string name="restored_to_library">Devuelto a la biblioteca</string>
+    <string name="delete_book_title">¿Borrar «%1$s» del móvil?</string>
+    <plurals name="delete_book_body">
+        <item quantity="one">Se borra %1$d archivo (%2$s) de la carpeta. No se puede deshacer.</item>
+        <item quantity="other">Se borran %1$d archivos (%2$s) de la carpeta. No se puede deshacer.</item>
+    </plurals>
+    <string name="delete_book_marks">Los marcadores se conservan en la recopilación.</string>
+    <string name="delete">Borrar</string>
+    <string name="delete_failed">No se pudieron borrar todos los archivos</string>
 </resources>

@@ -75,8 +75,22 @@ interface BookDao {
     )
     suspend fun chapters(bookId: String): List<Chapter>
 
-    @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, lastPlayedAt = :at WHERE id = :id")
+    /** Escuchar de nuevo un libro quitado de recientes le quita la marca. */
+    @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, lastPlayedAt = :at, hiddenFromRecents = 0 WHERE id = :id")
     suspend fun savePosition(id: String, file: String, ms: Long, at: Long)
+
+    /** Reiniciar posición, y su "Deshacer" con la posición anterior. */
+    @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at WHERE id = :id")
+    suspend fun setPosition(id: String, file: String?, ms: Long, at: Long?)
+
+    @Query("UPDATE book SET hiddenFromRecents = :hidden WHERE id = :id")
+    suspend fun setHiddenFromRecents(id: String, hidden: Boolean)
+
+    @Query("UPDATE book SET customName = :name WHERE id = :id")
+    suspend fun setCustomName(id: String, name: String?)
+
+    @Query("SELECT coalesce(sum(sizeBytes), 0) FROM book_file WHERE bookId = :bookId")
+    suspend fun sizeBytes(bookId: String): Long
 
     /** Posición traída de otro libro (reagrupar): no cuenta como escucha nueva. */
     @Query(

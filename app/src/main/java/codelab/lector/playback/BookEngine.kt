@@ -207,6 +207,41 @@ class BookEngine(
         undo.take()?.let(::seekToBook)
     }
 
+    // ---- Menú del libro ----
+
+    /** Reiniciar posición del libro cargado: al inicio, en pausa. */
+    fun reset(bookId: String) {
+        if (book?.id != bookId) return
+        exo.pause()
+        seekToBook(0)
+    }
+
+    /** Cambios hechos fuera del motor (nombre, terminado): relee el libro y el título de la notificación. */
+    suspend fun refresh(bookId: String) {
+        if (book?.id != bookId) return
+        book = db.books().get(bookId) ?: return
+        if (exo.mediaItemCount > 0) {
+            val i = exo.currentMediaItemIndex
+            exo.replaceMediaItem(i, mediaItem(i, timeline.segments.getOrNull(timeline.segmentIndexAt(position()))))
+        }
+        publish()
+    }
+
+    /** Borrar del móvil el libro cargado: primero se descarga del reproductor. */
+    fun unload(bookId: String) {
+        if (book?.id != bookId) return
+        drop()
+    }
+
+    private fun drop() {
+        exo.stop()
+        exo.clearMediaItems()
+        book = null
+        files = emptyList()
+        timeline = BookTimeline(emptyList())
+        publish()
+    }
+
     private suspend fun addBookmark() {
         val b = book ?: return
         val now = System.currentTimeMillis()
@@ -380,12 +415,7 @@ class BookEngine(
         db.books().setInaccessible(bookId, true)
         if (book?.id == bookId) {
             save()
-            exo.stop()
-            exo.clearMediaItems()
-            book = null
-            files = emptyList()
-            timeline = BookTimeline(emptyList())
-            publish()
+            drop()
         }
         holder.fail(PlaybackError.Inaccessible(bookId))
     }
