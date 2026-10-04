@@ -160,8 +160,8 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Datos: exportar copia completa (JSON) o marcadores como texto; importar y combinar con resumen previo (marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados) e "Importar también los ajustes" opcional
   - Primer arranque: pantalla de permiso ("No sube nada a internet", con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
   - Tema Oscuro / Claro / Sistema; idioma Español / English / Sistema
-- Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual; los libros aparecen a medida que se encuentran. Artboard "Biblioteca: buscando"
-- Iconos en uso (versión 146): artboard con el logo definitivo y los iconos de la app, generado desde res/drawable. Las demás propuestas de icono, archivadas
+- Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual. Artboard "Biblioteca: buscando". En la app los libros nuevos aparecen al terminar la búsqueda (Pantallas › Biblioteca › A)
+- Iconos en uso (versión 148): artboard con el logo definitivo y los iconos de la app, generado desde res/drawable. Las demás propuestas de icono, archivadas
 - Sin pantalla propia (2026-10-03): Ajustes › Permisos abre los ajustes de Android; Acerca de es solo texto
 - Widget: dos botones de salto, izquierda −10 s y derecha +10 s, iguales en 4×1 y 4×2. Sustituye el modelo de Simple ABP (pequeño, grande izquierda, grande derecha)
 - Acciones asignables a botones (reproductor, notificación, widget, auricular, teclas multimedia): saltar atrás, saltar adelante, capítulo o archivo anterior, capítulo o archivo siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, nada. "Ir al marcador anterior" corresponde a "Previous mark" de Simple ABP (comportamiento exacto sin comprobar). Se eligen en una hoja al tocar cada botón en Ajustes › Botones
@@ -187,7 +187,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   | Etiqueta o filtro | 28 | 2 | 12 mono |
   | Fila de menú | 44 | — | 14–15 |
   | Icono | 44 | — | — |
-- Escala de texto: 11 etiquetas y texto sobre portadas pequeñas; 12 metadatos y tiempos en mono; 13 secundario; 14 listas y botones; 15 texto principal de fila; 17 título de hoja; 20 título de subpágina; 22 título del libro en el reproductor; 24 título de pestaña; 28 valores grandes (velocidad, cuenta atrás) y titular de bienvenida. Las portadas de ejemplo del lienzo quedan fuera
+- Escala de texto: 11 etiquetas y texto sobre portadas pequeñas; 12 metadatos y tiempos en mono; 13 secundario; 14 listas y botones; 15 texto principal de fila; 17 título de hoja; 20 título de subpágina; 22 título del libro en el reproductor; 24 título de Biblioteca; 28 valores grandes (velocidad, cuenta atrás) y titular de bienvenida. Las portadas de ejemplo del lienzo quedan fuera
 
 ## Recomendaciones técnicas
 
@@ -296,7 +296,7 @@ Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
 
 - Dependencias: Navigation3 1.2.0 (`navigation3-runtime`, `navigation3-ui`), `lifecycle-viewmodel-navigation3` 2.11.0, plugin de serialización de Kotlin 2.4.20 y `kotlinx-serialization-core`
 - Una sola pila con Biblioteca en la raíz; Atrás en Biblioteca sale de la app
-- Escuchando y Marcadores se abren encima. Si ya están en la pila, suben arriba en vez de duplicarse. Atrás vuelve a la pantalla anterior
+- Escuchando y Marcadores se abren encima. Si ya están en la pila, suben arriba en vez de duplicarse. Atrás vuelve a la pantalla anterior. Marcadores lleva flecha de Atrás y título de 20, como las subpantallas (lienzo, versión 148)
 - Cabecera de Biblioteca: buscar, Marcadores y Ajustes. Ajustes también desde el ⋯ del reproductor
 - Todo Atrás pasa por un punto único, para aplicar "Retrasar el botón Atrás" (comportamiento en Simple ABP sin comprobar)
 - Con minirreproductor: Biblioteca, Marcadores, búsqueda en la biblioteca y búsqueda en marcadores
