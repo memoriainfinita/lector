@@ -142,6 +142,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Libro inaccesible: aviso con "Volver a buscar" y "Quitar"; conserva posición y marcadores
   - Aviso al abrir tras un cierre del sistema con la pantalla apagada: dónde se paró, "Abrir ajustes" (batería) y "Ahora no"
 - Color de acento: por defecto #F58F00, el naranja del icono (antes #F0A43A). En tema claro, variante oscura del mismo tono (#B86E0E en el lienzo). Opciones en Ajustes › Apariencia: ámbar, azul, verde, coral, color del sistema (Android 12+) y personalizado
+- Ajustes › Apariencia: interruptor "Mostrar portadas" (de Simple ABP, decidido 2026-10-04); sin portadas, la superficie con el título
 - Color personalizado: hoja con tono, luminosidad, hex y vista previa en oscuro y claro. Si falta contraste avisa con "Poco contraste" y "Ajustar" (corrige la luminosidad), sin bloquear. Botón Listo pequeño a la derecha
 - Contenido del lienzo registrado en la revisión del 2026-10-02:
   - Reproductor: subtítulo con autor y narrador
@@ -338,6 +339,60 @@ Hecha 2026-10-03.
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
 - Minirreproductor: superpuesto sobre el menú inferior, con fundido; las pestañas reservan su alto (70) abajo, así el cambio de pestaña no desplaza nada. Muestra tramo · posición en el tramo
 - Horizontal: pendiente
+
+### Biblioteca
+
+Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del libro, D búsqueda.
+
+- Datos: una consulta Room devuelve cada libro con su posición en el libro (duración de los archivos anteriores a `positionFile` + `positionMs`), sus tiempos y su número de marcadores. La usan cuadrícula, Carpetas y búsqueda. Sin cambios en el esquema
+- Portadas: los archivos de `CoverStore` con Coil, los mismos del reproductor
+
+#### A. Cuadrícula
+
+- Cabecera "Biblioteca" con buscar; debajo, selector Libros / Carpetas
+- "Seguir escuchando": portada 60, título, barra en acento y play redondo en acento. Muestra el libro cargado; sin él, el último escuchado que no esté quitado de recientes ni terminado; sin ninguno, no aparece. Tocar la tarjeta abre Escuchando; play reproduce o pausa sin salir de la Biblioteca
+- Filtros En curso / Sin empezar / Terminados (etiqueta 28) y botón de ordenar a la derecha. Varios activos: la unión. Ninguno: toda la biblioteca. Los filtros no se guardan
+- Ordenar: popup "Ordenar por" con cinco opciones de 44 y marca en acento en la activa. El orden se guarda en DataStore
+  - Escuchados recientemente: los nunca escuchados al final, por fecha de añadido. Los quitados de recientes, como si no se hubieran escuchado; volver a escucharlos les quita la marca
+  - Tiempo restante: a 1x, sin la velocidad del libro
+- Cuadrícula de 2 columnas, separación 18 entre filas y 14 entre columnas, márgenes 20. Tarjeta: portada cuadrada, barra de 3, título 14, línea mono 12; ⋮ junto al título
+- Línea mono: "44% · quedan 3:52:09", "sin empezar · 6:56:54", "terminado · 6:56:54" (sin barra)
+- Libro cargado: contorno en acento alrededor de la portada y barra en acento; los demás, barra gris
+- Carpeta de Episodios o Sesiones: una sola tarjeta (portada apilada, "12 sesiones", sin barra) que abre la carpeta en la vista Carpetas; su ⋮ abre la hoja de clase (inactivo hasta B). Se agrupa por la carpeta que contiene los archivos, no por la que tiene la regla: una regla en "Podcasts" da una tarjeta por podcast
+- Tocar un libro lo carga, empieza a sonar y abre Escuchando. Tocar el libro cargado solo abre Escuchando
+- Libro inaccesible: sigue en la Biblioteca, atenuado, para mantener a mano sus marcadores; "no encontrado" en la línea mono. Tocarlo abre Escuchando con la tarjeta de libro inaccesible. "Quitar" en Escuchando solo cierra la tarjeta
+- Solo se muestran los libros de las carpetas actuales; los de una carpeta quitada reaparecen al volver a añadirla
+- Columnas según el ancho, unos 160 dp por tarjeta: 2 en vertical, unas 4 en horizontal
+- Sin portadas (Ajustes › Apariencia › Mostrar portadas): la superficie con el título en cuadrícula, filas, búsqueda y reproductor
+- Al abrir la app, búsqueda rápida de cambios en segundo plano
+- Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros aparecen a medida que se encuentran; dos tarjetas grises al final mientras dura la búsqueda
+- Sin carpetas: icono, "Aún no hay libros", "LECTOR busca los audiolibros dentro y los ordena por libro" y "Añadir carpeta" (destacado), que abre el explorador de carpetas
+- Reserva abajo los 70 del minirreproductor
+
+#### B. Carpetas
+
+- Arriba, flecha de subir y ruta: "Almacenamiento principal /" en gris y la carpeta actual en blanco. Atrás sube un nivel
+- Árbol a partir de las rutas de los libros guardados, sin recorrer el disco. Una carpeta que es un libro es fila de libro y no se abre. En la raíz, las carpetas de la biblioteca; con una sola, se entra directamente en ella
+- Fila de carpeta: icono 48, nombre y "Carpeta de autor" o la clase con el número ("Sesiones · 12"). Su ⋮ abre la hoja de clase
+- Fila de libro: portada 48, título 15 y línea mono "1:47:57 / 26:10:12 · 6%" con barra; sin empezar, "26:27:41 · sin empezar". Con marcadores, su número en lugar del porcentaje ("3 marcadores"). Libro cargado: título en acento y fila resaltada
+- Hoja "Clase de carpeta": cabecera con nombre, ruta y número de archivos; cuatro opciones con su explicación y la nota final; se aplica al tocar. Cambiar de clase lanza una búsqueda rápida que reagrupa los libros
+- "Ir a la carpeta" (`pendingFolder` de la navegación) abre Carpetas en esa ruta
+
+#### C. Menú del libro
+
+- Hoja con cabecera: portada 52, título, "autor · narrador · serie n" y línea mono "posición / total · % · tamaño"
+- Opciones: Marcadores [n], Ver portada, Ir a la carpeta, Separar en libros, Unir con otros libros, Marcar como terminado / no terminado, Reiniciar posición, Quitar de recientes; separador; Renombrar, Abrir con…, Borrar del móvil en coral
+- Marcadores, Separar y Unir: enlazados a sus pantallas vacías hasta que se hagan; Marcadores inactivo
+- Reiniciar posición y Quitar de recientes: aviso con "Deshacer". Reiniciar el libro que suena lo lleva al inicio en pausa
+- Renombrar: diálogo con Cancelar y Guardar; solo cambia el nombre en LECTOR
+- Abrir con…: comparte el primer archivo del libro, o el que está en curso, por FileProvider
+- Borrar del móvil: confirmación con número de archivos, tamaño, ruta y "No se puede deshacer"; conserva los marcadores. Si es el libro que suena, primero se descarga del reproductor
+
+#### D. Búsqueda
+
+- Campo con flecha atrás y × para borrar; línea "n libros · título, autor o carpeta"; filas con portada 52, título, autor y línea mono; lo encontrado resaltado en acento
+- Busca en título, autor, narrador, serie y carpeta. Sin distinguir mayúsculas ni acentos, a medida que se escribe, en memoria sobre la lista de la biblioteca
+- Tocar un resultado lo carga y abre Escuchando
 
 ## Modelo de datos
 
