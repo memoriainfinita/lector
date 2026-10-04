@@ -50,9 +50,7 @@ fun MiniPlayer(
     val t = LectorTheme.type
     Column(
         Modifier
-            .padding(horizontal = 8.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
             // Semitransparente: se ve pasar la cuadrícula por debajo.
             .background(c.surface.copy(alpha = 0.85f)),
     ) {
@@ -61,7 +59,7 @@ fun MiniPlayer(
             Box(Modifier.fillMaxWidth(fraction).height(2.dp).background(c.accent))
         }
         Row(
-            Modifier.fillMaxWidth().height(60.dp).padding(start = 8.dp, end = 4.dp),
+            Modifier.fillMaxWidth().height(60.dp).padding(start = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {

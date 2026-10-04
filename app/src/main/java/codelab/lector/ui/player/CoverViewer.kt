@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import codelab.lector.R
 import codelab.lector.container
@@ -37,7 +35,6 @@ import codelab.lector.data.db.Book
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.theme.LectorTheme
-import kotlin.math.roundToInt
 
 /** Visor de portada: fondo negro, × arriba, título y autor abajo. Se cierra con × o deslizando hacia abajo. */
 @Composable
@@ -59,6 +56,7 @@ fun CoverViewer(bookId: String, onClose: () -> Unit) {
             .background(Color.Black)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
+                    // Cierra al soltar pasado el umbral; la imagen no se mueve (sola, parece que se despega).
                     onDragEnd = { if (drag > threshold) close() else drag = 0f },
                     onDragCancel = { drag = 0f },
                 ) { _, dy -> drag = (drag + dy).coerceAtLeast(0f) }
@@ -68,7 +66,7 @@ fun CoverViewer(bookId: String, onClose: () -> Unit) {
             IconAction(painterResource(R.drawable.ic_close), stringResource(R.string.close), onClose, tint = Color.White)
         }
         Box(
-            Modifier.weight(1f).fillMaxWidth().offset { IntOffset(0, drag.roundToInt()) },
+            Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             BookCover(path, title, Modifier.fillMaxWidth(), radius = 0.dp, titleStyle = t.headline, contentScale = ContentScale.Fit)

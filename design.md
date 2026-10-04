@@ -333,13 +333,13 @@ Hecha 2026-10-03.
 - Aviso de salto: "Saltado desde [posición]" con Deshacer
 - Play / pausa según "va a sonar": no parpadea mientras carga
 - ⋯ en la fila bajo los controles, a la derecha (su menú sale por abajo). Cabecera solo con la flecha y "Escuchando". Lienzo actualizado (versión 146)
-- Deslizar la portada hacia abajo hace lo mismo que la flecha: Atrás. Actúa al soltar pasado el umbral de 120, el del visor; la portada no se mueve. Solo hacia abajo: a los lados no hay gesto (2026-10-04)
+- Deslizar la portada hacia abajo hace lo mismo que la flecha: Atrás. Actúa al soltar pasado el umbral de 120, el del visor; la portada no se mueve, y en el visor tampoco. Solo hacia abajo: a los lados no hay gesto (2026-10-04)
 - Pausa diferida y marcadores del libro: inactivos hasta sus funciones. Marcar guarda sin hoja hasta Marcadores
 - Menú ⋯: Tema alterna oscuro y claro a partir del que se ve
 - Velocidad: − / + en pasos de 0.05
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
-- Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. Sin margen abajo, esquinas redondeadas solo arriba y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
+- Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. De lado a lado, sin márgenes ni esquinas redondeadas (la línea de progreso hace de borde superior), y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
 - Horizontal: pendiente
 
 ### Biblioteca
