@@ -23,7 +23,5 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 
 ## TODO
 
-- [ ] Decidir si al reagrupar (cambio de clase) pasan también al libro nuevo el nombre propio, la velocidad, el sonido y "terminado". Hoy solo pasan marcadores y posición
-- [ ] Biblioteca C: decidir "Quitar de la biblioteca" para libros inaccesibles (propuesta: borra si no tiene marcadores; con marcadores sigue atenuado). Hoy no hay forma de quitarlos y quedan dos en el móvil (Mentats borrado y su ".trashed-…")
 - [ ] Revisar la portada de la notificación: el log de systemui da `EACCES` al leer `files/covers/…jpg`; parece que la sesión pasa una ruta privada de la app. Sin comprobar en pantalla
 

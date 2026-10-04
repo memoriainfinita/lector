@@ -157,7 +157,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Horizontal: reproductor a la izquierda y panel con pestañas Archivos y Marcadores a la derecha
   - Ajustes › Marcadores: "Abrir la hoja al marcar". Desde la app abre la hoja; desde auricular y notificación solo se guarda
   - Ajustes › Sistema: "Seguir con la pantalla apagada" abre el ajuste de batería de Android
-  - Datos: exportar copia completa (JSON) o marcadores como texto; importar y combinar con resumen previo (marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados) e "Importar también los ajustes" opcional
+  - Datos: exportar copia completa (JSON) o marcadores como texto; importar y combinar con resumen previo (marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados) e "Importar también los ajustes" opcional. Los libros no encontrados entran como quitados, con sus marcadores; la copia debe llevar los datos del libro (título, autor, firma) (2026-10-05)
   - Primer arranque: pantalla de permiso ("No sube nada a internet", con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
   - Tema Oscuro / Claro / Sistema; idioma Español / English / Sistema
 - Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual. Artboard "Biblioteca: buscando". En la app los libros nuevos aparecen al terminar la búsqueda (Pantallas › Biblioteca › A)
@@ -338,7 +338,7 @@ Hecha 2026-10-03.
 - Menú ⋯: Tema alterna oscuro y claro a partir del que se ve
 - Velocidad: − / + en pasos de 0.05
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
-- Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
+- Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" lo quita de la biblioteca como el menú del libro (Pantallas › Biblioteca › A), con "Deshacer", y cierra Escuchando (2026-10-05)
 - Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. De lado a lado, sin márgenes ni esquinas redondeadas (la línea de progreso hace de borde superior), y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
 - Horizontal: pendiente
 
@@ -354,7 +354,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Cabecera en una fila: "Biblioteca", selector Libros / Carpetas con iconos (cuadrícula y carpeta; el texto va como descripción), buscar, Marcadores y Ajustes. Con texto no cabía con tres iconos y letra grande. En horizontal, 52 de alto y se va con el scroll de la cuadrícula, con la línea de búsqueda debajo
 - "Seguir escuchando": portada 60, título, barra en acento y play redondo en acento. Muestra el libro cargado; sin él, el último escuchado que no esté quitado de recientes ni terminado; sin ninguno, no aparece. Tocar la tarjeta abre Escuchando; play reproduce o pausa sin salir de la Biblioteca. Solo sin sesión de escucha: con ella, el libro ya está en el minirreproductor y la tarjeta no sale (nunca los dos a la vez, como en el lienzo)
 - Filtros En curso / Sin empezar / Terminados (etiqueta 28) y botón de ordenar a la derecha. Varios activos: la unión. Ninguno: toda la biblioteca. Los filtros no se guardan
-- Ordenar: popup "Ordenar por" con cinco opciones de 44 y marca en acento en la activa. El orden se guarda en DataStore
+- Ordenar: popup "Ordenar por" con cinco opciones de 44 y marca en acento en la activa. El orden se guarda en DataStore. Debajo, separador y casilla "No disponibles", guardada en DataStore y desactivada por defecto: muestra los libros quitados, atenuados, mezclados en el orden elegido y sujetos a los filtros (2026-10-05)
   - Escuchados recientemente: los nunca escuchados al final, por fecha de añadido. Los quitados de recientes, como si no se hubieran escuchado; volver a escucharlos les quita la marca
   - Tiempo restante: a 1x, sin la velocidad del libro
 - Cuadrícula de 2 columnas, separación 18 entre filas y 14 entre columnas, márgenes 20. Tarjeta: portada cuadrada, barra de 3, título 14, línea mono 12; ⋮ junto al título
@@ -362,7 +362,8 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Libro cargado: contorno en acento alrededor de la portada y barra en acento; los demás, barra gris
 - Carpeta de Episodios o Sesiones: una sola tarjeta (portada apilada, "12 sesiones", sin barra) que abre la carpeta en la vista Carpetas; su ⋮ abre la hoja de clase (inactivo hasta B). Se agrupa por la carpeta que contiene los archivos, no por la que tiene la regla: una regla en "Podcasts" da una tarjeta por podcast
 - Tocar un libro lo carga, empieza a sonar y abre Escuchando. Tocar el libro cargado solo abre Escuchando
-- Libro inaccesible: sigue en la Biblioteca, atenuado, para mantener a mano sus marcadores; "no encontrado" en la línea mono. Tocarlo abre Escuchando con la tarjeta de libro inaccesible. "Quitar" en Escuchando solo cierra la tarjeta
+- Libro inaccesible: sigue en la Biblioteca, atenuado; "no encontrado" en la línea mono. Tocarlo abre Escuchando con la tarjeta de libro inaccesible. "Quitar" en esa tarjeta y "Quitar de la biblioteca" en el menú del libro hacen lo mismo: lo quitan sin borrar nada, con "Deshacer" (2026-10-05)
+- Libro quitado: fuera de la Biblioteca salvo con "No disponibles"; entonces atenuado, con "no disponible · n marcadores" (o el porcentaje) en la línea mono. Tocarlo abre la hoja de marcadores del libro. Conserva posición, marcadores, notas y tags; sus marcadores siguen en la recopilación. Si sus archivos vuelven, la búsqueda lo reconecta por firma o duración y vuelve a la Biblioteca (2026-10-05)
 - Solo se muestran los libros de las carpetas actuales; los de una carpeta quitada reaparecen al volver a añadirla
 - Columnas con el pellizco: 1, 2 o 3 en vertical (por defecto 2), el doble en horizontal. Un nivel por gesto; se guarda en DataStore
 - Sin portadas (Ajustes › Apariencia › Mostrar portadas): la superficie con el título en cuadrícula, filas, búsqueda y reproductor
@@ -380,7 +381,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Hoja "Clase de carpeta": cabecera con nombre, ruta y número de archivos; cuatro opciones con su explicación y la nota final; se aplica al tocar. Cambiar de clase lanza una búsqueda rápida que reagrupa los libros
 - "Ir a la carpeta" (`pendingFolder` de la navegación) abre Carpetas en la carpeta donde aparece el libro. La tarjeta de Episodios o Sesiones de la cuadrícula abre su carpeta; su ⋮, la hoja de clase
 - Clase "Libros" en una subcarpeta de una carpeta con otra clase: se guarda como regla propia, para anular la heredada. Elegir la misma clase que la carpeta madre quita la regla propia
-- Reagrupar (cambio de clase): si los archivos de un libro que ya no aparece siguen existiendo y ahora son de otros libros, cada marcador pasa al libro que contiene su archivo, la posición al del archivo en curso (si es más reciente que la suya) y el libro antiguo se borra. Solo queda inaccesible si le faltan archivos. Misma regla que "Separar en libros"; Unir y Separar la usarán cuando lleguen
+- Reagrupar (cambio de clase): si los archivos de un libro que ya no aparece siguen existiendo y ahora son de otros libros, cada marcador pasa al libro que contiene su archivo, la posición al del archivo en curso (si es más reciente que la suya) y el libro antiguo se borra. Solo queda inaccesible si le faltan archivos. Misma regla que "Separar en libros"; Unir y Separar la usarán cuando lleguen. Pasan también velocidad y sonido (al juntar, los del libro antiguo más reciente) y terminado (al separar, si el antiguo lo estaba; al juntar, solo si lo estaban todos). No pasan el nombre propio ni "quitado de recientes" (2026-10-05)
 
 #### C. Menú del libro
 
@@ -391,12 +392,14 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Renombrar: diálogo con Cancelar y Guardar; solo cambia el nombre en LECTOR
 - Abrir con…: comparte el primer archivo del libro, o el que está en curso, por FileProvider
 - Borrar del móvil: confirmación con número de archivos, tamaño, ruta y "No se puede deshacer"; conserva los marcadores. Si es el libro que suena, primero se descarga del reproductor
+- Libro sin archivos (inaccesible o quitado): sin Ir a la carpeta, Separar, Unir, Abrir con… ni Borrar del móvil. En su lugar, "Quitar de la biblioteca" (inaccesible) o "Devolver a la biblioteca" (quitado), sin coral y con "Deshacer": no borra nada (2026-10-05)
 
 #### D. Búsqueda
 
 - Campo con flecha atrás y × para borrar; línea "n libros · título, autor o carpeta"; filas con portada 52, título, autor y línea mono; lo encontrado resaltado en acento
 - Busca en título, autor, narrador, serie y carpeta. Sin distinguir mayúsculas ni acentos, a medida que se escribe, en memoria sobre la lista de la biblioteca
 - Tocar un resultado lo carga y abre Escuchando
+- Encuentra también los libros quitados, atenuados y con "no disponible"; tocarlos abre su hoja de marcadores (2026-10-05)
 
 ## Modelo de datos
 
@@ -413,7 +416,7 @@ Aprobado 2026-10-03.
   - Duración total
   - Origen de portada: incrustada o imagen de la carpeta
   - Fecha de añadido y de última escucha
-  - Oculto de recientes, terminado, inaccesible
+  - Oculto de recientes, terminado, inaccesible, quitado de la biblioteca
   - Posición: archivo y punto dentro de él, con su fecha (en conflicto gana la más reciente)
   - Velocidad, saltar silencios, sonido propio (activado, preamplificación, bandas del ecualizador)
 - Archivo: libro, ruta relativa, orden, duración, tamaño
