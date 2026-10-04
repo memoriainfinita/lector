@@ -9,6 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -411,11 +415,19 @@ private fun BookGrid(
     top: (@Composable () -> Unit)?,
 ) {
     val full: LazyGridItemSpanScope.() -> GridItemSpan = { GridItemSpan(maxLineSpan) }
+    // Con el teclado abierto (buscando), las últimas tarjetas tienen que poder subir por encima de él.
+    // La raíz ya deja la barra de navegación; el teclado la tapa, así que solo cuenta lo que sobresale.
+    // El minirreproductor queda bajo el teclado: se toma el mayor de los dos huecos, no la suma.
+    val density = LocalDensity.current
+    val keyboard = with(density) {
+        (WindowInsets.ime.getBottom(this) - WindowInsets.navigationBars.getBottom(this)).coerceAtLeast(0).toDp()
+    }
+    val bottom = maxOf(LocalBottomInset.current, keyboard)
     // Columnas del pellizco: 1, 2 o 3 en vertical; en horizontal, el doble (mismo tamaño de tarjeta).
     LazyVerticalGrid(
         columns = GridCells.Fixed(if (landscape) state.columns * 2 else state.columns),
         modifier = Modifier.fillMaxSize().pinchToZoom(viewModel::zoom),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = LocalBottomInset.current + 20.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = bottom + 20.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
