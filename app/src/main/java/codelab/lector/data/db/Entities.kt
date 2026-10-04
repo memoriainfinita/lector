@@ -1,6 +1,7 @@
 package codelab.lector.data.db
 
 import androidx.room3.ColumnInfo
+import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
@@ -107,6 +108,15 @@ data class Tag(
 data class BookmarkTag(
     val bookmarkId: String,
     val tagId: Long,
+)
+
+/** Libro con lo que la biblioteca muestra de él (BookDao.observeLibrary). */
+data class LibraryItem(
+    @Embedded val book: Book,
+    /** Posición en ms del libro entero, no del archivo. */
+    val positionInBookMs: Long,
+    /** Marcadores normales; el de pausa no cuenta. */
+    val bookmarkCount: Int,
 )
 
 @Entity(tableName = "library_folder")

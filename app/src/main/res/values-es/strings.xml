@@ -72,4 +72,38 @@
     <string name="rescan">Volver a buscar</string>
     <string name="remove">Quitar</string>
     <string name="view_cover">Ver portada</string>
+    <string name="library_books">Libros</string>
+    <string name="library_folders">Carpetas</string>
+    <string name="continue_listening">Seguir escuchando</string>
+    <string name="filter_in_progress">En curso</string>
+    <string name="filter_not_started">Sin empezar</string>
+    <string name="filter_finished">Terminados</string>
+    <string name="sort">Ordenar</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="sort_recent">Escuchados recientemente</string>
+    <string name="sort_added">Añadidos recientemente</string>
+    <string name="sort_title">Título</string>
+    <string name="sort_author">Autor</string>
+    <string name="sort_remaining">Tiempo restante</string>
+    <string name="book_progress">%1$d%% · quedan %2$s</string>
+    <string name="book_not_started">sin empezar · %1$s</string>
+    <string name="book_finished">terminado · %1$s</string>
+    <string name="book_missing">no encontrado</string>
+    <plurals name="folder_sessions">
+        <item quantity="one">%d sesión</item>
+        <item quantity="other">%d sesiones</item>
+    </plurals>
+    <plurals name="folder_episodes">
+        <item quantity="one">%d episodio</item>
+        <item quantity="other">%d episodios</item>
+    </plurals>
+    <string name="folder_class_sessions">Sesiones</string>
+    <string name="folder_class_episodes">Episodios</string>
+    <string name="scanning_found">Buscando libros… %1$d encontrados</string>
+    <string name="library_empty_title">Aún no hay libros</string>
+    <string name="library_empty_body">LECTOR busca los audiolibros dentro y los ordena por libro.</string>
+    <string name="add_folder">Añadir carpeta</string>
+    <string name="listen_to">Escuchar %1$s</string>
+    <string name="book_options">Opciones de %1$s</string>
+    <string name="open_folder">Abrir la carpeta %1$s</string>
 </resources>

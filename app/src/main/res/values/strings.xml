@@ -73,4 +73,38 @@
     <string name="rescan">Search again</string>
     <string name="remove">Remove</string>
     <string name="view_cover">View cover</string>
+    <string name="library_books">Books</string>
+    <string name="library_folders">Folders</string>
+    <string name="continue_listening">Continue listening</string>
+    <string name="filter_in_progress">In progress</string>
+    <string name="filter_not_started">Not started</string>
+    <string name="filter_finished">Finished</string>
+    <string name="sort">Sort</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_recent">Recently listened</string>
+    <string name="sort_added">Recently added</string>
+    <string name="sort_title">Title</string>
+    <string name="sort_author">Author</string>
+    <string name="sort_remaining">Time left</string>
+    <string name="book_progress">%1$d%% · %2$s left</string>
+    <string name="book_not_started">not started · %1$s</string>
+    <string name="book_finished">finished · %1$s</string>
+    <string name="book_missing">not found</string>
+    <plurals name="folder_sessions">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <plurals name="folder_episodes">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+    <string name="folder_class_sessions">Sessions</string>
+    <string name="folder_class_episodes">Episodes</string>
+    <string name="scanning_found">Searching for books… %1$d found</string>
+    <string name="library_empty_title">No books yet</string>
+    <string name="library_empty_body">LECTOR looks for the audiobooks inside and sorts them by book.</string>
+    <string name="add_folder">Add folder</string>
+    <string name="listen_to">Listen to %1$s</string>
+    <string name="book_options">Options for %1$s</string>
+    <string name="open_folder">Open the folder %1$s</string>
 </resources>

@@ -20,6 +20,8 @@ data class AppearanceSettings(
     val mode: ThemeMode = ThemeMode.DARK,
     val schedule: ThemeSchedule = ThemeSchedule(),
     val accent: AccentChoice = AccentChoice.Preset(AccentPreset.AMBER),
+    /** Ajustes › Apariencia › Mostrar portadas; sin ellas, la superficie con el título. */
+    val showCovers: Boolean = true,
 )
 
 /** Tema y acento. El idioma lo guarda AppCompat (selector de idioma por app). */
@@ -35,6 +37,7 @@ class AppearanceRepository(private val store: DataStore<Preferences>) {
                 darkAt = p[DARK_AT]?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: defaults.darkAt,
             ),
             accent = decodeAccent(p[ACCENT]),
+            showCovers = p[SHOW_COVERS] ?: true,
         )
     }
 
@@ -48,12 +51,15 @@ class AppearanceRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setAccent(accent: AccentChoice) = store.edit { it[ACCENT] = encodeAccent(accent) }
 
+    suspend fun setShowCovers(show: Boolean) = store.edit { it[SHOW_COVERS] = show }
+
     companion object {
         private val MODE = stringPreferencesKey("theme_mode")
         private val SCHEDULE_ON = booleanPreferencesKey("theme_schedule_on")
         private val LIGHT_AT = intPreferencesKey("theme_light_at")
         private val DARK_AT = intPreferencesKey("theme_dark_at")
         private val ACCENT = stringPreferencesKey("accent")
+        private val SHOW_COVERS = booleanPreferencesKey("show_covers")
 
         fun encodeAccent(accent: AccentChoice): String = when (accent) {
             is AccentChoice.Preset -> "preset:${accent.preset.name}"

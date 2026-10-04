@@ -123,7 +123,8 @@ class LibraryScanner(
     ): ScannedFolder {
         _state.update { it.copy(currentFolder = dir.path) }
         val entries = dir.listFiles().orEmpty()
-        val audio = entries.filter { it.isFile && extensionOf(it.name) in AudioExtensions }
+        // Sin ocultos: la papelera de Android deja lo borrado como ".trashed-…" en la misma carpeta.
+        val audio = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in AudioExtensions }
         val files = coroutineScope {
             audio.map { f -> async { readers.withPermit { ScannedFile(f.path, f.name, meta(f, cache, seen, fresh)) } } }.awaitAll()
         }

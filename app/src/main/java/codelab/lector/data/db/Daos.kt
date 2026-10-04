@@ -27,6 +27,21 @@ interface BookDao {
     @Query("SELECT * FROM book")
     suspend fun all(): List<Book>
 
+    /**
+     * Libros de las carpetas actuales de la biblioteca, con su posición en el libro y su número de
+     * marcadores. Los de una carpeta quitada se conservan pero no salen aquí.
+     */
+    @Query(
+        "SELECT book.*, " +
+            "book.positionMs + coalesce((SELECT sum(f.durationMs) FROM book_file f WHERE f.bookId = book.id " +
+            "AND f.sortIndex < (SELECT p.sortIndex FROM book_file p WHERE p.bookId = book.id AND p.relativePath = book.positionFile)), 0) " +
+            "AS positionInBookMs, " +
+            "(SELECT count(*) FROM bookmark b WHERE b.bookId = book.id AND b.kind = 'NORMAL') AS bookmarkCount " +
+            "FROM book WHERE EXISTS (SELECT 1 FROM library_folder lf " +
+            "WHERE book.path = lf.path OR substr(book.path, 1, length(lf.path) + 1) = lf.path || '/')"
+    )
+    fun observeLibrary(): Flow<List<LibraryItem>>
+
     @Query("UPDATE book SET inaccessible = 1 WHERE id IN (:ids)")
     suspend fun markInaccessible(ids: List<String>)
 
@@ -157,6 +172,9 @@ interface FolderDao {
 
     @Query("SELECT * FROM folder_rule")
     suspend fun rules(): List<FolderRule>
+
+    @Query("SELECT * FROM folder_rule")
+    fun observeRules(): Flow<List<FolderRule>>
 
     @Upsert
     suspend fun setRule(rule: FolderRule)

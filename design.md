@@ -131,7 +131,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 - Popups: filas de 44 px
 - Hoja de marcador: botón Listo pequeño, a la derecha
 - Muchos tags: fila de filtros de una línea con desplazamiento lateral; en la hoja de marcador solo los más usados; lista completa con búsqueda, crear tag y orden por uso o A–Z, que también asigna tags desde la hoja de marcador ("Listo" en vez de "Aplicar"). Varios tags en el filtro muestran los marcadores con cualquiera de ellos. Gestionar tags en Ajustes (renombrar, unir, borrar); borrar un tag no borra marcadores
-- Menú inferior de la app: solo iconos, pequeño (barra de 48 px)
+- Menú inferior de la app: solo iconos, pequeño (barra de 40, iconos de 18; antes 48 y 20, reducido el 2026-10-04 para ganar espacio)
 - Fila bajo los controles (pausa, marcar, velocidad, marcadores): pequeña, iconos con texto mínimo
 - Pantallas añadidas el 2026-10-02, aprobadas como están en el lienzo:
   - Widget 4×1 (portada, título y barra, −10, play, +10) y 4×2 (añade capítulo o archivo, tiempos y marcar). Botones configurables en Ajustes › Botones
@@ -248,7 +248,7 @@ Aprobado 2026-10-03. Código en `ui/theme` y `ui/components`; catálogo de depur
 Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR escaneo".
 
 - Permiso: acceso a todos los archivos (Android 11+), lectura clásica en 8–10
-- Recorre almacenamiento principal y SD. Formatos: mp3, m4a, m4b, aac, ogg, oga, opus, flac, wav. Salta carpetas ocultas y `Android/`; no salta carpetas con `.nomedia`
+- Recorre almacenamiento principal y SD. Formatos: mp3, m4a, m4b, aac, ogg, oga, opus, flac, wav. Salta carpetas y archivos ocultos (la papelera de Android deja lo borrado como `.trashed-…`) y `Android/`; no salta carpetas con `.nomedia`
 - Metadatos con `media3-inspector` (`MetadataRetriever`): duración (también mp3 de tasa constante sin cabecera), etiquetas y capítulos (interfaz `Chapter`: ID3 CHAP y MP4). Título: álbum, título de pista (libro de un archivo) o carpeta / archivo. Autor: artista del álbum o artista. Narrador: compositor. Serie y número: TXXX SERIES / SERIES-PART, MVNM / MVIN
 - Portadas: miniatura (lado mayor 1024) en almacenamiento de la app, de la imagen incrustada o, si no hay, de cover / folder / front o la única imagen de la carpeta (solo si la carpeta tiene un único libro)
 - Caché `file_meta` por ruta: el escaneo rápido (al abrir) solo relee archivos con tamaño o fecha distintos; "Volver a buscar" relee todo y rehace portadas
@@ -337,7 +337,7 @@ Hecha 2026-10-03.
 - Velocidad: − / + en pasos de 0.05
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
-- Minirreproductor: superpuesto sobre el menú inferior, con fundido; las pestañas reservan su alto (70) abajo, así el cambio de pestaña no desplaza nada. Muestra tramo · posición en el tramo
+- Minirreproductor: superpuesto sobre el menú inferior, con fundido; las pestañas reservan su alto (62) abajo, así el cambio de pestaña no desplaza nada. Muestra tramo · posición en el tramo. Pegado al menú inferior (sin margen abajo, esquinas redondeadas solo arriba) y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
 - Horizontal: pendiente
 
 ### Biblioteca
@@ -349,25 +349,25 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 #### A. Cuadrícula
 
-- Cabecera "Biblioteca" con buscar; debajo, selector Libros / Carpetas
+- Cabecera en una fila: "Biblioteca", selector Libros / Carpetas y buscar. En horizontal, 52 de alto y se va con el scroll de la cuadrícula, con la línea de búsqueda debajo
 - "Seguir escuchando": portada 60, título, barra en acento y play redondo en acento. Muestra el libro cargado; sin él, el último escuchado que no esté quitado de recientes ni terminado; sin ninguno, no aparece. Tocar la tarjeta abre Escuchando; play reproduce o pausa sin salir de la Biblioteca
 - Filtros En curso / Sin empezar / Terminados (etiqueta 28) y botón de ordenar a la derecha. Varios activos: la unión. Ninguno: toda la biblioteca. Los filtros no se guardan
 - Ordenar: popup "Ordenar por" con cinco opciones de 44 y marca en acento en la activa. El orden se guarda en DataStore
   - Escuchados recientemente: los nunca escuchados al final, por fecha de añadido. Los quitados de recientes, como si no se hubieran escuchado; volver a escucharlos les quita la marca
   - Tiempo restante: a 1x, sin la velocidad del libro
 - Cuadrícula de 2 columnas, separación 18 entre filas y 14 entre columnas, márgenes 20. Tarjeta: portada cuadrada, barra de 3, título 14, línea mono 12; ⋮ junto al título
-- Línea mono: "44% · quedan 3:52:09", "sin empezar · 6:56:54", "terminado · 6:56:54" (sin barra)
+- Línea mono: "44% · quedan 3:52:09", "sin empezar · 6:56:54", "terminado · 6:56:54" (sin barra); hasta dos líneas si no cabe
 - Libro cargado: contorno en acento alrededor de la portada y barra en acento; los demás, barra gris
 - Carpeta de Episodios o Sesiones: una sola tarjeta (portada apilada, "12 sesiones", sin barra) que abre la carpeta en la vista Carpetas; su ⋮ abre la hoja de clase (inactivo hasta B). Se agrupa por la carpeta que contiene los archivos, no por la que tiene la regla: una regla en "Podcasts" da una tarjeta por podcast
 - Tocar un libro lo carga, empieza a sonar y abre Escuchando. Tocar el libro cargado solo abre Escuchando
 - Libro inaccesible: sigue en la Biblioteca, atenuado, para mantener a mano sus marcadores; "no encontrado" en la línea mono. Tocarlo abre Escuchando con la tarjeta de libro inaccesible. "Quitar" en Escuchando solo cierra la tarjeta
 - Solo se muestran los libros de las carpetas actuales; los de una carpeta quitada reaparecen al volver a añadirla
-- Columnas según el ancho, unos 160 dp por tarjeta: 2 en vertical, unas 4 en horizontal
+- Columnas con el pellizco: 1, 2 o 3 en vertical (por defecto 2), el doble en horizontal. Un nivel por gesto; se guarda en DataStore
 - Sin portadas (Ajustes › Apariencia › Mostrar portadas): la superficie con el título en cuadrícula, filas, búsqueda y reproductor
 - Al abrir la app, búsqueda rápida de cambios en segundo plano
-- Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros aparecen a medida que se encuentran; dos tarjetas grises al final mientras dura la búsqueda
+- Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros nuevos aparecen al terminar (el escaneo guarda en una transacción); dos tarjetas grises al final mientras dura la búsqueda
 - Sin carpetas: icono, "Aún no hay libros", "LECTOR busca los audiolibros dentro y los ordena por libro" y "Añadir carpeta" (destacado), que abre el explorador de carpetas
-- Reserva abajo los 70 del minirreproductor
+- Reserva abajo los 62 del minirreproductor
 
 #### B. Carpetas
 

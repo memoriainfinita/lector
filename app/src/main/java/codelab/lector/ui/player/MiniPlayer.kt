@@ -31,8 +31,8 @@ import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.theme.LectorTheme
 
-/** Alto que ocupa con su margen inferior: barra de 2, fila de 60 y 8 de margen. Las pestañas lo reservan. */
-val MiniPlayerHeight = 70.dp
+/** Alto que ocupa: barra de 2 y fila de 60, pegado al menú inferior. Las pestañas lo reservan. */
+val MiniPlayerHeight = 62.dp
 
 /**
  * Minirreproductor sobre el menú inferior: progreso del libro, portada, título, tramo y botones
@@ -50,10 +50,11 @@ fun MiniPlayer(
     val t = LectorTheme.type
     Column(
         Modifier
-            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            .padding(horizontal = 8.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(c.surface),
+            .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
+            // Semitransparente: se ve pasar la cuadrícula por debajo.
+            .background(c.surface.copy(alpha = 0.85f)),
     ) {
         val fraction = if (np.durationMs > 0) (np.positionMs.toFloat() / np.durationMs).coerceIn(0f, 1f) else 0f
         Box(Modifier.fillMaxWidth().height(2.dp).background(c.track)) {

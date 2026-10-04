@@ -110,6 +110,36 @@ class LectorDatabaseTest {
     }
 
     @Test
+    fun libraryAddsEarlierFilesToPositionAndCountsNormalBookmarks() = runTest {
+        db.folders().addFolder(LibraryFolder("/storage/emulated/0/Audiobooks"))
+        db.books().upsert(book("a").copy(positionFile = "02.mp3", positionMs = 5_000))
+        listOf(1_000_000L, 2_000_000L, 3_000_000L).forEachIndexed { i, ms ->
+            db.books().insertFile(BookFile(bookId = "a", relativePath = "0${i + 1}.mp3", sortIndex = i, durationMs = ms, sizeBytes = 0))
+        }
+        db.books().upsert(book("b"))
+        db.bookmarks().upsert(bookmark("m1", "a"))
+        db.bookmarks().upsert(bookmark("m2", "a"))
+        db.bookmarks().replacePauseMarker(bookmark("p", "a"))
+
+        val items = db.books().observeLibrary().first().associateBy { it.book.id }
+        assertEquals(1_005_000L, items.getValue("a").positionInBookMs)
+        assertEquals(2, items.getValue("a").bookmarkCount)
+        assertEquals(0L, items.getValue("b").positionInBookMs)
+        assertEquals(0, items.getValue("b").bookmarkCount)
+    }
+
+    @Test
+    fun libraryShowsOnlyBooksInsideCurrentFolders() = runTest {
+        db.folders().addFolder(LibraryFolder("/storage/emulated/0/Audiobooks"))
+        db.books().upsert(book("inside"))
+        db.books().upsert(book("file").copy(path = "/storage/emulated/0/Audiobooks/suelto.m4b"))
+        db.books().upsert(book("sibling").copy(path = "/storage/emulated/0/Audiobooks 2/x"))
+        db.books().upsert(book("removed").copy(path = "/storage/emulated/0/Music/AUDIOBOOKS/y"))
+
+        assertEquals(setOf("inside", "file"), db.books().observeLibrary().first().map { it.book.id }.toSet())
+    }
+
+    @Test
     fun storesListColumns() = runTest {
         db.books().upsert(book("a").copy(ownSound = true, preampDb = 3f, eqBands = listOf(1.5f, -2f, 0f)))
         assertEquals(listOf(1.5f, -2f, 0f), db.books().get("a")?.eqBands)

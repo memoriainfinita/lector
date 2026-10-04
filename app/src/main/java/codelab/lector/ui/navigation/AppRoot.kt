@@ -41,6 +41,9 @@ import androidx.navigation3.ui.NavDisplay
 import codelab.lector.R
 import codelab.lector.container
 import codelab.lector.library.hasStorageAccess
+import codelab.lector.library.storageRoots
+import codelab.lector.ui.library.LibraryScreen
+import codelab.lector.ui.library.LibraryViewModel
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlaybackError
 import codelab.lector.playback.PlayerAction
@@ -137,6 +140,14 @@ private fun MainTabs(openPlayer: Flow<Unit>) {
     val error by player.error.collectAsStateWithLifecycle()
     val settings by player.settings.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { app.playback.connect() }
+    // Búsqueda rápida de cambios al abrir la app; no se repite al girar la pantalla.
+    var scanned by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!scanned) {
+            scanned = true
+            app.scanner.start()
+        }
+    }
     LaunchedEffect(openPlayer) { openPlayer.collect { navigator.selectTab(ListeningRoute) } }
     JumpUndo(nowPlaying, onUndo = { player.act(PlayerAction.UNDO_JUMP) })
 
@@ -152,7 +163,7 @@ private fun MainTabs(openPlayer: Flow<Unit>) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             CompositionLocalProvider(LocalBottomInset provides if (showMini) MiniPlayerHeight else 0.dp) {
                 NavDisplay(
-                    entries = state.toDecoratedEntries(routeEntries(state, navigator, playing)),
+                    entries = state.toDecoratedEntries(routeEntries(state, navigator)),
                     onBack = navigator::goBack,
                 )
             }
@@ -193,11 +204,9 @@ private fun JumpUndo(playing: NowPlaying?, onUndo: () -> Unit) {
 private fun routeEntries(
     state: NavigationState,
     navigator: Navigator,
-    playing: NowPlaying?,
 ): (NavKey) -> NavEntry<NavKey> {
     val app = LocalContext.current.container
     val back = navigator::goBack
-    val bookId = playing?.bookId
     val settings = listOf(
         R.string.settings_sleep to SettingsSleepRoute,
         R.string.settings_buttons to SettingsButtonsRoute,
@@ -212,15 +221,14 @@ private fun routeEntries(
 
     return entryProvider<NavKey> {
         entry<LibraryRoute> {
-            PlaceholderScreen(
-                stringResource(R.string.tab_library),
-                subtitle = state.pendingFolder?.let { stringResource(R.string.pending_folder, it) },
-                links = listOfNotNull(
-                    link(R.string.search_library, LibrarySearchRoute),
-                    link(R.string.folder_picker, FolderPickerRoute),
-                    bookId?.let { link(R.string.merge_books, MergeBooksRoute(it)) },
-                    bookId?.let { link(R.string.split_book, SplitBookRoute(it)) },
-                ),
+            val context = LocalContext.current
+            LibraryScreen(
+                viewModel = viewModel { LibraryViewModel(app, storageRoots(context).map { it.path }) },
+                pendingFolder = state.pendingFolder,
+                onSearch = { navigator.open(LibrarySearchRoute) },
+                onOpenPlayer = { navigator.selectTab(ListeningRoute) },
+                onOpenFolder = navigator::showFolder,
+                onAddFolder = { navigator.open(FolderPickerRoute) },
             )
         }
         entry<ListeningRoute> {
@@ -256,13 +264,13 @@ private fun routeEntries(
     }
 }
 
-/** Menú inferior: solo iconos, barra de 48. Escuchando inactivo sin libro cargado. */
+/** Menú inferior: solo iconos, barra de 40 e iconos de 18. Escuchando inactivo sin libro cargado. */
 @Composable
 private fun BottomBar(tab: TabRoute, listeningEnabled: Boolean, onSelect: (TabRoute) -> Unit) {
     val c = LectorTheme.colors
     Column {
         Box(Modifier.fillMaxWidth().height(1.dp).background(c.divider))
-        Row(Modifier.fillMaxWidth().height(48.dp)) {
+        Row(Modifier.fillMaxWidth().height(40.dp)) {
             Tabs.forEach { route ->
                 val enabled = route != ListeningRoute || listeningEnabled
                 val (icon, label) = when (route) {
@@ -283,7 +291,7 @@ private fun BottomBar(tab: TabRoute, listeningEnabled: Boolean, onSelect: (TabRo
                         .clickable(enabled = enabled, role = Role.Tab) { onSelect(route) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(painterResource(icon), stringResource(label), Modifier.size(20.dp), tint = tint)
+                    Icon(painterResource(icon), stringResource(label), Modifier.size(18.dp), tint = tint)
                 }
             }
         }

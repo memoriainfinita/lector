@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import codelab.lector.data.db.LectorDatabase
 import codelab.lector.data.settings.AppearanceRepository
+import codelab.lector.data.settings.LibrarySettingsRepository
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.library.CoverStore
 import codelab.lector.library.LibraryScanner
@@ -32,6 +33,7 @@ class AppContainer(context: Context) {
         LibraryScanner(database, Media3MetadataReader(context), covers, appScope) { playbackSettings.current().newBookSpeed }
     }
     val playbackSettings = PlaybackSettingsRepository(context.settingsStore)
+    val librarySettings = LibrarySettingsRepository(context.settingsStore)
     /** Lo publica el servicio de reproducción; lo leen pantallas y widgets. */
     val nowPlaying = PlaybackStateHolder()
     val playback = PlaybackConnection(context, nowPlaying, playbackSettings, appScope)
