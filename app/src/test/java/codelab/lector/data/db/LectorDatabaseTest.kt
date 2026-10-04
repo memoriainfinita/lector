@@ -140,6 +140,17 @@ class LectorDatabaseTest {
     }
 
     @Test
+    fun movedPositionKeepsTheLatestListeningDate() = runTest {
+        db.books().upsert(book("a").copy(lastPlayedAt = 500))
+        db.books().movePosition("a", "02.mp3", 7_000, at = 300)
+        val a = db.books().get("a")!!
+        assertEquals("02.mp3", a.positionFile)
+        assertEquals(7_000L, a.positionMs)
+        assertEquals(300L, a.positionUpdatedAt)
+        assertEquals(500L, a.lastPlayedAt)
+    }
+
+    @Test
     fun storesListColumns() = runTest {
         db.books().upsert(book("a").copy(ownSound = true, preampDb = 3f, eqBands = listOf(1.5f, -2f, 0f)))
         assertEquals(listOf(1.5f, -2f, 0f), db.books().get("a")?.eqBands)

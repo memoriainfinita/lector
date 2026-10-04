@@ -73,6 +73,8 @@ import codelab.lector.library.LibraryEntry
 import codelab.lector.library.LibraryFilter
 import codelab.lector.library.LibrarySort
 import codelab.lector.library.displayTitle
+import codelab.lector.library.folderContent
+import codelab.lector.library.folderToShow
 import codelab.lector.library.progress
 import codelab.lector.library.remainingMs
 import codelab.lector.library.status
@@ -118,8 +120,8 @@ private fun Modifier.pinchToZoom(onZoom: (bigger: Boolean) -> Unit) = pointerInp
 }
 
 /**
- * Biblioteca: cabecera, Libros / Carpetas, "Seguir escuchando", filtros, ordenar y cuadrícula.
- * Carpetas, el menú ⋮ y la búsqueda llegan en las entregas B, C y D.
+ * Biblioteca: cabecera, Libros / Carpetas, "Seguir escuchando", filtros, ordenar, cuadrícula y vista
+ * Carpetas. El menú ⋮ del libro y la búsqueda llegan en las entregas C y D.
  */
 @Composable
 fun LibraryScreen(
@@ -133,12 +135,24 @@ fun LibraryScreen(
     onAddFolder: () -> Unit,
     /** Sin sesión de escucha en curso: con ella, el minirreproductor ya enseña el libro. */
     showContinue: Boolean,
+    /** La carpeta pedida por "Ir a la carpeta" ya se ha abierto. */
+    onFolderShown: () -> Unit,
+    storage: StorageRoots,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val c = LectorTheme.colors
     val t = LectorTheme.type
     var segment by rememberSaveable { mutableIntStateOf(0) }
-    LaunchedEffect(pendingFolder) { if (pendingFolder != null) segment = 1 }
+    // Carpeta abierta en la vista Carpetas; null = raíz.
+    var folder by rememberSaveable { mutableStateOf<String?>(null) }
+    var classSheetFor by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(pendingFolder, state.hasFolders) {
+        if (pendingFolder != null && state.hasFolders == true) {
+            folder = folderToShow(pendingFolder, state.items)
+            segment = 1
+            onFolderShown()
+        }
+    }
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val header = @Composable {
@@ -154,21 +168,42 @@ fun LibraryScreen(
     }
 
     // Título, selector y buscar en una fila. En horizontal la altura escasea: la cabecera se va
-    // con el scroll de la cuadrícula para dejar sitio a las portadas.
+    // con el scroll de la lista para dejar sitio a las portadas.
     Column(Modifier.fillMaxSize()) {
-        if (!landscape || state.hasFolders != true || segment == 1) header()
+        val scrollingHeader = landscape && state.hasFolders == true
+        if (!scrollingHeader) header()
         if (state.hasFolders == false) {
             EmptyLibrary(onAddFolder)
             return@Column
         }
-        val scrollingHeader = landscape && segment == 0
         if (state.scan.running && !scrollingHeader) ScanProgress(state.scan.found, state.scanFolder)
+        val top: (@Composable () -> Unit)? = if (scrollingHeader) {
+            {
+                header()
+                if (state.scan.running) ScanProgress(state.scan.found, state.scanFolder)
+            }
+        } else null
         when {
             state.hasFolders == null -> Unit
-            segment == 1 -> FoldersPending(pendingFolder)
-            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, landscape, showContinue, top = if (scrollingHeader) header else null)
+            segment == 1 -> FoldersView(
+                content = folderContent(folder, state.items, state.roots, state.rules),
+                roots = state.roots,
+                storage = storage,
+                loadedBookId = state.loadedBookId,
+                covers = state.covers,
+                showCovers = state.showCovers,
+                onFolder = { folder = it },
+                onBook = { item ->
+                    viewModel.open(item.book.id)
+                    onOpenPlayer()
+                },
+                onFolderOptions = { classSheetFor = it },
+                top = top,
+            )
+            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, landscape, showContinue, top = top)
         }
     }
+    classSheetFor?.let { path -> FolderClassSheet(path, viewModel, state.rules, onDismiss = { classSheetFor = null }) }
 }
 
 @Composable
@@ -212,6 +247,7 @@ private fun BookGrid(
     viewModel: LibraryViewModel,
     onOpenPlayer: () -> Unit,
     onOpenFolder: (String) -> Unit,
+    onFolderOptions: (String) -> Unit,
     landscape: Boolean,
     showContinue: Boolean,
     /** Cabecera que se desplaza con la cuadrícula (horizontal), con la línea de búsqueda debajo. */
@@ -229,10 +265,7 @@ private fun BookGrid(
         if (top != null) {
             item(key = "header", span = full) {
                 // A todo el ancho, saltando los márgenes de la cuadrícula: la misma cabecera que fija.
-                Column(Modifier.bleed(20.dp)) {
-                    top()
-                    if (state.scan.running) ScanProgress(state.scan.found, state.scanFolder)
-                }
+                Column(Modifier.bleed(20.dp)) { top() }
             }
         }
         val continueItem = state.continueItem?.takeIf { showContinue }
@@ -269,6 +302,7 @@ private fun BookGrid(
                     entry,
                     cover = entry.items.firstNotNullOfOrNull { state.covers[it.book.id] }.takeIf { state.showCovers },
                     onOpen = { onOpenFolder(entry.path) },
+                    onOptions = { onFolderOptions(entry.path) },
                 )
             }
         }
@@ -435,7 +469,7 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
 }
 
 @Composable
-private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit) {
+private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit) {
     val c = LectorTheme.colors
     val count = entry.items.size
     val meta = when (entry.kind) {
@@ -454,13 +488,13 @@ private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: 
             BookCover(cover, entry.name, Modifier.padding(top = 8.dp).fillMaxSize())
         }
         Spacer(Modifier.height(3.dp))
-        CardFooter(entry.name, meta, optionsLabel = stringResource(R.string.book_options, entry.name))
+        CardFooter(entry.name, meta, optionsLabel = stringResource(R.string.folder_options, entry.name), onOptions = onOptions)
     }
 }
 
-/** Título, línea mono y ⋮. El ⋮ queda inactivo hasta el menú del libro y la hoja de clase. */
+/** Título, línea mono y ⋮. Sin [onOptions] (libros, hasta el menú del libro) el ⋮ queda inactivo. */
 @Composable
-private fun CardFooter(title: String, meta: String, optionsLabel: String) {
+private fun CardFooter(title: String, meta: String, optionsLabel: String, onOptions: (() -> Unit)? = null) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -468,8 +502,15 @@ private fun CardFooter(title: String, meta: String, optionsLabel: String) {
             Text(title, style = t.body.copy(fontWeight = FontWeight.Medium), color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(meta, style = t.meta, color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Box(Modifier.width(28.dp).height(40.dp).offset(x = 8.dp), contentAlignment = Alignment.TopCenter) {
-            Icon(painterResource(R.drawable.ic_more_vert), optionsLabel, Modifier.padding(top = 2.dp).size(16.dp), tint = c.inactive)
+        Box(
+            Modifier
+                .width(28.dp)
+                .height(40.dp)
+                .offset(x = 8.dp)
+                .then(if (onOptions != null) Modifier.clickable(role = Role.Button, onClickLabel = optionsLabel, onClick = onOptions) else Modifier),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Icon(painterResource(R.drawable.ic_more_vert), optionsLabel, Modifier.padding(top = 2.dp).size(16.dp), tint = if (onOptions != null) c.textSecondary else c.inactive)
         }
     }
 }
@@ -485,7 +526,7 @@ private fun SkeletonCard() {
 }
 
 @Composable
-private fun ProgressBar(fraction: Float, color: androidx.compose.ui.graphics.Color) {
+internal fun ProgressBar(fraction: Float, color: androidx.compose.ui.graphics.Color) {
     val c = LectorTheme.colors
     Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
         Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(color))
@@ -494,7 +535,7 @@ private fun ProgressBar(fraction: Float, color: androidx.compose.ui.graphics.Col
 
 /** Línea fina de progreso bajo el selector, con el recuento y la carpeta que se recorre. */
 @Composable
-private fun ScanProgress(found: Int, folder: String?) {
+internal fun ScanProgress(found: Int, folder: String?) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -540,14 +581,5 @@ private fun EmptyLibrary(onAddFolder: () -> Unit) {
         Text(stringResource(R.string.library_empty_title), style = t.sheetTitle, color = c.text)
         Text(stringResource(R.string.library_empty_body), style = t.body.copy(lineHeight = 21.sp), color = c.textSecondary, textAlign = TextAlign.Center)
         HeroButton(stringResource(R.string.add_folder), onAddFolder, Modifier.padding(top = 8.dp))
-    }
-}
-
-/** Vista Carpetas: llega en la entrega B. De momento, la carpeta pedida desde "Ir a la carpeta". */
-@Composable
-private fun FoldersPending(pendingFolder: String?) {
-    val c = LectorTheme.colors
-    Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.TopStart) {
-        if (pendingFolder != null) Text(stringResource(R.string.pending_folder, pendingFolder), style = LectorTheme.type.secondary, color = c.textSecondary)
     }
 }

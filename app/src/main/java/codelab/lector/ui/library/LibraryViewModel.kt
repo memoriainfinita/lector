@@ -3,7 +3,10 @@ package codelab.lector.ui.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import codelab.lector.AppContainer
+import codelab.lector.data.db.FolderRule
 import codelab.lector.data.db.LibraryItem
+import codelab.lector.library.FolderClass
+import codelab.lector.library.ruleToStore
 import codelab.lector.library.LibraryEntry
 import codelab.lector.library.LibraryFilter
 import codelab.lector.library.LibrarySort
@@ -43,9 +46,13 @@ data class LibraryUiState(
     val columns: Int = 2,
     /** Portada en caché por libro; los que no tienen, no están. */
     val covers: Map<String, String> = emptyMap(),
+    /** Para la vista Carpetas: todos los libros, las reglas y las carpetas de la biblioteca. */
+    val items: List<LibraryItem> = emptyList(),
+    val rules: List<FolderRule> = emptyList(),
+    val roots: List<String> = emptyList(),
 )
 
-/** Cuadrícula de la biblioteca (design.md › Pantallas › Biblioteca › A). */
+/** Biblioteca: cuadrícula y vista Carpetas (design.md › Pantallas › Biblioteca › A y B). */
 class LibraryViewModel(private val app: AppContainer, private val storageRoots: List<String>) : ViewModel() {
     private val filters = MutableStateFlow(emptySet<LibraryFilter>())
     /** Una sola consulta para la cuadrícula y las portadas. */
@@ -68,6 +75,8 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
             playing = np?.playWhenReady == true,
             filters = f,
             sort = sort,
+            items = list,
+            rules = rules,
         )
     }.flowOn(Dispatchers.Default)
 
@@ -82,6 +91,7 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
     ) { v, folders, scan, appearance, coverMap ->
         v.copy(
             hasFolders = folders.isNotEmpty(),
+            roots = folders.map { it.path },
             scan = scan,
             scanFolder = scan.currentFolder?.let { displayPath(it, storageRoots) },
             showCovers = appearance.showCovers,
@@ -102,6 +112,24 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
         val next = state.value.columns + if (bigger) -1 else 1
         viewModelScope.launch { app.librarySettings.setGridColumns(next) }
     }
+
+    /**
+     * Clase de carpeta: se guarda la regla (o se quita, si coincide con la heredada) y una búsqueda
+     * rápida reagrupa los libros.
+     */
+    fun setFolderClass(path: String, folderClass: FolderClass) {
+        viewModelScope.launch {
+            val rule = ruleToStore(path, folderClass, state.value.rules)
+            if (rule == null) app.database.folders().clearRule(path) else app.database.folders().setRule(rule)
+            app.scanner.start()
+        }
+    }
+
+    /** Archivos de los libros de la carpeta, para la cabecera de la hoja de clase. */
+    suspend fun fileCount(path: String): Int = app.database.books().fileCountUnder(path)
+
+    /** Carpeta relativa a su almacenamiento: "Audiobooks / yoga nidra". */
+    fun relativePath(path: String): String = displayPath(path, storageRoots)
 
     /** Tocar un libro: si no es el cargado, lo carga y empieza a sonar. Después se abre Escuchando. */
     fun open(bookId: String) {

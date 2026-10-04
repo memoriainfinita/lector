@@ -254,7 +254,7 @@ Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR esca
 - Portadas: miniatura (lado mayor 1024) en almacenamiento de la app, de la imagen incrustada o, si no hay, de cover / folder / front o la única imagen de la carpeta (solo si la carpeta tiene un único libro)
 - Caché `file_meta` por ruta: el escaneo rápido (al abrir) solo relee archivos con tamaño o fecha distintos; "Volver a buscar" relee todo y rehace portadas
 - Dos fases: recorrer y leer (progreso: encontrados y carpeta actual), después detectar, aplicar correcciones, reconciliar y guardar en una transacción. Los libros aparecen al terminar
-- Reconciliación: por firma; si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos
+- Reconciliación: por firma; si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos, salvo los reagrupados (todos sus archivos siguen y son de otros libros): marcadores y posición pasan a esos libros y el antiguo se borra (Pantallas › Biblioteca › B)
 - Carpetas candidatas para el primer arranque: niveles 1 y 2 con audio bajo cada almacenamiento
 
 ## Reproducción
@@ -373,12 +373,14 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 #### B. Carpetas
 
-- Arriba, flecha de subir y ruta: "Almacenamiento principal /" en gris y la carpeta actual en blanco. Atrás sube un nivel
+- Arriba, flecha de subir y ruta: "Almacenamiento principal /" (o "Tarjeta SD /") en gris y la carpeta actual en blanco. Atrás sube un nivel
 - Árbol a partir de las rutas de los libros guardados, sin recorrer el disco. Una carpeta que es un libro es fila de libro y no se abre. En la raíz, las carpetas de la biblioteca; con una sola, se entra directamente en ella
-- Fila de carpeta: icono 48, nombre y "Carpeta de autor" o la clase con el número ("Sesiones · 12"). Su ⋮ abre la hoja de clase
+- Fila de carpeta: icono 48, nombre y subtítulo: la clase con el número de obras si no es Libros ("Sesiones · 12"); si no, "Carpeta de autor" (solo subcarpetas) o el número de libros ("12 libros"). Su ⋮ abre la hoja de clase
 - Fila de libro: portada 48, título 15 y línea mono "1:47:57 / 26:10:12 · 6%" con barra; sin empezar, "26:27:41 · sin empezar". Con marcadores, su número en lugar del porcentaje ("3 marcadores"). Libro cargado: título en acento y fila resaltada
 - Hoja "Clase de carpeta": cabecera con nombre, ruta y número de archivos; cuatro opciones con su explicación y la nota final; se aplica al tocar. Cambiar de clase lanza una búsqueda rápida que reagrupa los libros
-- "Ir a la carpeta" (`pendingFolder` de la navegación) abre Carpetas en esa ruta
+- "Ir a la carpeta" (`pendingFolder` de la navegación) abre Carpetas en la carpeta donde aparece el libro. La tarjeta de Episodios o Sesiones de la cuadrícula abre su carpeta; su ⋮, la hoja de clase
+- Clase "Libros" en una subcarpeta de una carpeta con otra clase: se guarda como regla propia, para anular la heredada. Elegir la misma clase que la carpeta madre quita la regla propia
+- Reagrupar (cambio de clase): si los archivos de un libro que ya no aparece siguen existiendo y ahora son de otros libros, cada marcador pasa al libro que contiene su archivo, la posición al del archivo en curso (si es más reciente que la suya) y el libro antiguo se borra. Solo queda inaccesible si le faltan archivos. Misma regla que "Separar en libros"; Unir y Separar la usarán cuando lleguen
 
 #### C. Menú del libro
 
@@ -421,7 +423,7 @@ Aprobado 2026-10-03.
 - Carpeta de la biblioteca: ruta raíz
 - Caché de archivo (`file_meta`): ruta, tamaño, fecha, duración, etiquetas, portada sí / no, capítulos
 - Corrección: tipo (separar o unir), libros afectados por firma de identidad, archivos donde empieza cada libro (separar), fecha. Se aplica sobre cada escaneo y se puede deshacer
-- Regla de carpeta: carpeta y dos ajustes, qué es una obra (la carpeta o cada archivo) y qué pasa al terminar (queda terminada o vuelve al inicio). La heredan las subcarpetas; vale para lo que se añada después
+- Regla de carpeta: carpeta y dos ajustes, qué es una obra (la carpeta, cada archivo o las reglas de detección: clase Libros guardada para anular una heredada) y qué pasa al terminar (queda terminada o vuelve al inicio). La heredan las subcarpetas; vale para lo que se añada después
 
 ### Clases de carpeta
 

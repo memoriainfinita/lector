@@ -66,6 +66,21 @@ private fun split(books: List<DetectedBook>, key: String?, startFiles: List<Stri
 private fun relativeTo(base: String, path: String): String =
     File(base).toPath().relativize(File(path).toPath()).toString().replace(File.separatorChar, '/')
 
+/** Carpeta base de las rutas relativas de un libro: la suya o, si el libro es un archivo, la que lo contiene. */
+fun baseFolder(book: Book): String = if (extensionOf(book.path) in AudioExtensions) parentOf(book.path) else book.path
+
+/** Dónde queda un archivo tras el escaneo: libro y ruta relativa dentro de él. */
+data class Placement(val bookId: String, val relativePath: String)
+
+/**
+ * Libro que ya no aparece pero cuyos archivos siguen, ahora en otros libros (cambio de clase):
+ * adónde va cada uno de sus archivos. Null si falta alguno: entonces queda inaccesible.
+ */
+fun regroup(base: String, relativePaths: List<String>, placements: Map<String, Placement>): Map<String, Placement>? {
+    if (relativePaths.isEmpty()) return null
+    return relativePaths.associateWith { placements["$base/$it"] ?: return null }
+}
+
 data class Match(val detected: DetectedBook, val existing: Book?)
 
 data class Reconciliation(val matches: List<Match>, val missing: List<Book>)

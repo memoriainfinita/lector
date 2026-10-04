@@ -30,7 +30,9 @@ import codelab.lector.R
 import codelab.lector.container
 import codelab.lector.library.hasStorageAccess
 import codelab.lector.library.storageRoots
+import android.os.Environment
 import codelab.lector.ui.library.LibraryScreen
+import codelab.lector.ui.library.StorageRoots
 import codelab.lector.ui.library.LibraryViewModel
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlayerAction
@@ -218,6 +220,8 @@ private fun routeEntries(
                 onOpenFolder = navigator::showFolder,
                 onAddFolder = { navigator.open(FolderPickerRoute) },
                 showContinue = !session,
+                onFolderShown = { state.pendingFolder = null },
+                storage = remember { StorageRoots(Environment.getExternalStorageDirectory().path, storageRoots(context).map { it.path }) },
             )
         }
         entry<ListeningRoute> {

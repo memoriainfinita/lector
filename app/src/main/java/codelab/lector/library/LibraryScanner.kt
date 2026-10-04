@@ -1,6 +1,7 @@
 package codelab.lector.library
 
 import codelab.lector.data.db.BookFile
+import codelab.lector.data.db.BookmarkKind
 import codelab.lector.data.db.Chapter
 import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.FileMeta
@@ -103,7 +104,32 @@ class LibraryScanner(
                 if (m.existing?.coverSource != source) covers.delete(book.id)
                 written += book.id to m.detected
             }
-            if (result.missing.isNotEmpty()) db.books().markInaccessible(result.missing.map { it.id })
+            // Reagrupados (cambio de clase): marcadores y posición pasan a los libros que tienen ahora
+            // sus archivos y el libro antiguo se borra. Los demás que faltan quedan inaccesibles.
+            val placements = written.flatMap { (id, book) -> book.parts.map { it.file.path to Placement(id, it.relativePath) } }.toMap()
+            val inaccessible = mutableListOf<String>()
+            for (old in result.missing) {
+                val moves = regroup(baseFolder(old), db.books().files(old.id).map { it.relativePath }, placements)
+                val marks = db.bookmarks().forBook(old.id)
+                // Un marcador sin sitio (su archivo no está en el libro) impediría borrarlo: queda inaccesible.
+                if (moves == null || marks.any { it.file !in moves }) {
+                    inaccessible += old.id
+                    continue
+                }
+                for (mark in marks) {
+                    val to = moves.getValue(mark.file)
+                    if (mark.kind == BookmarkKind.PAUSE) db.bookmarks().replacePauseMarker(mark.copy(bookId = to.bookId, file = to.relativePath))
+                    else db.bookmarks().upsert(mark.copy(bookId = to.bookId, file = to.relativePath))
+                }
+                val at = old.positionUpdatedAt
+                val to = old.positionFile?.let { moves[it] }
+                if (to != null && at != null) {
+                    val current = db.books().get(to.bookId)?.positionUpdatedAt
+                    if (current == null || current < at) db.books().movePosition(to.bookId, to.relativePath, old.positionMs, at)
+                }
+                db.books().delete(old.id)
+            }
+            if (inaccessible.isNotEmpty()) db.books().markInaccessible(inaccessible)
         }
         _state.update { it.copy(found = result.matches.size) }
 

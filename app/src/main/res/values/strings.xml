@@ -107,4 +107,34 @@
     <string name="listen_to">Listen to %1$s</string>
     <string name="book_options">Options for %1$s</string>
     <string name="open_folder">Open the folder %1$s</string>
+    <string name="storage_primary">Internal storage</string>
+    <string name="storage_sd">SD card</string>
+    <string name="go_up">Up one level</string>
+    <string name="folder_author">Author folder</string>
+    <plurals name="folder_books">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
+    <string name="folder_subtitle_class">%1$s · %2$d</string>
+    <string name="folder_options">Options for the folder %1$s</string>
+    <string name="folder_class">Folder class</string>
+    <string name="folder_class_books">Books</string>
+    <string name="folder_class_albums">Albums</string>
+    <string name="folder_class_books_desc">Each book by its folders and files. Finished when it ends</string>
+    <string name="folder_class_episodes_desc">Each file on its own. Finished when it ends</string>
+    <string name="folder_class_albums_desc">The whole folder. Back to the start when it ends</string>
+    <string name="folder_class_sessions_desc">Each file on its own. Back to the start when it ends</string>
+    <string name="folder_class_note">Applies to its subfolders and to anything added later.</string>
+    <plurals name="files_count">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <string name="book_row_progress">%1$s / %2$s · %3$d%%</string>
+    <string name="book_row_marks">%1$s / %2$s · %3$s</string>
+    <plurals name="bookmarks_count">
+        <item quantity="one">%d bookmark</item>
+        <item quantity="other">%d bookmarks</item>
+    </plurals>
+    <string name="book_row_not_started">%1$s · not started</string>
+    <string name="book_row_finished">%1$s · finished</string>
 </resources>

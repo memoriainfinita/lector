@@ -106,4 +106,34 @@
     <string name="listen_to">Escuchar %1$s</string>
     <string name="book_options">Opciones de %1$s</string>
     <string name="open_folder">Abrir la carpeta %1$s</string>
+    <string name="storage_primary">Almacenamiento principal</string>
+    <string name="storage_sd">Tarjeta SD</string>
+    <string name="go_up">Subir de nivel</string>
+    <string name="folder_author">Carpeta de autor</string>
+    <plurals name="folder_books">
+        <item quantity="one">%d libro</item>
+        <item quantity="other">%d libros</item>
+    </plurals>
+    <string name="folder_subtitle_class">%1$s · %2$d</string>
+    <string name="folder_options">Opciones de la carpeta %1$s</string>
+    <string name="folder_class">Clase de carpeta</string>
+    <string name="folder_class_books">Libros</string>
+    <string name="folder_class_albums">Álbumes</string>
+    <string name="folder_class_books_desc">Cada libro según sus carpetas y archivos. Al acabar queda terminado</string>
+    <string name="folder_class_episodes_desc">Cada archivo por separado. Al acabar queda terminado</string>
+    <string name="folder_class_albums_desc">La carpeta entera. Al acabar vuelve al inicio</string>
+    <string name="folder_class_sessions_desc">Cada archivo por separado. Al acabar vuelve al inicio</string>
+    <string name="folder_class_note">Vale para sus subcarpetas y para lo que se añada después.</string>
+    <plurals name="files_count">
+        <item quantity="one">%d archivo</item>
+        <item quantity="other">%d archivos</item>
+    </plurals>
+    <string name="book_row_progress">%1$s / %2$s · %3$d%%</string>
+    <string name="book_row_marks">%1$s / %2$s · %3$s</string>
+    <plurals name="bookmarks_count">
+        <item quantity="one">%d marcador</item>
+        <item quantity="other">%d marcadores</item>
+    </plurals>
+    <string name="book_row_not_started">%1$s · sin empezar</string>
+    <string name="book_row_finished">%1$s · terminado</string>
 </resources>

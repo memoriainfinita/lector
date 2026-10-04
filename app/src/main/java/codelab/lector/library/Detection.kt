@@ -40,7 +40,7 @@ fun detectBooks(root: ScannedFolder, rules: List<FolderRule>): List<DetectedBook
             WorkUnit.FOLDER -> {
                 partsWithDiscs(folder, discs).takeIf { it.isNotEmpty() }?.let { out += whole(folder, it) }
             }
-            null -> {
+            null, WorkUnit.DETECT -> {
                 if (discs.isNotEmpty()) out += whole(folder, partsWithDiscs(folder, discs))
                 else out += groupLoose(folder)
             }

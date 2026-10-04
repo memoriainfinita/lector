@@ -57,6 +57,12 @@ interface BookDao {
     @Upsert
     suspend fun upsertFiles(files: List<BookFile>)
 
+    @Query(
+        "SELECT count(*) FROM book_file JOIN book ON book.id = book_file.bookId " +
+            "WHERE book.path = :path OR substr(book.path, 1, length(:path) + 1) = :path || '/'"
+    )
+    suspend fun fileCountUnder(path: String): Int
+
     @Query("SELECT * FROM book_file WHERE bookId = :bookId ORDER BY sortIndex")
     suspend fun files(bookId: String): List<BookFile>
 
@@ -71,6 +77,13 @@ interface BookDao {
 
     @Query("UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, lastPlayedAt = :at WHERE id = :id")
     suspend fun savePosition(id: String, file: String, ms: Long, at: Long)
+
+    /** Posición traída de otro libro (reagrupar): no cuenta como escucha nueva. */
+    @Query(
+        "UPDATE book SET positionFile = :file, positionMs = :ms, positionUpdatedAt = :at, " +
+            "lastPlayedAt = max(coalesce(lastPlayedAt, 0), :at) WHERE id = :id"
+    )
+    suspend fun movePosition(id: String, file: String, ms: Long, at: Long)
 
     @Query("UPDATE book SET speed = :speed WHERE id = :id")
     suspend fun setSpeed(id: String, speed: Float)
@@ -108,6 +121,9 @@ interface BookmarkDao {
 
     @Query("SELECT * FROM bookmark WHERE bookId = :bookId ORDER BY file, positionMs")
     fun observeForBook(bookId: String): Flow<List<Bookmark>>
+
+    @Query("SELECT * FROM bookmark WHERE bookId = :bookId")
+    suspend fun forBook(bookId: String): List<Bookmark>
 
     @Query("SELECT * FROM bookmark WHERE bookId = :bookId AND kind = :kind")
     suspend fun ofKind(bookId: String, kind: BookmarkKind): List<Bookmark>
