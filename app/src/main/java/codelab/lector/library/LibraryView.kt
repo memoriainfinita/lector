@@ -52,7 +52,10 @@ sealed interface LibraryEntry {
  * Agrupa, filtra y ordena. Los libros de una carpeta con clase "cada archivo" se agrupan por la
  * carpeta que contiene los archivos, no por la que tiene la regla. Varios filtros: la unión;
  * ninguno: todo. Una carpeta sale si alguno de sus libros pasa el filtro. Los quitados de la
- * biblioteca, solo con [showUnavailable] ("No disponibles" en ordenar).
+ * biblioteca, solo con [showUnavailable] ("No disponibles" en ordenar) o buscando.
+ *
+ * Buscando ([searchTerms] no vacío), además del filtro: un libro sale si coincide; una carpeta, si
+ * coincide su nombre o alguno de sus libros.
  */
 fun buildLibrary(
     items: List<LibraryItem>,
@@ -60,12 +63,15 @@ fun buildLibrary(
     filters: Set<LibraryFilter>,
     sort: LibrarySort,
     showUnavailable: Boolean = false,
+    searchTerms: List<String> = emptyList(),
+    roots: List<String> = emptyList(),
 ): List<LibraryEntry> {
+    val searching = searchTerms.isNotEmpty()
     val entries = mutableListOf<LibraryEntry>()
     val groups = linkedMapOf<String, MutableList<LibraryItem>>()
     val kinds = mutableMapOf<String, FolderKind>()
     for (item in items) {
-        if (item.book.removed && !showUnavailable) continue
+        if (item.book.removed && !showUnavailable && !searching) continue
         val rule = ruleFor(item.book.path, rules)
         if (rule?.workUnit == WorkUnit.FILE) {
             val folder = item.book.path.substringBeforeLast('/')
@@ -78,10 +84,17 @@ fun buildLibrary(
     groups.forEach { (path, members) ->
         entries += LibraryEntry.FolderEntry(path, path.substringAfterLast('/'), kinds.getValue(path), members.sortedWith(compareBy(NaturalOrder) { it.book.path }))
     }
-    val visible = if (filters.isEmpty()) entries else entries.filter { e ->
+    val filtered = if (filters.isEmpty()) entries else entries.filter { e ->
         when (e) {
             is LibraryEntry.BookEntry -> e.item.status in filters
             is LibraryEntry.FolderEntry -> e.items.any { it.status in filters }
+        }
+    }
+    val visible = if (!searching) filtered else filtered.filter { e ->
+        when (e) {
+            is LibraryEntry.BookEntry -> matchesSearch(e.item, searchTerms, roots)
+            is LibraryEntry.FolderEntry ->
+                searchTerms.all { it in fold(e.name) } || e.items.any { matchesSearch(it, searchTerms, roots) }
         }
     }
     return visible.sortedWith(comparatorFor(sort))

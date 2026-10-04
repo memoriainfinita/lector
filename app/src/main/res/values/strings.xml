@@ -167,4 +167,8 @@
     <string name="delete_book_marks">Bookmarks are kept in the collection.</string>
     <string name="delete">Delete</string>
     <string name="delete_failed">Not all files could be deleted</string>
+    <!-- Library search (Library D) -->
+    <string name="search_fields">title, author or folder</string>
+    <string name="close_search">Close search</string>
+    <string name="clear_text">Clear text</string>
 </resources>

@@ -7,7 +7,21 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
+import codelab.lector.library.searchHighlights
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
@@ -132,13 +146,12 @@ private fun Modifier.pinchToZoom(onZoom: (bigger: Boolean) -> Unit) = pointerInp
 
 /**
  * Biblioteca: cabecera, Libros / Carpetas, "Seguir escuchando", filtros, ordenar, cuadrícula, vista
- * Carpetas y menú ⋮ del libro. La búsqueda llega en la entrega D.
+ * Carpetas, menú ⋮ del libro y búsqueda, que filtra la cuadrícula sin pantalla aparte.
  */
 @Composable
 fun LibraryScreen(
     viewModel: LibraryViewModel,
     pendingFolder: String?,
-    onSearch: () -> Unit,
     onBookmarks: () -> Unit,
     onSettings: () -> Unit,
     onOpenPlayer: () -> Unit,
@@ -185,17 +198,32 @@ fun LibraryScreen(
         }
     }
 
+    // Búsqueda: la cabecera se vuelve campo y la cuadrícula se filtra. Al cerrar, todo como estaba.
+    var searching by rememberSaveable { mutableStateOf(false) }
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    fun closeSearch() {
+        searching = false
+        viewModel.setQuery("")
+    }
+    BackHandler(enabled = searching) { closeSearch() }
+
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val headerHeight = if (landscape) 52.dp else 60.dp
     val header = @Composable {
-        LibraryHeader(
-            withSelector = state.hasFolders == true,
-            segment = segment,
-            onSegment = { segment = it },
-            onSearch = onSearch,
-            onBookmarks = onBookmarks,
-            onSettings = onSettings,
-            height = if (landscape) 52.dp else 60.dp,
-        )
+        if (searching) {
+            SearchHeader(query, viewModel::setQuery, ::closeSearch, headerHeight)
+            if (query.isNotBlank()) SearchCount(state.entries.size)
+        } else {
+            LibraryHeader(
+                withSelector = state.hasFolders == true,
+                segment = segment,
+                onSegment = { segment = it },
+                onSearch = { searching = true },
+                onBookmarks = onBookmarks,
+                onSettings = onSettings,
+                height = headerHeight,
+            )
+        }
     }
 
     // Título, selector y buscar en una fila. En horizontal la altura escasea: la cabecera se va
@@ -216,8 +244,8 @@ fun LibraryScreen(
         } else null
         when {
             state.hasFolders == null -> Unit
-            // Los quitados no tienen sitio en Carpetas: su carpeta puede no existir ya.
-            segment == 1 -> FoldersView(
+            // Los quitados no tienen sitio en Carpetas: su carpeta puede no existir ya. Buscando, la cuadrícula.
+            segment == 1 && !searching -> FoldersView(
                 content = folderContent(folder, state.items.filterNot { it.book.removed }, state.roots, state.rules),
                 roots = state.roots,
                 storage = storage,
@@ -233,7 +261,7 @@ fun LibraryScreen(
                 onBookOptions = { menuFor = it.book.id },
                 top = top,
             )
-            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue, top = top)
+            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue && !searching, top = top)
         }
     }
     classSheetFor?.let { path -> FolderClassSheet(path, viewModel, state.rules, onDismiss = { classSheetFor = null }) }
@@ -266,6 +294,72 @@ private fun openWith(context: Context, file: File, title: String) {
     val type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension.lowercase()) ?: "audio/*"
     val view = Intent(Intent.ACTION_VIEW).setDataAndType(uri, type).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     runCatching { context.startActivity(Intent.createChooser(view, title)) }
+}
+
+/** Cabecera buscando: flecha atrás, campo y ×, con el teclado abierto (design.md › Biblioteca › D). */
+@Composable
+private fun SearchHeader(query: String, onQuery: (String) -> Unit, onClose: () -> Unit, height: androidx.compose.ui.unit.Dp) {
+    val c = LectorTheme.colors
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val label = stringResource(R.string.search_library)
+    Row(
+        Modifier.fillMaxWidth().height(height).padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        IconAction(painterResource(R.drawable.ic_back), stringResource(R.string.close_search), onClose)
+        Row(
+            Modifier
+                .weight(1f)
+                .height(40.dp)
+                .background(c.background, RoundedCornerShape(6.dp))
+                .border(1.dp, c.track, RoundedCornerShape(6.dp))
+                .padding(start = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicTextField(
+                value = query,
+                onValueChange = onQuery,
+                singleLine = true,
+                textStyle = LectorTheme.type.row.copy(color = c.text),
+                cursorBrush = SolidColor(c.accent),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                modifier = Modifier.weight(1f).focusRequester(focus).semantics { contentDescription = label },
+            )
+            if (query.isNotEmpty()) {
+                Box(
+                    Modifier.size(32.dp).clickable(role = Role.Button, onClickLabel = stringResource(R.string.clear_text)) { onQuery("") },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(R.drawable.ic_close), stringResource(R.string.clear_text), Modifier.size(16.dp), tint = c.textSecondary)
+                }
+            }
+        }
+    }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+}
+
+/** "4 libros · título, autor o carpeta", bajo el campo. */
+@Composable
+private fun SearchCount(count: Int) {
+    Text(
+        pluralStringResource(R.plurals.folder_books, count, count) + " · " + stringResource(R.string.search_fields),
+        style = LectorTheme.type.body.copy(fontSize = 12.sp),
+        color = LectorTheme.colors.textSecondary,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 4.dp),
+    )
+}
+
+/** Lo encontrado en acento. */
+@Composable
+private fun highlighted(text: String, terms: List<String>): AnnotatedString {
+    val accent = LectorTheme.colors.accent
+    return buildAnnotatedString {
+        append(text)
+        searchHighlights(text, terms).forEach { addStyle(SpanStyle(color = accent), it.first, it.last + 1) }
+    }
 }
 
 @Composable
@@ -372,12 +466,14 @@ private fun BookGrid(
                         }
                     },
                     onOptions = { onBookOptions(entry.item.book.id) },
+                    terms = state.searchTerms,
                 )
                 is LibraryEntry.FolderEntry -> FolderCard(
                     entry,
                     cover = entry.items.firstNotNullOfOrNull { state.covers[it.book.id] }.takeIf { state.showCovers },
                     onOpen = { onOpenFolder(entry.path) },
                     onOptions = { onFolderOptions(entry.path) },
+                    terms = state.searchTerms,
                 )
             }
         }
@@ -513,20 +609,14 @@ private fun SortButton(sort: LibrarySort, showUnavailable: Boolean, onSort: (Lib
 }
 
 @Composable
-private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit) {
+private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
     val title = book.displayTitle
     val status = item.status
     val unavailable = book.inaccessible || book.removed
-    val meta = when {
-        book.removed -> unavailableMeta(item)
-        book.inaccessible -> stringResource(R.string.book_missing)
-        status == LibraryFilter.FINISHED -> stringResource(R.string.book_finished, formatDuration(book.totalDurationMs))
-        status == LibraryFilter.NOT_STARTED -> stringResource(R.string.book_not_started, formatDuration(book.totalDurationMs))
-        else -> stringResource(R.string.book_progress, (item.progress * 100).roundToInt(), formatDuration(item.remainingMs))
-    }
+    val meta = cardMeta(item)
     val accent = c.accent
     Column(
         Modifier
@@ -557,7 +647,20 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
         }
         if (status == LibraryFilter.IN_PROGRESS && !unavailable) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
         else Spacer(Modifier.height(3.dp))
-        CardFooter(title, meta, optionsLabel = stringResource(R.string.book_options, title), onOptions = onOptions)
+        CardFooter(highlighted(title, terms), meta, optionsLabel = stringResource(R.string.book_options, title), onOptions = onOptions)
+    }
+}
+
+/** Línea mono de la tarjeta y de la búsqueda: "44% · quedan 3:52:09", "sin empezar · 6:56:54"… */
+@Composable
+internal fun cardMeta(item: LibraryItem): String {
+    val book = item.book
+    return when {
+        book.removed -> unavailableMeta(item)
+        book.inaccessible -> stringResource(R.string.book_missing)
+        item.status == LibraryFilter.FINISHED -> stringResource(R.string.book_finished, formatDuration(book.totalDurationMs))
+        item.status == LibraryFilter.NOT_STARTED -> stringResource(R.string.book_not_started, formatDuration(book.totalDurationMs))
+        else -> stringResource(R.string.book_progress, (item.progress * 100).roundToInt(), formatDuration(item.remainingMs))
     }
 }
 
@@ -570,7 +673,7 @@ internal fun unavailableMeta(item: LibraryItem): String = stringResource(
 )
 
 @Composable
-private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit) {
+private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>) {
     val c = LectorTheme.colors
     val count = entry.items.size
     val meta = when (entry.kind) {
@@ -589,13 +692,13 @@ private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: 
             BookCover(cover, entry.name, Modifier.padding(top = 8.dp).fillMaxSize())
         }
         Spacer(Modifier.height(3.dp))
-        CardFooter(entry.name, meta, optionsLabel = stringResource(R.string.folder_options, entry.name), onOptions = onOptions)
+        CardFooter(highlighted(entry.name, terms), meta, optionsLabel = stringResource(R.string.folder_options, entry.name), onOptions = onOptions)
     }
 }
 
 /** Título, línea mono y ⋮. Sin [onOptions] el ⋮ queda inactivo. */
 @Composable
-private fun CardFooter(title: String, meta: String, optionsLabel: String, onOptions: (() -> Unit)? = null) {
+private fun CardFooter(title: AnnotatedString, meta: String, optionsLabel: String, onOptions: (() -> Unit)? = null) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(2.dp)) {

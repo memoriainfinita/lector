@@ -136,7 +136,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 - Pantallas añadidas el 2026-10-02, aprobadas como están en el lienzo:
   - Widget 4×1 (portada, título y barra, −10, play, +10) y 4×2 (añade capítulo o archivo, tiempos y marcar). Botones configurables en Ajustes › Botones
   - Visor de portada: desde "Ver portada" en el menú del libro y tocando la portada del reproductor; se cierra con × o deslizando hacia abajo
-  - Búsqueda en la biblioteca (título, autor, narrador, serie, carpeta) y en marcadores (título, nota, tag), con lo encontrado resaltado
+  - Búsqueda en la biblioteca (título, autor, narrador, serie, carpeta) y en marcadores (título, nota, tag), con lo encontrado resaltado. La de la biblioteca filtra la propia Biblioteca, sin pantalla aparte (2026-10-05)
   - Ordenar: escuchados recientemente (por defecto), añadidos recientemente, título, autor, tiempo restante
   - Estados vacíos: biblioteca sin carpetas con "Añadir carpeta"; marcadores vacíos con cómo marcar
   - Libro inaccesible: aviso con "Volver a buscar" y "Quitar"; conserva posición y marcadores
@@ -299,7 +299,7 @@ Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
 - Escuchando y Marcadores se abren encima. Si ya están en la pila, suben arriba en vez de duplicarse. Atrás vuelve a la pantalla anterior. Marcadores lleva flecha de Atrás y título de 20, como las subpantallas (lienzo, versión 148)
 - Cabecera de Biblioteca: buscar, Marcadores y Ajustes. Ajustes también desde el ⋯ del reproductor
 - Todo Atrás pasa por un punto único, para aplicar "Retrasar el botón Atrás" (comportamiento en Simple ABP sin comprobar)
-- Con minirreproductor: Biblioteca, Marcadores, búsqueda en la biblioteca y búsqueda en marcadores
+- Con minirreproductor: Biblioteca, Marcadores y búsqueda en marcadores. La búsqueda en la biblioteca no es pantalla: filtra la propia Biblioteca (Pantallas › Biblioteca › D, 2026-10-05)
 - Biblioteca: Libros / Carpetas es un selector de la misma pantalla. En Carpetas se entra en subcarpetas con la ruta arriba; Atrás sube un nivel
 - Pantallas completas, sin minirreproductor: Ajustes y sus subpáginas (Pausa diferida, Botones, Ecualizador y volumen, Carpetas, Gestionar tags, Apariencia, Datos), explorador de carpetas, unir libros, separar en libros, visor de portada. El visor se cierra con × o deslizando hacia abajo
 - Hojas, menús emergentes y diálogos: estado de su pantalla, no entradas de navegación. Atrás cierra primero la hoja
@@ -308,7 +308,7 @@ Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
 - Saltos:
   - "Ir a la carpeta" (menú del libro y ⋯ del reproductor) → vuelve a la raíz, Biblioteca › Carpetas, en esa carpeta
   - "Ver todos los marcadores" (hoja de marcadores del libro) → Marcadores
-  - Tocar un libro en la cuadrícula o en la búsqueda lo carga y abre Escuchando
+  - Tocar un libro en la cuadrícula (también buscando) lo carga y abre Escuchando
 - "Marcadores" en el menú del libro abre la hoja de marcadores de ese libro
 - "Escuchar desde aquí" en un marcador salta y se queda en Marcadores, con el minirreproductor y "Deshacer"
 - Minirreproductor abajo del todo, con un libro cargado y una sesión de escucha en curso, en todas las pantallas salvo Escuchando y las pantallas completas. La sesión empieza cuando algo suena o se abre Escuchando; al abrir la app, el libro cargado en pausa solo sale en "Seguir escuchando" de Biblioteca. Se conserva al girar la pantalla; si la app sigue sonando en segundo plano, al volver hay minirreproductor. La flecha del reproductor y deslizar la portada hacia abajo hacen Atrás; tocar el minirreproductor abre Escuchando
@@ -396,10 +396,17 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 #### D. Búsqueda
 
-- Campo con flecha atrás y × para borrar; línea "n libros · título, autor o carpeta"; filas con portada 52, título, autor y línea mono; lo encontrado resaltado en acento
-- Busca en título, autor, narrador, serie y carpeta. Sin distinguir mayúsculas ni acentos, a medida que se escribe, en memoria sobre la lista de la biblioteca
-- Tocar un resultado lo carga y abre Escuchando
-- Encuentra también los libros quitados, atenuados y con "no disponible"; tocarlos abre su hoja de marcadores (2026-10-05)
+Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye a la pantalla "Buscar en la biblioteca" del lienzo).
+
+- La lupa convierte la cabecera en el campo: flecha atrás, campo y ×, con el teclado abierto. Mientras se busca, el selector Libros / Carpetas y los demás iconos se ocultan
+- La flecha o Atrás cierran la búsqueda y la Biblioteca vuelve a como estaba
+- La cuadrícula se filtra a medida que se escribe, con lo encontrado en acento en el título de la tarjeta. Bajo el campo, línea "n libros · título, autor o carpeta"
+- Busca en título, autor, narrador, serie y carpeta (ruta dentro de la carpeta de la biblioteca). Sin distinguir mayúsculas ni acentos; cada palabra tiene que aparecer. En memoria sobre la lista de la biblioteca
+- Carpeta de Episodios o Sesiones: sale su tarjeta si coincide su nombre o alguno de sus archivos, como con los filtros
+- Filtros y orden se mantienen y se combinan con la búsqueda. "Seguir escuchando" se oculta mientras se busca
+- Encuentra siempre los libros quitados, atenuados, aunque "No disponibles" esté apagada
+- Desde Carpetas, buscar pasa a la vista Libros; al cerrar, vuelve a donde estaba
+- Tocar un resultado lo carga y abre Escuchando; un quitado, como en la cuadrícula
 
 ## Modelo de datos
 

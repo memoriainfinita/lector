@@ -213,7 +213,6 @@ private fun routeEntries(
             LibraryScreen(
                 viewModel = viewModel { LibraryViewModel(app, storageRoots(context).map { it.path }) },
                 pendingFolder = state.pendingFolder,
-                onSearch = { navigator.open(LibrarySearchRoute) },
                 onBookmarks = navigator::showAllBookmarks,
                 onSettings = { navigator.open(SettingsRoute) },
                 onOpenPlayer = navigator::openPlayer,
@@ -239,7 +238,6 @@ private fun routeEntries(
         entry<BookmarksRoute> {
             PlaceholderScreen(stringResource(R.string.tab_bookmarks), onBack = back, links = listOf(link(R.string.search_bookmarks, BookmarksSearchRoute)))
         }
-        entry<LibrarySearchRoute> { PlaceholderScreen(stringResource(R.string.search_library), onBack = back) }
         entry<BookmarksSearchRoute> { PlaceholderScreen(stringResource(R.string.search_bookmarks), onBack = back) }
         entry<SettingsRoute> {
             PlaceholderScreen(stringResource(R.string.settings), onBack = back, links = settings.map { (text, route) -> link(text, route) })

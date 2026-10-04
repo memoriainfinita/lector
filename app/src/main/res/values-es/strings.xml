@@ -166,4 +166,8 @@
     <string name="delete_book_marks">Los marcadores se conservan en la recopilación.</string>
     <string name="delete">Borrar</string>
     <string name="delete_failed">No se pudieron borrar todos los archivos</string>
+    <!-- Buscar en la biblioteca (Biblioteca D) -->
+    <string name="search_fields">título, autor o carpeta</string>
+    <string name="close_search">Cerrar la búsqueda</string>
+    <string name="clear_text">Borrar texto</string>
 </resources>

@@ -14,6 +14,7 @@ import codelab.lector.library.LibrarySort
 import codelab.lector.library.ScanState
 import codelab.lector.library.baseFolder
 import codelab.lector.library.buildLibrary
+import codelab.lector.library.searchTerms
 import codelab.lector.library.continueListening
 import codelab.lector.library.displayPath
 import codelab.lector.playback.PlayerAction
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
@@ -44,6 +46,8 @@ data class LibraryUiState(
     val sort: LibrarySort = LibrarySort.RECENT,
     /** Casilla "No disponibles": libros quitados de la biblioteca, atenuados. */
     val showUnavailable: Boolean = false,
+    /** Buscando: palabras de la búsqueda, para resaltar los títulos. Vacía: sin búsqueda. */
+    val searchTerms: List<String> = emptyList(),
     val scan: ScanState = ScanState(),
     /** Carpeta que se está recorriendo, relativa a su almacenamiento. */
     val scanFolder: String? = null,
@@ -73,11 +77,25 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
         list.mapNotNull { item -> app.covers.file(item.book.id).takeIf { it.exists() }?.let { item.book.id to it.path } }.toMap()
     }.flowOn(Dispatchers.IO).onStart { emit(emptyMap()) }
 
-    private val listing = combine(app.librarySettings.sort, app.librarySettings.showUnavailable, ::Pair)
+    private val _query = MutableStateFlow("")
+    /** Texto de la búsqueda, aparte del estado: el campo no espera a que se filtre la cuadrícula. */
+    val query: StateFlow<String> = _query.asStateFlow()
 
-    private val view = combine(items, app.database.folders().observeRules(), filters, listing, app.playback.state) { list, rules, f, (sort, unavailable), np ->
+    private class Listing(val sort: LibrarySort, val unavailable: Boolean, val terms: List<String>, val roots: List<String>)
+
+    private val listing = combine(
+        app.librarySettings.sort,
+        app.librarySettings.showUnavailable,
+        _query.map(::searchTerms).distinctUntilChanged(),
+        app.database.folders().observeFolders(),
+    ) { sort, unavailable, terms, folders -> Listing(sort, unavailable, terms, folders.map { it.path }) }
+
+    private val view = combine(items, app.database.folders().observeRules(), filters, listing, app.playback.state) { list, rules, f, l, np ->
+        val sort = l.sort
+        val unavailable = l.unavailable
         LibraryUiState(
-            entries = buildLibrary(list, rules, f, sort, unavailable),
+            entries = buildLibrary(list, rules, f, sort, unavailable, l.terms, l.roots),
+            searchTerms = l.terms,
             continueItem = continueListening(list, np?.bookId),
             loadedBookId = np?.bookId,
             playing = np?.playWhenReady == true,
@@ -114,6 +132,10 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
 
     fun setSort(sort: LibrarySort) {
         viewModelScope.launch { app.librarySettings.setSort(sort) }
+    }
+
+    fun setQuery(text: String) {
+        _query.value = text
     }
 
     fun setShowUnavailable(show: Boolean) {

@@ -17,10 +17,7 @@ data object ListeningRoute : Route
 @Serializable
 data object BookmarksRoute : Route
 
-/** Búsquedas: con minirreproductor, como Biblioteca y Marcadores. */
-@Serializable
-data object LibrarySearchRoute : Route
-
+/** Búsqueda en marcadores: con minirreproductor. La de la biblioteca filtra la propia Biblioteca. */
 @Serializable
 data object BookmarksSearchRoute : Route
 
