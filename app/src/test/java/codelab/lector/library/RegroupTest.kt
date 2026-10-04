@@ -29,6 +29,24 @@ class RegroupTest {
     }
 
     @Test
+    fun carryOverTakesSettingsFromTheLatestAndFinishedOnlyIfAll() {
+        val a = book(folder).copy(id = "a", speed = 1.5f, ownSound = true, preampDb = 3f, finished = true, positionUpdatedAt = 100)
+        val b = book(folder).copy(id = "b", speed = 2f, skipSilence = true, finished = false, positionUpdatedAt = 200)
+        // Separar: un solo antiguo, pasa tal cual.
+        val split = carryOver(listOf(a))!!
+        assertEquals(1.5f, split.speed)
+        assertEquals(3f, split.preampDb)
+        assertEquals(true, split.finished)
+        // Juntar: ajustes del más reciente; terminado solo si lo estaban todos.
+        val merged = carryOver(listOf(a, b))!!
+        assertEquals(2f, merged.speed)
+        assertEquals(true, merged.skipSilence)
+        assertEquals(false, merged.ownSound)
+        assertEquals(false, merged.finished)
+        assertNull(carryOver(emptyList()))
+    }
+
+    @Test
     fun aMissingFileLeavesTheBookInaccessible() {
         val placements = mapOf("$folder/a.mp3" to Placement("s1", "a.mp3"))
         assertNull(regroup(folder, listOf("a.mp3", "b.mp3"), placements))

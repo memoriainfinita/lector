@@ -100,6 +100,9 @@ interface BookDao {
     @Query("UPDATE book SET inaccessible = :inaccessible WHERE id = :id")
     suspend fun setInaccessible(id: String, inaccessible: Boolean)
 
+    @Query("UPDATE book SET removed = :removed WHERE id = :id")
+    suspend fun setRemoved(id: String, removed: Boolean)
+
     /** Duración leída por el reproductor cuando el escaneo no la obtuvo. Recalcula el total del libro. */
     @Transaction
     suspend fun fixFileDuration(fileId: Long, bookId: String, durationMs: Long) {

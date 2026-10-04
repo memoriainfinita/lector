@@ -1,5 +1,6 @@
 package codelab.lector.library
 
+import codelab.lector.data.db.Book
 import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.BookmarkKind
 import codelab.lector.data.db.Chapter
@@ -82,6 +83,7 @@ class LibraryScanner(
         val result = reconcile(detected, existing)
         val now = System.currentTimeMillis()
         val written = mutableListOf<Pair<String, DetectedBook>>()
+        val created = mutableSetOf<String>()
         db.withWriteTransaction {
             for (m in result.matches) {
                 val source = when {
@@ -103,11 +105,14 @@ class LibraryScanner(
                 }
                 if (m.existing?.coverSource != source) covers.delete(book.id)
                 written += book.id to m.detected
+                if (m.existing == null) created += book.id
             }
             // Reagrupados (cambio de clase): marcadores y posición pasan a los libros que tienen ahora
             // sus archivos y el libro antiguo se borra. Los demás que faltan quedan inaccesibles.
             val placements = written.flatMap { (id, book) -> book.parts.map { it.file.path to Placement(id, it.relativePath) } }.toMap()
             val inaccessible = mutableListOf<String>()
+            // Libros antiguos de los que viene cada libro, para pasarle sus ajustes.
+            val sources = mutableMapOf<String, MutableList<Book>>()
             for (old in result.missing) {
                 val moves = regroup(baseFolder(old), db.books().files(old.id).map { it.relativePath }, placements)
                 val marks = db.bookmarks().forBook(old.id)
@@ -127,7 +132,17 @@ class LibraryScanner(
                     val current = db.books().get(to.bookId)?.positionUpdatedAt
                     if (current == null || current < at) db.books().movePosition(to.bookId, to.relativePath, old.positionMs, at)
                 }
+                moves.values.map { it.bookId }.distinct().forEach { sources.getOrPut(it) { mutableListOf() } += old }
                 db.books().delete(old.id)
+            }
+            // Solo a los libros creados en este escaneo: uno que ya existía conserva sus ajustes.
+            for ((id, olds) in sources) {
+                if (id !in created) continue
+                val carried = carryOver(olds) ?: continue
+                db.books().setSpeed(id, carried.speed)
+                db.books().setSkipSilence(id, carried.skipSilence)
+                db.books().setSound(id, carried.ownSound, carried.preampDb, carried.eqEnabled, carried.eqBands)
+                db.books().setFinished(id, carried.finished)
             }
             if (inaccessible.isNotEmpty()) db.books().markInaccessible(inaccessible)
         }

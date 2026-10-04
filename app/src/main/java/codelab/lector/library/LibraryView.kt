@@ -51,18 +51,21 @@ sealed interface LibraryEntry {
 /**
  * Agrupa, filtra y ordena. Los libros de una carpeta con clase "cada archivo" se agrupan por la
  * carpeta que contiene los archivos, no por la que tiene la regla. Varios filtros: la unión;
- * ninguno: todo. Una carpeta sale si alguno de sus libros pasa el filtro.
+ * ninguno: todo. Una carpeta sale si alguno de sus libros pasa el filtro. Los quitados de la
+ * biblioteca, solo con [showUnavailable] ("No disponibles" en ordenar).
  */
 fun buildLibrary(
     items: List<LibraryItem>,
     rules: List<FolderRule>,
     filters: Set<LibraryFilter>,
     sort: LibrarySort,
+    showUnavailable: Boolean = false,
 ): List<LibraryEntry> {
     val entries = mutableListOf<LibraryEntry>()
     val groups = linkedMapOf<String, MutableList<LibraryItem>>()
     val kinds = mutableMapOf<String, FolderKind>()
     for (item in items) {
+        if (item.book.removed && !showUnavailable) continue
         val rule = ruleFor(item.book.path, rules)
         if (rule?.workUnit == WorkUnit.FILE) {
             val folder = item.book.path.substringBeforeLast('/')
@@ -119,11 +122,11 @@ private fun comparatorFor(sort: LibrarySort): Comparator<LibraryEntry> {
 
 /**
  * Libro de la tarjeta "Seguir escuchando": el cargado; sin él, el último escuchado que no esté
- * quitado de recientes ni terminado; sin ninguno, null.
+ * quitado de recientes, terminado ni quitado de la biblioteca; sin ninguno, null.
  */
 fun continueListening(items: List<LibraryItem>, loadedBookId: String?): LibraryItem? =
     items.firstOrNull { it.book.id == loadedBookId }
-        ?: items.filter { it.recentAt != null && !it.book.finished }.maxByOrNull { it.recentAt!! }
+        ?: items.filter { it.recentAt != null && !it.book.finished && !it.book.removed }.maxByOrNull { it.recentAt!! }
 
 /** Ruta para mostrar, relativa a su almacenamiento: "Audiobooks / Frank Herbert". */
 fun displayPath(path: String, storageRoots: List<String>): String {

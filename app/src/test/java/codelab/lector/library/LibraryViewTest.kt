@@ -22,10 +22,11 @@ class LibraryViewTest {
         position: Long = 0,
         total: Long = 10_000,
         author: String? = null,
+        removed: Boolean = false,
     ) = LibraryItem(
         Book(
             id = id, identityKey = id, totalDurationMs = total, path = path, title = id, author = author,
-            addedAt = added, lastPlayedAt = played, hiddenFromRecents = hidden, finished = finished,
+            addedAt = added, lastPlayedAt = played, hiddenFromRecents = hidden, finished = finished, removed = removed,
             positionFile = if (position > 0) "01.mp3" else null, positionMs = position, speed = 1f,
         ),
         positionInBookMs = position,
@@ -90,6 +91,15 @@ class LibraryViewTest {
         assertEquals("d", continueListening(items, "d")?.book?.id)
         assertEquals("a", continueListening(items, null)?.book?.id)
         assertNull(continueListening(listOf(item("d")), null))
+    }
+
+    @Test
+    fun removedBooksOnlyWithUnavailableAndSubjectToFilters() {
+        val items = listOf(item("a"), item("gone", removed = true, finished = true, played = 500))
+        assertEquals(listOf("a"), ids(buildLibrary(items, emptyList(), emptySet(), LibrarySort.TITLE)))
+        assertEquals(listOf("a", "gone"), ids(buildLibrary(items, emptyList(), emptySet(), LibrarySort.TITLE, showUnavailable = true)))
+        assertEquals(listOf("gone"), ids(buildLibrary(items, emptyList(), setOf(LibraryFilter.FINISHED), LibrarySort.TITLE, showUnavailable = true)))
+        assertNull(continueListening(listOf(item("gone", removed = true, played = 500)), null))
     }
 
     @Test

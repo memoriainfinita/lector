@@ -31,6 +31,11 @@ data class Book(
     val hiddenFromRecents: Boolean = false,
     val finished: Boolean = false,
     val inaccessible: Boolean = false,
+    /**
+     * Quitado de la biblioteca: oculto salvo con "No disponibles", sin borrar nada. Vuelve solo si
+     * reaparecen sus archivos. Versión 3 de la base de datos.
+     */
+    @ColumnInfo(defaultValue = "0") val removed: Boolean = false,
     /** Ruta relativa del archivo en curso; null si no se ha empezado. */
     val positionFile: String? = null,
     val positionMs: Long = 0,

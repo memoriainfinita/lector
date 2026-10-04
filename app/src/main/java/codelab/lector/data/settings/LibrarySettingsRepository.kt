@@ -2,6 +2,7 @@ package codelab.lector.data.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -24,10 +25,16 @@ class LibrarySettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setGridColumns(columns: Int) = store.edit { it[GRID_COLUMNS] = columns.coerceIn(MinColumns, MaxColumns) }
 
+    /** Casilla "No disponibles" de ordenar: muestra los libros quitados de la biblioteca. */
+    val showUnavailable: Flow<Boolean> = store.data.map { p -> p[SHOW_UNAVAILABLE] ?: false }.distinctUntilChanged()
+
+    suspend fun setShowUnavailable(show: Boolean) = store.edit { it[SHOW_UNAVAILABLE] = show }
+
     companion object {
         const val MinColumns = 1
         const val MaxColumns = 3
         private val SORT = stringPreferencesKey("library_sort")
         private val GRID_COLUMNS = intPreferencesKey("library_grid_columns")
+        private val SHOW_UNAVAILABLE = booleanPreferencesKey("library_show_unavailable")
     }
 }

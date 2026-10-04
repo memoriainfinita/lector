@@ -15,9 +15,9 @@ import kotlinx.coroutines.Dispatchers
         Bookmark::class, Tag::class, BookmarkTag::class,
         LibraryFolder::class, FolderRule::class, Correction::class, FileMeta::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @ColumnTypeConverters(Converters::class)
 abstract class LectorDatabase : RoomDatabase() {

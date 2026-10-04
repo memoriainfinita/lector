@@ -133,6 +133,35 @@ fun DetectedBook.toBook(existing: Book?, now: Long, newId: () -> String, newBook
         seriesPart = tag { it.seriesPart },
         coverSource = coverSource,
         inaccessible = false,
+        removed = false,
+    )
+}
+
+/** Ajustes que pasan de los libros antiguos al libro nuevo que tiene ahora sus archivos (reagrupar). */
+data class Carried(
+    val speed: Float,
+    val skipSilence: Boolean,
+    val ownSound: Boolean,
+    val preampDb: Float?,
+    val eqEnabled: Boolean,
+    val eqBands: List<Float>?,
+    val finished: Boolean,
+)
+
+/**
+ * Velocidad y sonido del antiguo escuchado más recientemente; terminado solo si lo estaban todos
+ * (al separar hay uno solo: pasa tal cual). Nombre propio y "quitado de recientes" no pasan.
+ */
+fun carryOver(sources: List<Book>): Carried? {
+    val latest = sources.maxByOrNull { it.positionUpdatedAt ?: it.lastPlayedAt ?: 0 } ?: return null
+    return Carried(
+        speed = latest.speed,
+        skipSilence = latest.skipSilence,
+        ownSound = latest.ownSound,
+        preampDb = latest.preampDb,
+        eqEnabled = latest.eqEnabled,
+        eqBands = latest.eqBands,
+        finished = sources.all { it.finished },
     )
 }
 

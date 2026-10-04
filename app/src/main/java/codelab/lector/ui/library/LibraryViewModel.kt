@@ -38,6 +38,8 @@ data class LibraryUiState(
     val playing: Boolean = false,
     val filters: Set<LibraryFilter> = emptySet(),
     val sort: LibrarySort = LibrarySort.RECENT,
+    /** Casilla "No disponibles": libros quitados de la biblioteca, atenuados. */
+    val showUnavailable: Boolean = false,
     val scan: ScanState = ScanState(),
     /** Carpeta que se está recorriendo, relativa a su almacenamiento. */
     val scanFolder: String? = null,
@@ -67,14 +69,17 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
         list.mapNotNull { item -> app.covers.file(item.book.id).takeIf { it.exists() }?.let { item.book.id to it.path } }.toMap()
     }.flowOn(Dispatchers.IO).onStart { emit(emptyMap()) }
 
-    private val view = combine(items, app.database.folders().observeRules(), filters, app.librarySettings.sort, app.playback.state) { list, rules, f, sort, np ->
+    private val listing = combine(app.librarySettings.sort, app.librarySettings.showUnavailable, ::Pair)
+
+    private val view = combine(items, app.database.folders().observeRules(), filters, listing, app.playback.state) { list, rules, f, (sort, unavailable), np ->
         LibraryUiState(
-            entries = buildLibrary(list, rules, f, sort),
+            entries = buildLibrary(list, rules, f, sort, unavailable),
             continueItem = continueListening(list, np?.bookId),
             loadedBookId = np?.bookId,
             playing = np?.playWhenReady == true,
             filters = f,
             sort = sort,
+            showUnavailable = unavailable,
             items = list,
             rules = rules,
         )
@@ -105,6 +110,10 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
 
     fun setSort(sort: LibrarySort) {
         viewModelScope.launch { app.librarySettings.setSort(sort) }
+    }
+
+    fun setShowUnavailable(show: Boolean) {
+        viewModelScope.launch { app.librarySettings.setShowUnavailable(show) }
     }
 
     /** Pellizco: separar los dedos agranda las tarjetas (menos columnas); juntarlos, al revés. */
