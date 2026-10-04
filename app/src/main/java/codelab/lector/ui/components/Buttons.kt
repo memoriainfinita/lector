@@ -151,6 +151,33 @@ fun SegmentedControl(options: List<String>, selected: Int, onSelect: (Int) -> Un
     }
 }
 
+/** Segmentado con iconos (Libros / Carpetas en la cabecera): 36 de alto, 44 de ancho por opción. El texto va como descripción. */
+@Composable
+fun IconSegmentedControl(icons: List<Painter>, labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val c = LectorTheme.colors
+    Row(
+        modifier = modifier
+            .background(c.surface, RoundedCornerShape(10.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        icons.forEachIndexed { i, icon ->
+            val isSelected = i == selected
+            Box(
+                modifier = Modifier
+                    .width(44.dp)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(7.dp))
+                    .background(if (isSelected) c.track else Color.Transparent)
+                    .selectable(isSelected, role = Role.Tab) { onSelect(i) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, labels[i], Modifier.size(20.dp), tint = if (isSelected) c.text else c.textSecondary)
+            }
+        }
+    }
+}
+
 /** Opción en hoja (velocidad, pausa, valores): 36 / radio 2 / 13 mono. */
 @Composable
 fun OptionChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {

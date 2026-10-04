@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
@@ -50,6 +49,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -80,11 +80,19 @@ import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.HeroButton
 import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LocalBottomInset
-import codelab.lector.ui.components.SegmentedControl
+import codelab.lector.ui.components.IconSegmentedControl
 import codelab.lector.ui.components.TagChip
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.theme.LectorTheme
 import kotlin.math.roundToInt
+
+/** Ocupa también los márgenes laterales del contenedor ([horizontal] a cada lado). */
+private fun Modifier.bleed(horizontal: androidx.compose.ui.unit.Dp) = layout { measurable, constraints ->
+    val extra = (horizontal * 2).roundToPx()
+    val width = constraints.maxWidth + extra
+    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}
 
 /**
  * Pellizco con dos dedos: un nivel por gesto al pasar de un umbral. Mira los eventos antes que la
@@ -118,9 +126,13 @@ fun LibraryScreen(
     viewModel: LibraryViewModel,
     pendingFolder: String?,
     onSearch: () -> Unit,
+    onBookmarks: () -> Unit,
+    onSettings: () -> Unit,
     onOpenPlayer: () -> Unit,
     onOpenFolder: (String) -> Unit,
     onAddFolder: () -> Unit,
+    /** Sin sesión de escucha en curso: con ella, el minirreproductor ya enseña el libro. */
+    showContinue: Boolean,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val c = LectorTheme.colors
@@ -129,21 +141,22 @@ fun LibraryScreen(
     LaunchedEffect(pendingFolder) { if (pendingFolder != null) segment = 1 }
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val header = @Composable { inGrid: Boolean ->
+    val header = @Composable {
         LibraryHeader(
             withSelector = state.hasFolders == true,
             segment = segment,
             onSegment = { segment = it },
             onSearch = onSearch,
+            onBookmarks = onBookmarks,
+            onSettings = onSettings,
             height = if (landscape) 52.dp else 60.dp,
-            inGrid = inGrid,
         )
     }
 
     // Título, selector y buscar en una fila. En horizontal la altura escasea: la cabecera se va
     // con el scroll de la cuadrícula para dejar sitio a las portadas.
     Column(Modifier.fillMaxSize()) {
-        if (!landscape || state.hasFolders != true || segment == 1) header(false)
+        if (!landscape || state.hasFolders != true || segment == 1) header()
         if (state.hasFolders == false) {
             EmptyLibrary(onAddFolder)
             return@Column
@@ -153,7 +166,7 @@ fun LibraryScreen(
         when {
             state.hasFolders == null -> Unit
             segment == 1 -> FoldersPending(pendingFolder)
-            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, landscape, top = if (scrollingHeader) ({ header(true) }) else null)
+            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, landscape, showContinue, top = if (scrollingHeader) header else null)
         }
     }
 }
@@ -164,33 +177,31 @@ private fun LibraryHeader(
     segment: Int,
     onSegment: (Int) -> Unit,
     onSearch: () -> Unit,
+    onBookmarks: () -> Unit,
+    onSettings: () -> Unit,
     height: androidx.compose.ui.unit.Dp,
-    /** Dentro de la cuadrícula, que ya pone los 20 de margen a los lados. */
-    inGrid: Boolean,
 ) {
     val c = LectorTheme.colors
     Row(
-        Modifier.fillMaxWidth().height(height).padding(start = if (inGrid) 0.dp else 20.dp, end = if (inGrid) 0.dp else 8.dp),
+        Modifier.fillMaxWidth().height(height).padding(start = 20.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(stringResource(R.string.tab_library), style = LectorTheme.type.tabTitle, color = c.text, maxLines = 1)
-        Box(Modifier.weight(1f).padding(start = 16.dp, end = 4.dp), contentAlignment = Alignment.CenterEnd) {
+        Box(Modifier.weight(1f).padding(start = 12.dp, end = 4.dp), contentAlignment = Alignment.CenterEnd) {
             if (withSelector) {
-                SegmentedControl(
+                IconSegmentedControl(
+                    listOf(painterResource(R.drawable.ic_nav_library), painterResource(R.drawable.ic_folder)),
                     listOf(stringResource(R.string.library_books), stringResource(R.string.library_folders)),
                     segment,
                     onSegment,
-                    Modifier.widthIn(max = 280.dp).fillMaxWidth(),
                 )
             }
         }
-        if (withSelector) {
-            IconAction(
-                painterResource(R.drawable.ic_search),
-                stringResource(R.string.search_library),
-                onSearch,
-                Modifier.offset(x = if (inGrid) 12.dp else 0.dp),
-            )
+        // Sin menú inferior: Marcadores y Ajustes se abren desde aquí.
+        Row {
+            if (withSelector) IconAction(painterResource(R.drawable.ic_search), stringResource(R.string.search_library), onSearch)
+            IconAction(painterResource(R.drawable.ic_bookmark), stringResource(R.string.tab_bookmarks), onBookmarks, iconSize = 20.dp)
+            IconAction(painterResource(R.drawable.ic_settings), stringResource(R.string.settings), onSettings, iconSize = 20.dp)
         }
     }
 }
@@ -202,6 +213,7 @@ private fun BookGrid(
     onOpenPlayer: () -> Unit,
     onOpenFolder: (String) -> Unit,
     landscape: Boolean,
+    showContinue: Boolean,
     /** Cabecera que se desplaza con la cuadrícula (horizontal), con la línea de búsqueda debajo. */
     top: (@Composable () -> Unit)?,
 ) {
@@ -216,13 +228,15 @@ private fun BookGrid(
     ) {
         if (top != null) {
             item(key = "header", span = full) {
-                Column {
+                // A todo el ancho, saltando los márgenes de la cuadrícula: la misma cabecera que fija.
+                Column(Modifier.bleed(20.dp)) {
                     top()
-                    if (state.scan.running) ScanProgress(state.scan.found, state.scanFolder, inGrid = true)
+                    if (state.scan.running) ScanProgress(state.scan.found, state.scanFolder)
                 }
             }
         }
-        state.continueItem?.let { item ->
+        val continueItem = state.continueItem?.takeIf { showContinue }
+        continueItem?.let { item ->
             item(key = "continue", span = full) {
                 ContinueCard(
                     item,
@@ -238,7 +252,7 @@ private fun BookGrid(
             }
         }
         item(key = "filters", span = full) {
-            FilterRow(state.filters, state.sort, viewModel::toggleFilter, viewModel::setSort, Modifier.padding(top = if (state.continueItem == null) 10.dp else 2.dp))
+            FilterRow(state.filters, state.sort, viewModel::toggleFilter, viewModel::setSort, Modifier.padding(top = if (continueItem == null) 10.dp else 2.dp))
         }
         items(state.entries, key = { it.key }) { entry ->
             when (entry) {
@@ -480,11 +494,10 @@ private fun ProgressBar(fraction: Float, color: androidx.compose.ui.graphics.Col
 
 /** Línea fina de progreso bajo el selector, con el recuento y la carpeta que se recorre. */
 @Composable
-private fun ScanProgress(found: Int, folder: String?, inGrid: Boolean = false) {
+private fun ScanProgress(found: Int, folder: String?) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
-    val side = if (inGrid) 0.dp else 20.dp
-    Column(Modifier.fillMaxWidth().padding(start = side, end = side, top = if (inGrid) 0.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LinearProgressIndicator(
             modifier = Modifier.fillMaxWidth().height(2.dp),
             color = c.accent,

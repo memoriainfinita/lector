@@ -116,12 +116,12 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 
 - Reproductor: variante A. Portada grande: 358 × 411, ancho completo con 16 px de margen
 - Tags de marcadores: estilo de la recopilación original (etiquetas en la nota y filtros arriba), rectangulares y pequeñas. Descartados: tags como texto con #, puntos de color, agrupar por tag
-- Minirreproductor: la flecha del reproductor lo reduce a una barra sobre el menú inferior; se sigue escuchando mientras se navega. Botones: marcar, −10, play/pausa, +10
+- Minirreproductor: la flecha del reproductor lo reduce a una barra abajo del todo; se sigue escuchando mientras se navega. Botones: marcar, −10, play/pausa, +10
 - Descartado: reproductor B (fiel a Simple ABP)
 - Cuadrícula de la biblioteca: ⋮ pequeño junto al título de cada libro, bajo la portada. Descartados: pulsación larga (no es intuitiva) y ⋯ sobre la portada
 - Ecualizador accesible desde el ⋯ del reproductor como hoja, además de en Ajustes
 - Capítulos: en libros con capítulos, la segunda barra es la del capítulo; tocar su nombre abre la lista; anterior/siguiente saltan de capítulo. Anterior con más de 3 s dentro del capítulo vuelve a su inicio
-- Deshacer salto: aviso temporal sobre el menú inferior con "Deshacer", unos 5 s. Solo en saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo), no en ±10 s. Con saltos encadenados vuelve a la posición previa al primero
+- Deshacer salto: aviso temporal abajo, sobre el minirreproductor si lo hay, con "Deshacer", unos 5 s. Solo en saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo), no en ±10 s. Con saltos encadenados vuelve a la posición previa al primero
 - Aviso con "Deshacer" como patrón de la app: saltos, borrar marcador, unir libros, quitar carpeta, borrar tag, reiniciar posición, quitar de recientes. Excepción: borrar del móvil pide confirmación porque no se puede deshacer
 - Marcadores: botón de play en cada marcador ("escuchar desde aquí"). Tocar la fila abre la edición (hoja de marcador). El ⋮ queda en copiar texto y borrar. Borrar sin confirmación, con "Deshacer"
 - Marcadores sin límite de número ni de longitud del título
@@ -131,7 +131,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 - Popups: filas de 44 px
 - Hoja de marcador: botón Listo pequeño, a la derecha
 - Muchos tags: fila de filtros de una línea con desplazamiento lateral; en la hoja de marcador solo los más usados; lista completa con búsqueda, crear tag y orden por uso o A–Z, que también asigna tags desde la hoja de marcador ("Listo" en vez de "Aplicar"). Varios tags en el filtro muestran los marcadores con cualquiera de ellos. Gestionar tags en Ajustes (renombrar, unir, borrar); borrar un tag no borra marcadores
-- Menú inferior de la app: solo iconos, pequeño (barra de 40, iconos de 18; antes 48 y 20, reducido el 2026-10-04 para ganar espacio)
+- Sin menú inferior (quitado el 2026-10-04: Escuchando ya se abre desde el minirreproductor y basta un icono para Marcadores). Antes: tres pestañas, solo iconos, barra de 48 y después de 40
 - Fila bajo los controles (pausa, marcar, velocidad, marcadores): pequeña, iconos con texto mínimo
 - Pantallas añadidas el 2026-10-02, aprobadas como están en el lienzo:
   - Widget 4×1 (portada, título y barra, −10, play, +10) y 4×2 (añade capítulo o archivo, tiempos y marcar). Botones configurables en Ajustes › Botones
@@ -181,7 +181,8 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   | Secundario con borde | 36 | 6 | 13 |
   | Texto (Deshacer, Cancelar, Ahora no…) | 40 | 6 | 14 |
   | Enlace dentro de una hoja (Ver todos, Restablecer…) | 36 | — | 13 |
-  | Segmentado (Libros / Carpetas, tema, idioma) | 36 | — | 14 |
+  | Segmentado (tema, idioma) | 36 | — | 14 |
+  | Segmentado con iconos (Libros / Carpetas) | 36 × 44 por opción | — | icono 20 |
   | Opción en hoja (velocidad, pausa, valores) | 36 | 2 | 13 mono |
   | Etiqueta o filtro | 28 | 2 | 12 mono |
   | Fila de menú | 44 | — | 14–15 |
@@ -240,7 +241,7 @@ Aprobado 2026-10-03. Código en `ui/theme` y `ui/components`; catálogo de depur
 - Tema por hora, cuando está activo, manda sobre Oscuro / Claro / Sistema. Por defecto: claro a las 08:00, oscuro a las 21:00
 - Tema y acento en DataStore. Idioma con el selector por app de AppCompat; inglés como base y español traducido
 - Fuentes IBM Plex Sans (variable) y Plex Mono, incluidas en la app (OFL)
-- Componentes: los diez tipos de botón, interruptor, hoja, diálogo, cabecera de sección y aviso "Deshacer" (5 s, sobre el menú inferior). Diálogo con radio 14; segmentado con radio 10 / 7
+- Componentes: los diez tipos de botón, interruptor, hoja, diálogo, cabecera de sección y aviso "Deshacer" (5 s, abajo, sobre el minirreproductor si lo hay). Diálogo con radio 14; segmentado con radio 10 / 7
 - Icono: adaptativo, fondo #0A0A0A y libro L2 con play y cinta M2 en hueco (huecos reales, también en el icono temático monocromo). Dentro de la app, F1 sin fondo
 
 ## Escaneo
@@ -291,31 +292,31 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 
 ## Navegación
 
-Aprobado 2026-10-03.
+Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
 
 - Dependencias: Navigation3 1.2.0 (`navigation3-runtime`, `navigation3-ui`), `lifecycle-viewmodel-navigation3` 2.11.0, plugin de serialización de Kotlin 2.4.20 y `kotlinx-serialization-core`
-- Menú inferior con tres pestañas: Biblioteca, Escuchando, Marcadores. Cada pestaña con su pila, que se conserva al cambiar de pestaña
-- Atrás en la raíz de Escuchando o de Marcadores lleva a Biblioteca; en la raíz de Biblioteca sale de la app. Tocar la pestaña activa vuelve a su raíz
+- Una sola pila con Biblioteca en la raíz; Atrás en Biblioteca sale de la app
+- Escuchando y Marcadores se abren encima. Si ya están en la pila, suben arriba en vez de duplicarse. Atrás vuelve a la pantalla anterior
+- Cabecera de Biblioteca: buscar, Marcadores y Ajustes. Ajustes también desde el ⋯ del reproductor
 - Todo Atrás pasa por un punto único, para aplicar "Retrasar el botón Atrás" (comportamiento en Simple ABP sin comprobar)
-- Dentro de una pestaña, con menú inferior: búsqueda en la biblioteca y búsqueda en marcadores
+- Con minirreproductor: Biblioteca, Marcadores, búsqueda en la biblioteca y búsqueda en marcadores
 - Biblioteca: Libros / Carpetas es un selector de la misma pantalla. En Carpetas se entra en subcarpetas con la ruta arriba; Atrás sube un nivel
-- Pantallas completas sin menú inferior, encima de las pestañas: Ajustes y sus subpáginas (Pausa diferida, Botones, Ecualizador y volumen, Carpetas, Gestionar tags, Apariencia, Datos), explorador de carpetas, unir libros, separar en libros, visor de portada. El visor se cierra con × o deslizando hacia abajo
+- Pantallas completas, sin minirreproductor: Ajustes y sus subpáginas (Pausa diferida, Botones, Ecualizador y volumen, Carpetas, Gestionar tags, Apariencia, Datos), explorador de carpetas, unir libros, separar en libros, visor de portada. El visor se cierra con × o deslizando hacia abajo
 - Hojas, menús emergentes y diálogos: estado de su pantalla, no entradas de navegación. Atrás cierra primero la hoja
 - De hoja a pantalla completa: "Horario automático y más" → Ajustes › Pausa diferida; "Gestionar" en la lista de tags → Ajustes › Gestionar tags; "Ajustes" en el ⋯ del reproductor → Ajustes. Al volver, la pantalla de origen sin la hoja
 - Explorador de carpetas desde Ajustes › Carpetas, la biblioteca vacía ("Añadir carpeta") y el primer arranque ("Elegir otra carpeta")
-- Saltos entre pestañas:
-  - "Ir a la carpeta" (menú del libro y ⋯ del reproductor) → Biblioteca › Carpetas, en esa carpeta
-  - "Ver todos los marcadores" (hoja de marcadores del libro) → pestaña Marcadores
+- Saltos:
+  - "Ir a la carpeta" (menú del libro y ⋯ del reproductor) → vuelve a la raíz, Biblioteca › Carpetas, en esa carpeta
+  - "Ver todos los marcadores" (hoja de marcadores del libro) → Marcadores
   - Tocar un libro en la cuadrícula o en la búsqueda lo carga y abre Escuchando
 - "Marcadores" en el menú del libro abre la hoja de marcadores de ese libro
 - "Escuchar desde aquí" en un marcador salta y se queda en Marcadores, con el minirreproductor y "Deshacer"
-- Minirreproductor sobre el menú inferior en todas las pestañas salvo Escuchando, con un libro cargado. La flecha del reproductor vuelve a la pestaña anterior; tocar el minirreproductor abre Escuchando
-- Escuchando sin libro cargado: icono inactivo, no responde
-- Aviso "Deshacer" único para toda la app, encima del minirreproductor y del menú inferior
+- Minirreproductor abajo del todo, con un libro cargado y una sesión de escucha en curso, en todas las pantallas salvo Escuchando y las pantallas completas. La sesión empieza cuando algo suena o se abre Escuchando; al abrir la app, el libro cargado en pausa solo sale en "Seguir escuchando" de Biblioteca. Se conserva al girar la pantalla; si la app sigue sonando en segundo plano, al volver hay minirreproductor. La flecha del reproductor y deslizar la portada hacia abajo hacen Atrás; tocar el minirreproductor abre Escuchando
+- Aviso "Deshacer" único para toda la app, abajo, encima del minirreproductor si lo hay
 - Libro inaccesible: tarjeta dentro de Escuchando
-- Entradas desde fuera: widget y notificación abren Escuchando. El aviso de cierre del sistema aparece al abrir, sobre Escuchando
-- Primer arranque: pila propia (permiso → carpetas) en lugar de las pestañas cuando falta el permiso o no hay carpetas. "Empezar" la sustituye por las pestañas. "Importar una copia de otro móvil" usa el selector de archivos de Android
-- Horizontal: el reproductor ocupa toda la pantalla, sin menú inferior; las demás pestañas mantienen el menú. El doble panel se hace con la pantalla del reproductor
+- Entradas desde fuera: widget y notificación abren Escuchando encima de Biblioteca. El aviso de cierre del sistema aparece al abrir, sobre Escuchando
+- Primer arranque: pila propia (permiso → carpetas) en lugar de la principal cuando falta el permiso o no hay carpetas. "Empezar" la sustituye por la principal. "Importar una copia de otro móvil" usa el selector de archivos de Android
+- Horizontal: el reproductor ocupa toda la pantalla. El doble panel se hace con la pantalla del reproductor
 - Un ViewModel por pantalla, ligado a su entrada de navegación y creado desde `AppContainer`
 
 ## Pantallas
@@ -332,12 +333,13 @@ Hecha 2026-10-03.
 - Aviso de salto: "Saltado desde [posición]" con Deshacer
 - Play / pausa según "va a sonar": no parpadea mientras carga
 - ⋯ en la fila bajo los controles, a la derecha (su menú sale por abajo). Cabecera solo con la flecha y "Escuchando". Lienzo actualizado (versión 146)
+- Deslizar la portada hacia abajo hace lo mismo que la flecha: Atrás. Actúa al soltar pasado el umbral de 120, el del visor; la portada no se mueve. Solo hacia abajo: a los lados no hay gesto (2026-10-04)
 - Pausa diferida y marcadores del libro: inactivos hasta sus funciones. Marcar guarda sin hoja hasta Marcadores
 - Menú ⋯: Tema alterna oscuro y claro a partir del que se ve
 - Velocidad: − / + en pasos de 0.05
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" deja de mostrarlo (Escuchando inactivo) y conserva posición y marcadores
-- Minirreproductor: superpuesto sobre el menú inferior, con fundido; las pestañas reservan su alto (62) abajo, así el cambio de pestaña no desplaza nada. Muestra tramo · posición en el tramo. Pegado al menú inferior (sin margen abajo, esquinas redondeadas solo arriba) y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
+- Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. Sin margen abajo, esquinas redondeadas solo arriba y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
 - Horizontal: pendiente
 
 ### Biblioteca
@@ -349,8 +351,8 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 #### A. Cuadrícula
 
-- Cabecera en una fila: "Biblioteca", selector Libros / Carpetas y buscar. En horizontal, 52 de alto y se va con el scroll de la cuadrícula, con la línea de búsqueda debajo
-- "Seguir escuchando": portada 60, título, barra en acento y play redondo en acento. Muestra el libro cargado; sin él, el último escuchado que no esté quitado de recientes ni terminado; sin ninguno, no aparece. Tocar la tarjeta abre Escuchando; play reproduce o pausa sin salir de la Biblioteca
+- Cabecera en una fila: "Biblioteca", selector Libros / Carpetas con iconos (cuadrícula y carpeta; el texto va como descripción), buscar, Marcadores y Ajustes. Con texto no cabía con tres iconos y letra grande. En horizontal, 52 de alto y se va con el scroll de la cuadrícula, con la línea de búsqueda debajo
+- "Seguir escuchando": portada 60, título, barra en acento y play redondo en acento. Muestra el libro cargado; sin él, el último escuchado que no esté quitado de recientes ni terminado; sin ninguno, no aparece. Tocar la tarjeta abre Escuchando; play reproduce o pausa sin salir de la Biblioteca. Solo sin sesión de escucha: con ella, el libro ya está en el minirreproductor y la tarjeta no sale (nunca los dos a la vez, como en el lienzo)
 - Filtros En curso / Sin empezar / Terminados (etiqueta 28) y botón de ordenar a la derecha. Varios activos: la unión. Ninguno: toda la biblioteca. Los filtros no se guardan
 - Ordenar: popup "Ordenar por" con cinco opciones de 44 y marca en acento en la activa. El orden se guarda en DataStore
   - Escuchados recientemente: los nunca escuchados al final, por fecha de añadido. Los quitados de recientes, como si no se hubieran escuchado; volver a escucharlos les quita la marca

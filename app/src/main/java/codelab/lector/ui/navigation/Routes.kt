@@ -7,27 +7,24 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Route : NavKey
 
-/** Pestañas del menú inferior; cada una es la raíz de su pila. */
+/** Raíz de la pila. */
 @Serializable
-sealed interface TabRoute : Route
+data object LibraryRoute : Route
 
 @Serializable
-data object LibraryRoute : TabRoute
+data object ListeningRoute : Route
 
 @Serializable
-data object ListeningRoute : TabRoute
+data object BookmarksRoute : Route
 
-@Serializable
-data object BookmarksRoute : TabRoute
-
-/** Dentro de una pestaña, con menú inferior. */
+/** Búsquedas: con minirreproductor, como Biblioteca y Marcadores. */
 @Serializable
 data object LibrarySearchRoute : Route
 
 @Serializable
 data object BookmarksSearchRoute : Route
 
-/** Pantallas completas: sin menú inferior, encima de las pestañas. */
+/** Pantallas completas: sin minirreproductor. */
 @Serializable
 sealed interface FullScreenRoute : Route
 

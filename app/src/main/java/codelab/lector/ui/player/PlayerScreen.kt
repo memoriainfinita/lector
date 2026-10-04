@@ -3,6 +3,11 @@ package codelab.lector.ui.player
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -90,11 +95,12 @@ fun PlayerScreen(
                 onAct = viewModel::act,
                 onJump = viewModel::jumpTo,
                 onCover = { onOpenCover(np.bookId) },
+                onMinimize = onMinimize,
                 onChapters = { sheet = PlayerSheet.CHAPTERS },
                 onSpeed = { sheet = PlayerSheet.SPEED },
                 onMenu = { sheet = PlayerSheet.MENU },
             )
-            lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), viewModel::rescan, viewModel::dismissInaccessible)
+            lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), viewModel::rescan, viewModel::dismissInaccessible, onMinimize)
         }
     }
 
@@ -157,6 +163,7 @@ private fun ColumnScope.Player(
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
     onCover: () -> Unit,
+    onMinimize: () -> Unit,
     onChapters: () -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
@@ -176,6 +183,7 @@ private fun ColumnScope.Player(
             np.title,
             Modifier
                 .aspectRatio(ratio, matchHeightConstraintsFirst = true)
+                .swipeDown(onMinimize)
                 .clickable(onClickLabel = stringResource(R.string.view_cover), role = Role.Image, onClick = onCover),
             titleStyle = t.headline,
             onAspectRatio = { ratio = it },
@@ -364,7 +372,7 @@ private fun SmallAction(
 
 /** Libro sin acceso: portada atenuada y tarjeta con "Volver a buscar" y "Quitar". */
 @Composable
-private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit) {
+private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val title = book.customName ?: book.title
@@ -373,7 +381,7 @@ private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (
         BookCover(
             coverPath,
             title,
-            Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).alpha(0.35f),
+            Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
             titleStyle = t.headline,
             onAspectRatio = { ratio = it },
         )
@@ -403,4 +411,27 @@ private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (
             PrimaryButton(stringResource(R.string.rescan), { onRescan(book.id) })
         }
     }
+}
+
+/**
+ * Deslizar la portada hacia abajo hace lo mismo que la flecha de la cabecera, al soltar pasado el
+ * umbral (el del visor de portada). La portada no se mueve: sola, parecería que se despega.
+ */
+@Composable
+private fun Modifier.swipeDown(onSwipe: () -> Unit): Modifier {
+    val action by rememberUpdatedState(onSwipe)
+    var drag by remember { mutableFloatStateOf(0f) }
+    val threshold = with(LocalDensity.current) { 120.dp.toPx() }
+    return pointerInput(Unit) {
+            detectVerticalDragGestures(
+                onDragEnd = {
+                    if (drag > threshold) action()
+                    drag = 0f
+                },
+                onDragCancel = { drag = 0f },
+            ) { change, dy ->
+                change.consume()
+                drag = (drag + dy).coerceAtLeast(0f)
+            }
+        }
 }
