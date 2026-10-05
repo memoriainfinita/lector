@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,12 +30,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import codelab.lector.R
 import codelab.lector.data.settings.DEFAULT_SKIP_SEC
 import codelab.lector.playback.ActionCall
 import codelab.lector.playback.AssignableActions
 import codelab.lector.playback.PlayerAction
+import codelab.lector.playback.RemoteKey
 import codelab.lector.playback.iconRes
 import codelab.lector.playback.isSkip
 import codelab.lector.playback.nameRes
@@ -42,6 +45,7 @@ import codelab.lector.playback.skipText
 import codelab.lector.ui.components.LectorSheet
 import codelab.lector.ui.components.SectionHeader
 import codelab.lector.ui.theme.LectorTheme
+import kotlinx.coroutines.delay
 
 private val SkipPresets = listOf(5f, 10f, 15f, 30f, 60f)
 
@@ -113,6 +117,128 @@ fun ButtonsSettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
             onDone = { save(ref, call.copy(seconds = it.toInt())) },
             onDismiss = { seconds = null },
         )
+    }
+}
+
+/** Filas de Botones remotos, en el orden de [RemoteKey]. */
+private val RemoteRows = listOf(
+    R.string.remote_press_1,
+    R.string.remote_press_2,
+    R.string.remote_press_3,
+    R.string.remote_previous,
+    R.string.remote_next,
+    R.string.remote_play,
+)
+
+/**
+ * Ajustes › Botones remotos (design.md › Ajustes › C2; lienzo `Settings-Buttons`): botón del
+ * auricular con 1, 2 y 3 pulsaciones, teclas multimedia y responder con la app cerrada. Mientras
+ * está en primer plano, una pulsación resalta su fila y no se ejecuta.
+ */
+@Composable
+fun RemoteButtonsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
+    val playback by viewModel.playback.collectAsStateWithLifecycle()
+    val calls = playback.remoteButtons
+    var choosing by remember { mutableStateOf<RemoteKey?>(null) }
+    var seconds by remember { mutableStateOf<Pair<RemoteKey, ActionCall>?>(null) }
+    /** Fila resaltada y cuántas pulsaciones van: la misma tecla otra vez vuelve a contar el tiempo. */
+    var pressed by remember { mutableStateOf<Pair<RemoteKey, Int>?>(null) }
+
+    val monitor = viewModel.remoteKeys
+    LifecycleResumeEffect(monitor) {
+        monitor.start()
+        onPauseOrDispose { monitor.stop() }
+    }
+    LaunchedEffect(monitor) {
+        var n = 0
+        monitor.keys.collect { pressed = it to ++n }
+    }
+    LaunchedEffect(pressed) {
+        if (pressed != null) {
+            delay(HighlightMs)
+            pressed = null
+        }
+    }
+
+    @Composable
+    fun KeyRow(key: RemoteKey) {
+        RemoteRow(stringResource(RemoteRows[key.ordinal]), calls[key.ordinal], highlighted = pressed?.first == key) { choosing = key }
+    }
+
+    SettingsPage(stringResource(R.string.remote_buttons), onBack) {
+        SectionHeader(stringResource(R.string.remote_headset))
+        KeyRow(RemoteKey.HEADSET_1)
+        KeyRow(RemoteKey.HEADSET_2)
+        KeyRow(RemoteKey.HEADSET_3)
+        SectionHeader(stringResource(R.string.remote_media_keys))
+        KeyRow(RemoteKey.PREVIOUS)
+        KeyRow(RemoteKey.NEXT)
+        KeyRow(RemoteKey.PLAY)
+        SwitchRow(stringResource(R.string.remote_when_closed), playback.remoteWhenClosed, viewModel::setRemoteWhenClosed)
+        Text(
+            stringResource(R.string.remote_tip),
+            style = LectorTheme.type.secondary,
+            color = LectorTheme.colors.textSecondary,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+        )
+    }
+
+    choosing?.let { key ->
+        ActionPickerSheet(
+            title = stringResource(RemoteRows[key.ordinal]),
+            selected = calls[key.ordinal].action,
+            onPick = { action ->
+                choosing = null
+                if (action.isSkip) {
+                    val was = calls[key.ordinal]
+                    seconds = key to ActionCall(action, if (was.action.isSkip) was.seconds else DEFAULT_SKIP_SEC)
+                } else {
+                    viewModel.setRemoteButton(key.ordinal, ActionCall(action))
+                }
+            },
+            onDismiss = { choosing = null },
+        )
+    }
+    seconds?.let { (key, call) ->
+        val context = LocalContext.current
+        ValuePickerSheet(
+            title = stringResource(call.action.nameRes()),
+            subtitle = stringResource(RemoteRows[key.ordinal]),
+            initial = call.seconds.toFloat(),
+            step = 1f,
+            range = 1f..120f,
+            presets = SkipPresets,
+            format = { context.getString(R.string.seconds_value, it.toInt()) },
+            onDone = { viewModel.setRemoteButton(key.ordinal, call.copy(seconds = it.toInt())) },
+            onDismiss = { seconds = null },
+        )
+    }
+}
+
+private const val HighlightMs = 1_500L
+
+/** Fila de un botón remoto: su nombre y la acción a la derecha (salto en mono, marcador en acento). */
+@Composable
+private fun RemoteRow(title: String, call: ActionCall, highlighted: Boolean, onClick: () -> Unit) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    SettingRow(
+        title,
+        modifier = if (highlighted) Modifier.background(c.accent.copy(alpha = 0.18f)) else Modifier,
+        onClick = onClick,
+    ) {
+        when {
+            call.action.isSkip -> Text("${call.skipText()} s", style = t.meta.copy(fontSize = 14.sp), color = c.text)
+            else -> Text(
+                stringResource(call.action.nameRes()),
+                style = t.secondary,
+                color = when (call.action) {
+                    PlayerAction.ADD_BOOKMARK -> c.accent
+                    PlayerAction.NONE -> c.textSecondary
+                    else -> c.text
+                },
+            )
+        }
     }
 }
 

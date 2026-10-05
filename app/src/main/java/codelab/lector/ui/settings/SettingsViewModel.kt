@@ -54,6 +54,13 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     fun setPlayerButton(index: Int, call: ActionCall) = save { app.playbackSettings.setPlayerButton(index, call) }
     fun setNotificationButton(index: Int, call: ActionCall) = save { app.playbackSettings.setNotificationButton(index, call) }
 
+    // Botones remotos y auricular
+    val remoteKeys = app.remoteKeys
+    fun setRemoteButton(index: Int, call: ActionCall) = save { app.playbackSettings.setRemoteButton(index, call) }
+    fun setRemoteWhenClosed(enabled: Boolean) = save { app.playbackSettings.setRemoteWhenClosed(enabled) }
+    fun setPauseOnUnplug(enabled: Boolean) = save { app.playbackSettings.setPauseOnUnplug(enabled) }
+    fun setResumeOnReplug(enabled: Boolean) = save { app.playbackSettings.setResumeOnReplug(enabled) }
+
     // Sonido global
     fun setGlobalSound(sound: SoundSettings) = app.playback.setGlobalSound(sound)
     fun setVolume(level: Int) = app.volume.set(level)

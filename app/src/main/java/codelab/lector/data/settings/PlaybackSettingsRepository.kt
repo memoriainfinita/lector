@@ -32,6 +32,13 @@ data class PlaybackSettings(
     val coverOutside: Boolean = true,
     /** Ajustes › Siguiente archivo desde su posición: al terminar un archivo sonando, el siguiente retoma la suya. */
     val nextFileFromPosition: Boolean = true,
+    /** Ajustes › Botones remotos: auricular x1, x2, x3, anterior, siguiente y play (ver [RemoteKey]). */
+    val remoteButtons: List<ActionCall> = DefaultRemoteButtons,
+    /** Ajustes › Botones remotos › Responder con la app cerrada. */
+    val remoteWhenClosed: Boolean = true,
+    /** Ajustes › Auricular. */
+    val pauseOnUnplug: Boolean = true,
+    val resumeOnReplug: Boolean = true,
 ) {
     /** Segundos de los saltos sin hueco propio (minirreproductor sin salto, coche): los del reproductor. */
     val appSkipBackSec: Int get() = playerButtons.firstOrNull { it.action == PlayerAction.SKIP_BACK }?.seconds ?: DEFAULT_SKIP_SEC
@@ -48,13 +55,23 @@ val DefaultButtons = listOf(
     ActionCall(PlayerAction.NEXT),
 )
 
+/** Auricular x1 play / pausa, x2 marcador, x3 nada; anterior −10, siguiente +10, play play / pausa. */
+val DefaultRemoteButtons = listOf(
+    ActionCall(PlayerAction.PLAY_PAUSE),
+    ActionCall(PlayerAction.ADD_BOOKMARK),
+    ActionCall(PlayerAction.NONE),
+    ActionCall(PlayerAction.SKIP_BACK, DEFAULT_SKIP_SEC),
+    ActionCall(PlayerAction.SKIP_FORWARD, DEFAULT_SKIP_SEC),
+    ActionCall(PlayerAction.PLAY_PAUSE),
+)
+
 /** "SKIP_BACK:10,PREVIOUS:0,…". Uno ilegible o de otro número de huecos: los de por defecto. */
-private fun decodeButtons(text: String?): List<ActionCall> {
+private fun decodeButtons(text: String?, defaults: List<ActionCall> = DefaultButtons): List<ActionCall> {
     val calls = text?.split(',')?.map { part ->
-        val action = runCatching { PlayerAction.valueOf(part.substringBefore(':')) }.getOrNull() ?: return DefaultButtons
+        val action = runCatching { PlayerAction.valueOf(part.substringBefore(':')) }.getOrNull() ?: return defaults
         ActionCall(action, part.substringAfter(':', "0").toIntOrNull() ?: 0)
-    } ?: return DefaultButtons
-    return calls.takeIf { it.size == DefaultButtons.size } ?: DefaultButtons
+    } ?: return defaults
+    return calls.takeIf { it.size == defaults.size } ?: defaults
 }
 
 private fun encodeButtons(calls: List<ActionCall>) = calls.joinToString(",") { "${it.action.name}:${it.seconds}" }
@@ -76,6 +93,10 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             playOnOpen = p[PLAY_ON_OPEN] ?: d.playOnOpen,
             coverOutside = p[COVER_OUTSIDE] ?: d.coverOutside,
             nextFileFromPosition = p[NEXT_FILE_FROM_POSITION] ?: d.nextFileFromPosition,
+            remoteButtons = decodeButtons(p[REMOTE_BUTTONS], DefaultRemoteButtons),
+            remoteWhenClosed = p[REMOTE_WHEN_CLOSED] ?: d.remoteWhenClosed,
+            pauseOnUnplug = p[PAUSE_ON_UNPLUG] ?: d.pauseOnUnplug,
+            resumeOnReplug = p[RESUME_ON_REPLUG] ?: d.resumeOnReplug,
         )
     }
 
@@ -106,6 +127,16 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setNotificationButton(index: Int, call: ActionCall) = store.edit {
         it[NOTIFICATION_BUTTONS] = encodeButtons(decodeButtons(it[NOTIFICATION_BUTTONS]).toMutableList().also { list -> list[index] = call })
     }
+
+    suspend fun setRemoteButton(index: Int, call: ActionCall) = store.edit {
+        it[REMOTE_BUTTONS] = encodeButtons(decodeButtons(it[REMOTE_BUTTONS], DefaultRemoteButtons).toMutableList().also { list -> list[index] = call })
+    }
+
+    suspend fun setRemoteWhenClosed(enabled: Boolean) = store.edit { it[REMOTE_WHEN_CLOSED] = enabled }
+
+    suspend fun setPauseOnUnplug(enabled: Boolean) = store.edit { it[PAUSE_ON_UNPLUG] = enabled }
+
+    suspend fun setResumeOnReplug(enabled: Boolean) = store.edit { it[RESUME_ON_REPLUG] = enabled }
 
     suspend fun setAutoNextBook(enabled: Boolean) = store.edit { it[AUTO_NEXT] = enabled }
 
@@ -147,6 +178,10 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val PLAY_ON_OPEN = booleanPreferencesKey("play_on_open")
         val COVER_OUTSIDE = booleanPreferencesKey("cover_outside")
         val NEXT_FILE_FROM_POSITION = booleanPreferencesKey("next_file_from_position")
+        val REMOTE_BUTTONS = stringPreferencesKey("remote_buttons")
+        val REMOTE_WHEN_CLOSED = booleanPreferencesKey("remote_when_closed")
+        val PAUSE_ON_UNPLUG = booleanPreferencesKey("pause_on_unplug")
+        val RESUME_ON_REPLUG = booleanPreferencesKey("resume_on_replug")
         val PREAMP = floatPreferencesKey("sound_preamp_db")
         val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
         val EQ_BANDS = stringPreferencesKey("sound_eq_bands")

@@ -1,8 +1,18 @@
 package codelab.lector.playback
 
 import android.app.PendingIntent
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.SystemClock
+import android.view.KeyEvent
+import androidx.core.content.IntentCompat
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -16,7 +26,9 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaButtonReceiver
 import androidx.media3.session.MediaSession.ConnectionResult
+import androidx.media3.session.MediaSession.MediaItemsWithStartPosition
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import codelab.lector.MainActivity
@@ -25,6 +37,7 @@ import codelab.lector.container
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,6 +55,11 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var exo: ExoPlayer
     private lateinit var engine: BookEngine
     private var session: MediaLibrarySession? = null
+    private lateinit var remote: RemoteButtons
+    /** Último libro cargado al arrancar (o nada): lo esperan los botones remotos y retomar. */
+    private val restored = CompletableDeferred<Unit>()
+    /** Pausa por desconectar el auricular, para reanudar si vuelve (Ajustes › Auricular). */
+    private var unpluggedAt = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -70,13 +88,54 @@ class PlaybackService : MediaLibraryService() {
                 session?.setMediaButtonPreferences(notificationButtons(buttons))
             }
         }
+        scope.launch {
+            app.playbackSettings.settings.map { it.pauseOnUnplug }.distinctUntilChanged().collect(exo::setHandleAudioBecomingNoisy)
+        }
+        scope.launch {
+            app.playbackSettings.settings.map { it.remoteWhenClosed }.distinctUntilChanged().collect {
+                setMediaButtonReceiverEnabled(this@PlaybackService, it)
+            }
+        }
         // Al arrancar, el último libro queda cargado y en pausa; uno quitado de la biblioteca, no.
         scope.launch {
-            if (!engine.loaded) {
-                app.playbackSettings.lastBookId()
-                    ?.takeIf { app.database.books().get(it)?.removed == false }
-                    ?.let { engine.open(it, play = false) }
+            try {
+                if (!engine.loaded) {
+                    app.playbackSettings.lastBookId()
+                        ?.takeIf { app.database.books().get(it)?.removed == false }
+                        ?.let { engine.open(it, play = false) }
+                }
+            } finally {
+                restored.complete(Unit)
             }
+        }
+
+        remote = RemoteButtons(scope, { engine.currentPrefs }, app.remoteKeys) { key, call, code ->
+            scope.launch {
+                restored.await()
+                when {
+                    // Play, Pausa y Stop con "play / pausa": cada tecla hace lo que dice.
+                    key == RemoteKey.PLAY && call.action == PlayerAction.PLAY_PAUSE && code == KeyEvent.KEYCODE_MEDIA_PLAY -> engine.play()
+                    key == RemoteKey.PLAY && call.action == PlayerAction.PLAY_PAUSE -> exo.pause()
+                    else -> engine.perform(call)
+                }
+            }
+        }
+
+        exo.addListener(object : Player.Listener {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                unpluggedAt = if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_BECOMING_NOISY) SystemClock.elapsedRealtime() else 0L
+            }
+        })
+        getSystemService(AudioManager::class.java).registerAudioDeviceCallback(headsets, Handler(mainLooper))
+    }
+
+    /** Reanudar al reconectar: un auricular que vuelve antes de 10 s tras la pausa por desconectarlo. */
+    private val headsets = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
+            if (unpluggedAt == 0L || addedDevices.none { it.isSink && it.type in HeadsetTypes }) return
+            val recent = SystemClock.elapsedRealtime() - unpluggedAt < ReplugWindowMs
+            unpluggedAt = 0L
+            if (recent && engine.currentPrefs.resumeOnReplug && !exo.playWhenReady) engine.play()
         }
     }
 
@@ -143,6 +202,8 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(headsets)
+        remote.release()
         engine.release()
         session?.release()
         session = null
@@ -194,6 +255,36 @@ class PlaybackService : MediaLibraryService() {
             SessionResult(SessionResult.RESULT_SUCCESS)
         }
 
+        /**
+         * Botones remotos (design.md › Ajustes › C2). Los de la notificación (Android 12 y anteriores
+         * los manda como teclas) siguen el camino de Media3. Media3 atribuye a la notificación también
+         * las pulsaciones que arrancan el servicio con la app cerrada; las suyas llevan la sesión en
+         * los datos de la intención, las del receptor no.
+         */
+        override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
+            if (session.isMediaNotificationController(controllerInfo) && intent.data != null) return false
+            val event = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java) ?: return false
+            return remote.onKey(event)
+        }
+
+        /**
+         * Un botón remoto con la app cerrada arranca el servicio sin libro: el último, en su posición.
+         * Media3 vuelve a poner los archivos; `LectorPlayer` lo ignora.
+         */
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            isForPlayback: Boolean,
+        ): ListenableFuture<MediaItemsWithStartPosition> = scope.future {
+            restored.await()
+            if (!engine.loaded || exo.mediaItemCount == 0) throw UnsupportedOperationException("no book to resume")
+            MediaItemsWithStartPosition(
+                (0 until exo.mediaItemCount).map(exo::getMediaItemAt),
+                exo.currentMediaItemIndex,
+                exo.currentPosition,
+            )
+        }
+
         /** Raíz vacía: la navegación de la biblioteca (Android Auto) llega más adelante. */
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
@@ -209,4 +300,26 @@ class PlaybackService : MediaLibraryService() {
             ),
         )
     }
+}
+
+private const val ReplugWindowMs = 10_000L
+
+private val HeadsetTypes = setOf(
+    AudioDeviceInfo.TYPE_WIRED_HEADSET,
+    AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+    AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+    AudioDeviceInfo.TYPE_USB_HEADSET,
+    AudioDeviceInfo.TYPE_BLE_HEADSET,
+)
+
+/**
+ * Responder con la app cerrada: el receptor de Media3 arranca el servicio con una pulsación. Apagado,
+ * Android no tiene a quién entregarla con el servicio parado.
+ */
+fun setMediaButtonReceiverEnabled(context: Context, enabled: Boolean) {
+    context.packageManager.setComponentEnabledSetting(
+        ComponentName(context, MediaButtonReceiver::class.java),
+        if (enabled) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+        PackageManager.DONT_KILL_APP,
+    )
 }

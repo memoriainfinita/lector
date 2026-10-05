@@ -2,6 +2,7 @@ package codelab.lector.playback
 
 import androidx.annotation.OptIn
 import androidx.media3.common.ForwardingSimpleBasePlayer
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -32,6 +33,13 @@ class LectorPlayer(player: Player, private val engine: BookEngine) : ForwardingS
         if (playWhenReady) engine.beforePlay()
         return super.handleSetPlayWhenReady(playWhenReady)
     }
+
+    /**
+     * Los archivos los pone el motor. Retomar con la app cerrada (`onPlaybackResumption`) devuelve
+     * los del libro ya abierto y Media3 los vuelve a poner: se ignoran para no reiniciar el reproductor.
+     */
+    override fun handleSetMediaItems(mediaItems: List<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<*> =
+        if (engine.loaded) Futures.immediateVoidFuture() else super.handleSetMediaItems(mediaItems, startIndex, startPositionMs)
 
     /** Velocidad desde la app, la notificación o el coche: se guarda en el libro. */
     override fun handleSetPlaybackParameters(playbackParameters: PlaybackParameters): ListenableFuture<*> {

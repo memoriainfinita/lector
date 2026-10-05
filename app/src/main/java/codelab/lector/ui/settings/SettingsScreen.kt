@@ -45,6 +45,7 @@ fun SettingsScreen(
     onAppearance: () -> Unit,
     onLibrary: () -> Unit,
     onButtons: () -> Unit,
+    onRemote: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
@@ -76,13 +77,17 @@ fun SettingsScreen(
 
         SectionHeader(stringResource(R.string.settings_buttons))
         LinkRow(stringResource(R.string.skip_buttons), onButtons, note = stringResource(R.string.skip_buttons_note))
-        LinkRow(stringResource(R.string.remote_buttons), {}, note = stringResource(R.string.remote_buttons_note), enabled = false)
-        SwitchRow(stringResource(R.string.delay_bottom_buttons), false, {}, note = stringResource(R.string.delay_bottom_buttons_note), enabled = false)
-        SwitchRow(stringResource(R.string.delay_back_button), false, {}, enabled = false)
+        LinkRow(stringResource(R.string.remote_buttons), onRemote, note = stringResource(R.string.remote_buttons_note))
 
         SectionHeader(stringResource(R.string.settings_headset))
-        SwitchRow(stringResource(R.string.pause_on_unplug), false, {}, enabled = false)
-        SwitchRow(stringResource(R.string.resume_on_replug), false, {}, note = stringResource(R.string.resume_on_replug_note), enabled = false)
+        SwitchRow(stringResource(R.string.pause_on_unplug), playback.pauseOnUnplug, viewModel::setPauseOnUnplug)
+        SwitchRow(
+            stringResource(R.string.resume_on_replug),
+            playback.resumeOnReplug,
+            viewModel::setResumeOnReplug,
+            note = stringResource(R.string.resume_on_replug_note),
+            enabled = playback.pauseOnUnplug,
+        )
 
         SectionHeader(stringResource(R.string.settings_library))
         LinkRow(stringResource(R.string.library_folders), onLibrary, note = foldersSummary(folders))
@@ -114,7 +119,6 @@ fun SettingsScreen(
 
         SectionHeader(stringResource(R.string.settings_notification))
         SwitchRow(stringResource(R.string.cover_on_lock_screen), playback.coverOutside, viewModel::setCoverOutside)
-        SwitchRow(stringResource(R.string.standard_notification), false, {}, note = stringResource(R.string.standard_notification_note), enabled = false)
 
         SectionHeader(stringResource(R.string.settings_data))
         LinkRow(stringResource(R.string.export_all), {}, note = stringResource(R.string.export_all_note), enabled = false, chevron = false)

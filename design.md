@@ -461,6 +461,19 @@ Hecha 2026-10-06 (lienzo `Settings-Buttons`, `Action-Picker`). C2 (botones remot
 - Saltos sin hueco propio (`COMMAND_SEEK_BACK` / `FORWARD` del sistema): los segundos del primer salto de ese sentido del reproductor, o 10
 - Retrasos: Simple ABP no muestra retraso en nada (comprobado por el usuario 2026-10-06). Sin retrasos (decidido 2026-10-06): las dos filas salen en C2. En LECTOR los toques accidentales se corrigen con "Deshacer" o con el salto contrario
 
+#### C2. Botones remotos y Auricular
+
+Aprobado 2026-10-06 (lienzo `Settings-Buttons`, secciones "Botón del auricular" y "Teclas multimedia"; Simple ABP › Remote buttons).
+
+- Ajustes › Botones › "Botones remotos": pantalla propia
+- Botón del auricular: una, dos y tres pulsaciones, con la hoja de acciones de C1. Por defecto play / pausa, añadir marcador, nada (Decisiones de diseño: marcar sin mirar). Se cuentan solo play / pausa (`KEYCODE_MEDIA_PLAY_PAUSE`) y el botón del auricular de cable (`KEYCODE_HEADSETHOOK`). Con dos y tres en "nada", sin espera; si no, ~400 ms por si llega otra. Se queda en 1/2/3 aunque los auriculares del usuario (JBL) traigan gestos propios: sirve para otros auriculares (decidido 2026-10-06)
+- Teclas multimedia: Anterior / Rebobinar −10 s, Siguiente / Avanzar +10 s, Play, Pausa, Stop → play / pausa. El lienzo y Simple ABP dicen 7 s; 10 como los saltos del reproductor y la notificación (decidido 2026-10-06)
+- Responder con la app cerrada: activado por defecto. Con el servicio parado, una pulsación lo arranca y retoma el último libro. Apagado, no se reciben (receptor `MediaButtonReceiver` de Media3, desactivado con `PackageManager`). Con la app cerrada solo arrancan las teclas de play (play, play / pausa, auricular): Media3 descarta las demás para no fallar al pasar a primer plano (comprobado 2026-10-06). Media3 atribuye esas pulsaciones a la notificación; se distinguen de los botones de la notificación de Android 12 y anteriores porque estos llevan la sesión en los datos de la intención
+- Media3 1.11.1 entrega cada pulsación una vez (comprobado 2026-10-06); se descarta igualmente una repetida en menos de 100 ms (androidx/media#3083)
+- Con la pantalla abierta, pulsar un botón resalta su fila y no hace la acción
+- Ajustes › Auricular: Pausar al desconectar (activado; hoy pausa siempre) y Reanudar al reconectar (activado): si vuelve en menos de 10 s tras una pausa por desconexión, sigue. Cable y Bluetooth
+- Salen de Ajustes las dos filas de retrasos y "Notificación estándar de Android": la de LECTOR ya es la estándar de Android (lo que cambia en Simple ABP, sin comprobar)
+
 ### Sin portadas
 
 Aprobado 2026-10-05 (lienzo, versión 151: "Biblioteca sin portadas: lista", "Biblioteca: libros sin portada", "Reproductor sin portadas").

@@ -196,9 +196,6 @@
     <string name="skip_buttons_note">Player, notification and widget</string>
     <string name="remote_buttons">Remote buttons</string>
     <string name="remote_buttons_note">Headset and media keys</string>
-    <string name="delay_bottom_buttons">Delay the bottom buttons</string>
-    <string name="delay_bottom_buttons_note">Prevents accidental taps</string>
-    <string name="delay_back_button">Delay the Back button</string>
     <string name="settings_headset">Headset</string>
     <string name="pause_on_unplug">Pause when unplugged</string>
     <string name="resume_on_replug">Resume when plugged back</string>
@@ -216,8 +213,6 @@
     <string name="language_en">English</string>
     <string name="settings_notification">Notification and lock screen</string>
     <string name="cover_on_lock_screen">Cover on the lock screen</string>
-    <string name="standard_notification">Standard Android notification</string>
-    <string name="standard_notification_note">No custom buttons</string>
     <string name="export_all">Export everything</string>
     <string name="export_all_note">Bookmarks, positions and settings</string>
     <string name="import_merge">Import and merge</string>
@@ -281,4 +276,14 @@
     <string name="button_of_player">Player button %1$d</string>
     <string name="button_of_notification">Notification button %1$d</string>
     <string name="button_actions_note">The same actions work for the notification, the widget, the headset and the media keys</string>
+    <string name="remote_headset">Headset button</string>
+    <string name="remote_press_1">One press</string>
+    <string name="remote_press_2">Two presses</string>
+    <string name="remote_press_3">Three presses</string>
+    <string name="remote_media_keys">Media keys</string>
+    <string name="remote_previous">Previous / Rewind</string>
+    <string name="remote_next">Next / Fast forward</string>
+    <string name="remote_play">Play, Pause, Stop</string>
+    <string name="remote_when_closed">Respond when the app is closed</string>
+    <string name="remote_tip">Press a headset button to highlight it in the list.</string>
 </resources>

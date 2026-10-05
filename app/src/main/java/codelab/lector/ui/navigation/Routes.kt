@@ -35,6 +35,9 @@ data object SettingsSleepRoute : FullScreenRoute
 data object SettingsButtonsRoute : FullScreenRoute
 
 @Serializable
+data object SettingsRemoteRoute : FullScreenRoute
+
+@Serializable
 data object SettingsSoundRoute : FullScreenRoute
 
 @Serializable

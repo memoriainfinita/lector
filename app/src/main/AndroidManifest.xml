@@ -44,6 +44,15 @@
             </intent-filter>
         </service>
 
+        <!-- Botones remotos con la app cerrada (Ajustes › Botones remotos; se apaga desde ahí). -->
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
         <!-- "Abrir con…" del menú del libro: comparte un archivo de audio con otra app. -->
         <provider
             android:name="androidx.core.content.FileProvider"

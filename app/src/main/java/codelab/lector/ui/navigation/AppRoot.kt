@@ -62,6 +62,7 @@ import codelab.lector.ui.settings.FolderPickerScreen
 import codelab.lector.ui.settings.FolderPickerViewModel
 import codelab.lector.ui.settings.LibrarySettingsScreen
 import codelab.lector.ui.settings.LibrarySettingsViewModel
+import codelab.lector.ui.settings.RemoteButtonsScreen
 import codelab.lector.ui.settings.SettingsScreen
 import codelab.lector.ui.settings.SettingsViewModel
 import codelab.lector.ui.settings.SoundSettingsScreen
@@ -283,6 +284,7 @@ private fun routeEntries(
                 onAppearance = { navigator.open(SettingsAppearanceRoute) },
                 onLibrary = { navigator.open(SettingsLibraryRoute) },
                 onButtons = { navigator.open(SettingsButtonsRoute) },
+                onRemote = { navigator.open(SettingsRemoteRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
@@ -295,6 +297,7 @@ private fun routeEntries(
         }
         entry<SettingsSleepRoute> { PlaceholderScreen(stringResource(R.string.settings_sleep), onBack = back) }
         entry<SettingsButtonsRoute> { ButtonsSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
+        entry<SettingsRemoteRoute> { RemoteButtonsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsTagsRoute> { PlaceholderScreen(stringResource(R.string.settings_tags), onBack = back) }
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }

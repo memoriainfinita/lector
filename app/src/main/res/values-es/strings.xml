@@ -195,9 +195,6 @@
     <string name="skip_buttons_note">Reproductor, notificación y widget</string>
     <string name="remote_buttons">Botones remotos</string>
     <string name="remote_buttons_note">Auricular y teclas multimedia</string>
-    <string name="delay_bottom_buttons">Retrasar los botones inferiores</string>
-    <string name="delay_bottom_buttons_note">Evita toques accidentales</string>
-    <string name="delay_back_button">Retrasar el botón Atrás</string>
     <string name="settings_headset">Auricular</string>
     <string name="pause_on_unplug">Pausar al desconectar</string>
     <string name="resume_on_replug">Reanudar al reconectar</string>
@@ -215,8 +212,6 @@
     <string name="language_en">English</string>
     <string name="settings_notification">Notificación y bloqueo</string>
     <string name="cover_on_lock_screen">Portada en la pantalla de bloqueo</string>
-    <string name="standard_notification">Notificación estándar de Android</string>
-    <string name="standard_notification_note">Sin botones propios</string>
     <string name="export_all">Exportar todo</string>
     <string name="export_all_note">Marcadores, posiciones y ajustes</string>
     <string name="import_merge">Importar y combinar</string>
@@ -280,4 +275,14 @@
     <string name="button_of_player">Botón %1$d del reproductor</string>
     <string name="button_of_notification">Botón %1$d de la notificación</string>
     <string name="button_actions_note">Las mismas acciones sirven para la notificación, el widget, el auricular y las teclas multimedia</string>
+    <string name="remote_headset">Botón del auricular</string>
+    <string name="remote_press_1">Una pulsación</string>
+    <string name="remote_press_2">Dos pulsaciones</string>
+    <string name="remote_press_3">Tres pulsaciones</string>
+    <string name="remote_media_keys">Teclas multimedia</string>
+    <string name="remote_previous">Anterior / Rebobinar</string>
+    <string name="remote_next">Siguiente / Avanzar</string>
+    <string name="remote_play">Play, Pausa, Stop</string>
+    <string name="remote_when_closed">Responder con la app cerrada</string>
+    <string name="remote_tip">Pulsa un botón del auricular para resaltarlo en la lista.</string>
 </resources>

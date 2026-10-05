@@ -15,6 +15,7 @@ import codelab.lector.library.LibraryScanner
 import codelab.lector.library.Media3MetadataReader
 import codelab.lector.playback.PlaybackConnection
 import codelab.lector.playback.PlaybackStateHolder
+import codelab.lector.playback.RemoteKeyMonitor
 import codelab.lector.playback.VolumeControl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -42,6 +43,8 @@ class AppContainer(context: Context) {
     val nowPlaying = PlaybackStateHolder()
     val playback = PlaybackConnection(context, nowPlaying, playbackSettings, appScope)
     val volume = VolumeControl(context)
+    /** Ajustes › Botones remotos abierta: las pulsaciones se resaltan en vez de ejecutarse. */
+    val remoteKeys = RemoteKeyMonitor()
 
     init {
         // Cada búsqueda terminada queda como la última (Ajustes › Biblioteca). Sin errores: un
