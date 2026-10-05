@@ -3,4 +3,11 @@
     <style name="Theme.Lector" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
+
+    <!-- Pantalla de inicio: el icono sobre el fondo de la app hasta que la Biblioteca está lista. -->
+    <style name="Theme.Lector.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Lector</item>
+    </style>
 </resources>

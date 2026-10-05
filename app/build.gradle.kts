@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.sqlite.bundled)
     ksp(libs.androidx.room.compiler)

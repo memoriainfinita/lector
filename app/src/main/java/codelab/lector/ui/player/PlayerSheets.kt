@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -279,53 +280,63 @@ fun ChaptersSheet(np: NowPlaying, onJump: (Long) -> Unit, onDismiss: () -> Unit)
             Text(stringResource(R.string.chapters_count, np.segments.size), style = t.secondary, color = c.textSecondary)
         }
         LazyColumn(state = list, modifier = Modifier.padding(bottom = 12.dp)) {
-            itemsIndexed(np.segments) { i, seg ->
-                val current = i == np.segmentIndex
-                val past = i < np.segmentIndex
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(if (current) 52.dp else 44.dp)
-                        .background(if (current) c.popup else c.surface)
-                        .clickable(role = Role.Button) { onJump(seg.startMs) },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(Modifier.width(3.dp).fillMaxHeight().background(if (current) c.accent else c.surface))
-                    Row(
-                        Modifier.padding(start = 17.dp, end = 20.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        val tone = when {
-                            current -> c.accent
-                            past -> c.textTertiary
-                            else -> c.textSecondary
-                        }
-                        Text("${i + 1}", style = t.meta, color = tone, modifier = Modifier.width(28.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                seg.title,
-                                style = if (current) t.body.copy(fontWeight = FontWeight.Medium) else t.body,
-                                color = if (past) c.textTertiary else c.text,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            if (current) {
-                                val length = (seg.endMs - seg.startMs).coerceAtLeast(1)
-                                val f = ((np.positionMs - seg.startMs).toFloat() / length).coerceIn(0f, 1f)
-                                Box(Modifier.fillMaxWidth().height(2.dp).background(c.outline)) {
-                                    Box(Modifier.fillMaxWidth(f).height(2.dp).background(c.accent))
-                                }
-                            }
-                        }
-                        Text(formatDuration(seg.startMs), style = t.meta, color = if (past) c.textTertiary else c.textSecondary)
-                        if (past) {
-                            Icon(painterResource(R.drawable.ic_check), null, Modifier.size(14.dp), tint = c.textTertiary)
-                        } else {
-                            Spacer(Modifier.width(14.dp))
-                        }
+            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onJump, base = c.surface, highlight = c.popup) }
+        }
+    }
+}
+
+/**
+ * Fila de capítulo o archivo: pasados atenuados con marca, el actual resaltado con su progreso.
+ * La usan la hoja de capítulos y el panel Archivos de Escuchando en horizontal.
+ */
+@Composable
+internal fun SegmentRow(np: NowPlaying, i: Int, onJump: (Long) -> Unit, base: Color, highlight: Color) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val seg = np.segments[i]
+    val current = i == np.segmentIndex
+    val past = i < np.segmentIndex
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(if (current) 52.dp else 44.dp)
+            .background(if (current) highlight else base)
+            .clickable(role = Role.Button) { onJump(seg.startMs) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.width(3.dp).fillMaxHeight().background(if (current) c.accent else base))
+        Row(
+            Modifier.padding(start = 17.dp, end = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            val tone = when {
+                current -> c.accent
+                past -> c.textTertiary
+                else -> c.textSecondary
+            }
+            Text("${i + 1}", style = t.meta, color = tone, modifier = Modifier.width(28.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    seg.title,
+                    style = if (current) t.body.copy(fontWeight = FontWeight.Medium) else t.body,
+                    color = if (past) c.textTertiary else c.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (current) {
+                    val length = (seg.endMs - seg.startMs).coerceAtLeast(1)
+                    val f = ((np.positionMs - seg.startMs).toFloat() / length).coerceIn(0f, 1f)
+                    Box(Modifier.fillMaxWidth().height(2.dp).background(c.outline)) {
+                        Box(Modifier.fillMaxWidth(f).height(2.dp).background(c.accent))
                     }
                 }
+            }
+            Text(formatDuration(seg.startMs), style = t.meta, color = if (past) c.textTertiary else c.textSecondary)
+            if (past) {
+                Icon(painterResource(R.drawable.ic_check), null, Modifier.size(14.dp), tint = c.textTertiary)
+            } else {
+                Spacer(Modifier.width(14.dp))
             }
         }
     }

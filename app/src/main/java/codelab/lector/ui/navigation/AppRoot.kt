@@ -58,10 +58,11 @@ private enum class StartMode { LOADING, ONBOARDING_PERMISSION, ONBOARDING_FOLDER
 
 /**
  * Raíz de la app: primer arranque (sin permiso o sin carpetas) o las pestañas.
- * [openPlayer] llega desde la notificación y el widget: abre Escuchando.
+ * [openPlayer] llega desde la notificación y el widget: abre Escuchando. [onReady]: la primera
+ * pantalla ya tiene su contenido (quita la pantalla de inicio).
  */
 @Composable
-fun AppRoot(openPlayer: Flow<Unit>) {
+fun AppRoot(openPlayer: Flow<Unit>, onReady: () -> Unit = {}) {
     val context = LocalContext.current
     val app = context.container
     var mode by rememberSaveable { mutableStateOf(StartMode.LOADING) }
@@ -75,6 +76,8 @@ fun AppRoot(openPlayer: Flow<Unit>) {
             }
         }
     }
+    // Primer arranque: sus pantallas no esperan datos.
+    LaunchedEffect(mode) { if (mode == StartMode.ONBOARDING_PERMISSION || mode == StartMode.ONBOARDING_FOLDERS) onReady() }
     val undo = rememberUndoState()
     CompositionLocalProvider(LocalUndoState provides undo) {
         Box(Modifier.fillMaxSize().background(LectorTheme.colors.background).systemBarsPadding()) {
@@ -82,7 +85,7 @@ fun AppRoot(openPlayer: Flow<Unit>) {
                 StartMode.LOADING -> Unit
                 StartMode.ONBOARDING_PERMISSION, StartMode.ONBOARDING_FOLDERS ->
                     Onboarding(withPermission = mode == StartMode.ONBOARDING_PERMISSION) { mode = StartMode.MAIN }
-                StartMode.MAIN -> MainScreen(openPlayer)
+                StartMode.MAIN -> MainScreen(openPlayer, onReady)
             }
         }
     }
@@ -119,10 +122,12 @@ private fun Onboarding(withPermission: Boolean, onFinished: () -> Unit) {
 }
 
 @Composable
-private fun MainScreen(openPlayer: Flow<Unit>) {
+private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
     val app = LocalContext.current.container
     val state = rememberNavigationState()
     val navigator = remember(state) { Navigator(state) }
+    // Arriba otra pantalla (Escuchando desde la notificación): no hay que esperar a la Biblioteca.
+    LaunchedEffect(state.top) { if (state.top != LibraryRoute) onReady() }
     // Del ámbito de la Activity: minirreproductor y aviso de salto, fuera de las pantallas.
     val player: PlayerViewModel = viewModel { PlayerViewModel(app) }
     val nowPlaying by player.nowPlaying.collectAsStateWithLifecycle()
@@ -152,7 +157,7 @@ private fun MainScreen(openPlayer: Flow<Unit>) {
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalBottomInset provides if (showMini) MiniPlayerHeight else 0.dp) {
             NavDisplay(
-                entries = state.toDecoratedEntries(routeEntries(state, navigator, session)),
+                entries = state.toDecoratedEntries(routeEntries(state, navigator, session, onReady)),
                 onBack = navigator::goBack,
             )
         }
@@ -192,6 +197,7 @@ private fun routeEntries(
     state: NavigationState,
     navigator: Navigator,
     session: Boolean,
+    onReady: () -> Unit,
 ): (NavKey) -> NavEntry<NavKey> {
     val app = LocalContext.current.container
     val back = navigator::goBack
@@ -223,6 +229,7 @@ private fun routeEntries(
                 onMerge = { navigator.open(MergeBooksRoute(it)) },
                 showContinue = !session,
                 onFolderShown = { state.pendingFolder = null },
+                onLoaded = onReady,
                 storage = remember { StorageRoots(Environment.getExternalStorageDirectory().path, storageRoots(context).map { it.path }) },
             )
         }

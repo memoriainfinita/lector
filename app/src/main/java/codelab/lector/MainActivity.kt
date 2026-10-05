@@ -2,6 +2,8 @@ package codelab.lector
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,7 +23,15 @@ class MainActivity : AppCompatActivity() {
     /** Peticiones de abrir Escuchando (notificación, widget). */
     private val openPlayer = Channel<Unit>(Channel.CONFLATED)
 
+    /** La primera pantalla ya tiene su contenido: se quita la pantalla de inicio. */
+    @Volatile
+    private var ready = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Pantalla de inicio con el icono hasta que la Biblioteca está completa, en vez de negro y
+        // luego la cabecera sola. Como mucho SplashMaxMs, por si algo tarda.
+        val started = SystemClock.uptimeMillis()
+        installSplashScreen().setKeepOnScreenCondition { !ready && SystemClock.uptimeMillis() - started < SplashMaxMs }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handle(intent)
@@ -30,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             val settings by appearance.settings.collectAsStateWithLifecycle(AppearanceSettings())
             LectorTheme(settings) {
                 SystemBars()
-                AppRoot(openPlayer.receiveAsFlow())
+                AppRoot(openPlayer.receiveAsFlow(), onReady = { ready = true })
             }
         }
     }
@@ -57,5 +67,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val ACTION_OPEN_PLAYER = "codelab.lector.action.OPEN_PLAYER"
+        private const val SplashMaxMs = 2_000L
     }
 }

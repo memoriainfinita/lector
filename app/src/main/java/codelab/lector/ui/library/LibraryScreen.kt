@@ -171,8 +171,11 @@ fun LibraryScreen(
     /** La carpeta pedida por "Ir a la carpeta" ya se ha abierto. */
     onFolderShown: () -> Unit,
     storage: StorageRoots,
+    /** Ya hay datos que mostrar (libros o biblioteca vacía): quita la pantalla de inicio. */
+    onLoaded: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.hasFolders) { if (state.hasFolders != null) onLoaded() }
     val c = LectorTheme.colors
     val t = LectorTheme.type
     var segment by rememberSaveable { mutableIntStateOf(0) }
