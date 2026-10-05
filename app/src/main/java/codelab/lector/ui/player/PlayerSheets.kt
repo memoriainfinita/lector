@@ -272,7 +272,8 @@ fun ChaptersSheet(np: NowPlaying, onJump: (Long) -> Unit, onDismiss: () -> Unit)
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (np.segmentIndex - 2).coerceAtLeast(0))
-    LectorSheet(onDismiss) {
+    // Su propia lista ya se desplaza.
+    LectorSheet(onDismiss, scrollable = false) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.chapters), style = t.sheetTitle, color = c.text, modifier = Modifier.weight(1f))
             Text(stringResource(R.string.chapters_count, np.segments.size), style = t.secondary, color = c.textSecondary)

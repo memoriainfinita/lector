@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -182,6 +183,13 @@ fun LibraryScreen(
     var menuFor by remember { mutableStateOf<String?>(null) }
     var renameFor by remember { mutableStateOf<String?>(null) }
     var deleteFor by remember { mutableStateOf<String?>(null) }
+    // Buscando, el campo suelta el foco al abrir el menú: si no, al cerrar un diálogo (Renombrar)
+    // Android se lo devuelve y reabre el teclado.
+    val focusManager = LocalFocusManager.current
+    fun openMenu(bookId: String) {
+        focusManager.clearFocus()
+        menuFor = bookId
+    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val openWithTitle = stringResource(R.string.open_with)
@@ -191,6 +199,7 @@ fun LibraryScreen(
         onFolder = onOpenFolder,
         onSplit = onSplit,
         onMerge = onMerge,
+        onFolderClass = { classSheetFor = it },
         onRename = { renameFor = it },
         onOpenWith = { book -> scope.launch { viewModel.fileToOpen(book)?.let { openWith(context, it, openWithTitle) } } },
         onDelete = { deleteFor = it },
@@ -263,12 +272,12 @@ fun LibraryScreen(
                     onOpenPlayer()
                 },
                 onFolderOptions = { classSheetFor = it },
-                onBookOptions = { menuFor = it.book.id },
+                onBookOptions = { openMenu(it.book.id) },
                 top = top,
             )
             // Una cuadrícula nueva al abrir y al cerrar la búsqueda: las dos empiezan arriba del todo.
             else -> key(searching) {
-                BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue && !searching, top = top)
+                BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, ::openMenu, landscape, showContinue && !searching, top = top)
             }
         }
     }

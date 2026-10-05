@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import codelab.lector.R
 import codelab.lector.data.db.Book
 import codelab.lector.data.db.LibraryItem
+import codelab.lector.library.baseFolder
 import codelab.lector.library.displayTitle
 import codelab.lector.library.progress
 import codelab.lector.ui.components.BookCover
@@ -66,6 +67,8 @@ class BookMenuActions(
     val onFolder: (String) -> Unit,
     val onSplit: (String) -> Unit,
     val onMerge: (String) -> Unit,
+    /** Hoja de clase de la carpeta que es el libro entero. */
+    val onFolderClass: (String) -> Unit,
     val onRename: (String) -> Unit,
     val onOpenWith: (Book) -> Unit,
     val onDelete: (String) -> Unit,
@@ -100,6 +103,10 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
                     MenuRow(stringResource(R.string.go_to_folder), close { actions.onFolder(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_folder))
                     MenuRow(stringResource(R.string.split_book), close { actions.onSplit(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_split))
                     MenuRow(stringResource(R.string.merge_with_books), close { actions.onMerge(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_merge))
+                    // Una carpeta que es un libro sale en Carpetas como fila de libro: su clase se cambia aquí.
+                    if (baseFolder(book) == book.path) {
+                        MenuRow(stringResource(R.string.folder_class), close { actions.onFolderClass(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_list))
+                    }
                 }
                 MenuRow(
                     stringResource(if (book.finished) R.string.mark_unfinished else R.string.mark_finished),

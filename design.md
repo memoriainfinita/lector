@@ -387,6 +387,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 
 - Hoja con cabecera: portada 52, título, "autor · narrador · serie n" y línea mono "posición / total · % · tamaño"
 - Opciones: Marcadores [n], Ver portada, Ir a la carpeta, Separar en libros, Unir con otros libros, Marcar como terminado / no terminado, Reiniciar posición, Quitar de recientes; separador; Renombrar, Abrir con…, Borrar del móvil en coral
+- Libro que es una carpeta entera: además, "Clase de carpeta" tras Unir, que abre la hoja de clase de esa carpeta. En Carpetas sale como fila de libro y no tenía otra forma de cambiar su clase (2026-10-05)
 - Marcadores, Separar y Unir: enlazados a sus pantallas vacías hasta que se hagan; Marcadores inactivo. Hasta la hoja de marcadores, tocar un libro quitado no hace nada: se usa su ⋮
 - Reiniciar posición y Quitar de recientes: aviso con "Deshacer". Reiniciar el libro que suena lo lleva al inicio en pausa
 - Renombrar: diálogo con Cancelar y Guardar; solo cambia el nombre en LECTOR

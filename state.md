@@ -25,7 +25,6 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 ## TODO
 
 - [ ] Lienzo: casilla "No disponibles" en ordenar, menú del libro sin archivos, regenerar "Iconos en uso" con los 9 iconos nuevos del menú, y cambiar "Buscar en la biblioteca" por la búsqueda dentro de la Biblioteca (cabecera con campo, cuadrícula filtrada)
-- [ ] Una carpeta que es un libro (fila de libro en Carpetas) no tiene forma de cambiar su clase de carpeta: la hoja solo sale en filas de carpeta. Decidir dónde ofrecerla (propuesta: "Clase de carpeta" en el menú del libro cuando el libro es una carpeta entera)
-- [ ] Tema claro con una hoja abierta: los botones de navegación del sistema quedan claros sobre la hoja blanca, casi invisibles
-- [ ] Al cerrar el diálogo Renombrar desde la búsqueda, el foco vuelve al campo y se reabre el teclado
+- [ ] Escuchando en horizontal: sin hacer (`design.md` › Reproductor: "Horizontal: pendiente"). Hoy la portada ocupa todo el fondo y los controles quedan encima. El lienzo tiene el diseño ("Horizontal a doble panel")
+- [ ] Arranque en frío: ~1.2 s en negro (fondo de ventana) y ~1.3 s con solo la cabecera de Biblioteca hasta que llegan los libros. Medido el 2026-10-05 con la versión de depuración
 

@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -25,10 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import codelab.lector.ui.theme.LectorTheme
 
-/** Hoja inferior: fondo de superficie, esquinas 18, asa 40 × 4. */
+/**
+ * Hoja inferior: fondo de superficie, esquinas 18, asa 40 × 4. [scrollable]: el contenido se
+ * desplaza si no cabe (en horizontal el menú del libro no cabe); false si ya trae su propia lista.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LectorSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+fun LectorSheet(onDismiss: () -> Unit, scrollable: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
     val c = LectorTheme.colors
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -37,6 +43,12 @@ fun LectorSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Un
         containerColor = c.surface,
         contentColor = c.text,
         scrimColor = c.scrim,
+        // La hoja abre su propia ventana: sin esto, en tema claro los botones de navegación del
+        // sistema salen blancos sobre la hoja blanca.
+        properties = ModalBottomSheetProperties(
+            isAppearanceLightStatusBars = !c.isDark,
+            isAppearanceLightNavigationBars = !c.isDark,
+        ),
         dragHandle = {
             Box(
                 Modifier
@@ -45,7 +57,9 @@ fun LectorSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Un
                     .background(c.outline, RoundedCornerShape(2.dp)),
             )
         },
-        content = content,
+        content = if (scrollable) {
+            { Column(Modifier.verticalScroll(rememberScrollState()), content = content) }
+        } else content,
     )
 }
 
