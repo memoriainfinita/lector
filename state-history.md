@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-06 — Sin retrasos de botones
+
+**Qué cambió:** "Retrasar los botones inferiores" y "Retrasar el botón Atrás", del inventario de Simple ABP y del lienzo, salen de LECTOR; sus filas se quitan en Ajustes C2.
+**Por qué:** el usuario no detecta retraso en nada en Simple ABP. En LECTOR los toques accidentales ya se corrigen con "Deshacer" o con el salto contrario, y un retraso haría más lento cada toque querido.
+
 ### 2026-10-05 — Posición por tramo y "Deshacer" de 10 s
 
 **Qué cambió:** LECTOR guardaba una sola posición por libro; ahora guarda también la de cada tramo (capítulo, o archivo sin capítulos) al salir de él a medias, y volver lo retoma. "Siguiente archivo desde su posición" dejó de estar inactiva. El "Deshacer" de los saltos grandes pasó de 5 a 10 s.

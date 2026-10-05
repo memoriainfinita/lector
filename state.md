@@ -1,6 +1,6 @@
 ---
 created: 2026-10-02
-last_updated: 2026-10-05
+last_updated: 2026-10-06
 ---
 
 # LECTOR — state
