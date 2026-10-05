@@ -45,6 +45,7 @@ import codelab.lector.library.baseFolder
 import codelab.lector.library.displayTitle
 import codelab.lector.library.progress
 import codelab.lector.ui.components.BookCover
+import codelab.lector.ui.components.toneKeyOf
 import codelab.lector.ui.components.LectorDialog
 import codelab.lector.ui.components.LectorSheet
 import codelab.lector.ui.components.LocalUndoState
@@ -75,7 +76,7 @@ class BookMenuActions(
 )
 
 @Composable
-fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel, actions: BookMenuActions, onDismiss: () -> Unit) {
+fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel, actions: BookMenuActions, onDismiss: () -> Unit, showCover: Boolean = true) {
     val undo = LocalUndoState.current
     val book = item.book
     // Sin archivos (inaccesible o quitado): nada que abrir, separar, unir ni borrar.
@@ -93,7 +94,7 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
 
     LectorSheet(onDismiss) {
         Column(Modifier.padding(bottom = 14.dp)) {
-            MenuHeader(item, cover, viewModel)
+            MenuHeader(item, cover, showCover, viewModel)
             SheetDivider()
             Column(Modifier.padding(top = 6.dp)) {
                 // Marcadores: inactivo hasta su función.
@@ -155,7 +156,7 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
 
 /** Portada 52, título, "autor · narrador · serie n" y "posición / total · % · tamaño". */
 @Composable
-private fun MenuHeader(item: LibraryItem, cover: String?, viewModel: LibraryViewModel) {
+private fun MenuHeader(item: LibraryItem, cover: String?, showCover: Boolean, viewModel: LibraryViewModel) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
@@ -168,7 +169,7 @@ private fun MenuHeader(item: LibraryItem, cover: String?, viewModel: LibraryView
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        BookCover(cover, title, Modifier.size(52.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp))
+        if (showCover) BookCover(cover, title, Modifier.size(52.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp), toneKey = toneKeyOf(book.author, title))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(title, style = t.row.copy(fontWeight = FontWeight.SemiBold), color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (byline.isNotEmpty()) Text(byline, style = t.body.copy(fontSize = 13.sp), color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)

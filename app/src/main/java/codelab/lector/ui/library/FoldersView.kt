@@ -57,6 +57,7 @@ import codelab.lector.library.progress
 import codelab.lector.library.ruleFor
 import codelab.lector.library.status
 import codelab.lector.ui.components.BookCover
+import codelab.lector.ui.components.toneKeyOf
 import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LectorSheet
 import codelab.lector.ui.components.LocalBottomInset
@@ -110,7 +111,8 @@ fun FoldersView(
         items(content.books, key = { "b:" + it.book.id }) { item ->
             BookRowItem(
                 item,
-                cover = covers[item.book.id].takeIf { showCovers },
+                cover = covers[item.book.id],
+                showCover = showCovers,
                 loaded = item.book.id == loadedBookId,
                 onOpen = { onBook(item) },
                 onOptions = { onBookOptions(item) },
@@ -175,7 +177,7 @@ private fun FolderRowItem(row: FolderRow, onOpen: () -> Unit, onOptions: () -> U
 }
 
 @Composable
-private fun BookRowItem(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: () -> Unit, onOptions: () -> Unit) {
+private fun BookRowItem(item: LibraryItem, cover: String?, showCover: Boolean, loaded: Boolean, onOpen: () -> Unit, onOptions: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
@@ -202,7 +204,7 @@ private fun BookRowItem(item: LibraryItem, cover: String?, loaded: Boolean, onOp
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        BookCover(cover, title, Modifier.size(48.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp))
+        if (showCover) BookCover(cover, title, Modifier.size(48.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp), toneKey = toneKeyOf(book.author, title))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 title,

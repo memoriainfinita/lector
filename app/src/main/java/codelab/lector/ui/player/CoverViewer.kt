@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,7 +70,16 @@ fun CoverViewer(bookId: String, onClose: () -> Unit) {
             Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            BookCover(path, title, Modifier.fillMaxWidth(), radius = 0.dp, titleStyle = t.headline, contentScale = ContentScale.Fit)
+            // Sin imagen, la portada tipográfica cuadrada.
+            BookCover(
+                path,
+                title,
+                Modifier.fillMaxWidth().then(if (path == null) Modifier.aspectRatio(1f) else Modifier),
+                radius = 0.dp,
+                titleStyle = t.headline,
+                contentScale = ContentScale.Fit,
+                author = book?.author,
+            )
         }
         Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = t.sheetTitle, color = Color.White)

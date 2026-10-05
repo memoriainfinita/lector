@@ -142,7 +142,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Libro inaccesible: aviso con "Volver a buscar" y "Quitar"; conserva posición y marcadores
   - Aviso al abrir tras un cierre del sistema con la pantalla apagada: dónde se paró, "Abrir ajustes" (batería) y "Ahora no"
 - Color de acento: por defecto #F58F00, el naranja del icono (antes #F0A43A). En tema claro, variante oscura del mismo tono (#B86E0E en el lienzo). Opciones en Ajustes › Apariencia: ámbar, azul, verde, coral, color del sistema (Android 12+) y personalizado
-- Ajustes › Apariencia: interruptor "Mostrar portadas" (de Simple ABP, decidido 2026-10-04); sin portadas, la superficie con el título
+- Ajustes › Apariencia: interruptor "Mostrar portadas" (de Simple ABP, decidido 2026-10-04). Sin portadas: Biblioteca en lista y Escuchando sin recuadro (lienzo, versión 151; Pantallas › Sin portadas)
 - Color personalizado: hoja con tono, luminosidad, hex y vista previa en oscuro y claro. Si falta contraste avisa con "Poco contraste" y "Ajustar" (corrige la luminosidad), sin bloquear. Botón Listo pequeño a la derecha
 - Contenido del lienzo registrado en la revisión del 2026-10-02:
   - Reproductor: subtítulo con autor y narrador
@@ -366,7 +366,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Libro quitado: fuera de la Biblioteca salvo con "No disponibles"; entonces atenuado, con "no disponible · n marcadores" (o el porcentaje) en la línea mono. Tocarlo abre la hoja de marcadores del libro. Conserva posición, marcadores, notas y tags; sus marcadores siguen en la recopilación. Si sus archivos vuelven, la búsqueda lo reconecta por firma o duración y vuelve a la Biblioteca (2026-10-05)
 - Solo se muestran los libros de las carpetas actuales; los de una carpeta quitada reaparecen al volver a añadirla
 - Columnas con el pellizco: 1, 2 o 3 en vertical (por defecto 2), el doble en horizontal. Un nivel por gesto; se guarda en DataStore
-- Sin portadas (Ajustes › Apariencia › Mostrar portadas): la superficie con el título en cuadrícula, filas, búsqueda y reproductor
+- Sin portadas (Ajustes › Mostrar portadas): lista en vez de cuadrícula (Pantallas › Sin portadas)
 - Al abrir la app, búsqueda rápida de cambios en segundo plano
 - Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros nuevos aparecen al terminar (el escaneo guarda en una transacción); dos tarjetas grises al final mientras dura la búsqueda. Así solo la búsqueda completa ("Volver a buscar"), el cambio de clase de carpeta y la primera búsqueda. La rápida al abrir es discreta (2026-10-05): solo la línea, superpuesta al borde inferior de la cabecera, sin texto ni tarjetas; no ocupa sitio y no desplaza la cuadrícula al terminar
 - Sin carpetas: icono, "Aún no hay libros", "LECTOR busca los audiolibros dentro y los ordena por libro" y "Añadir carpeta" (destacado), que abre el explorador de carpetas
@@ -429,6 +429,19 @@ Hecha 2026-10-05.
 - Ecualizador y volumen: edita el sonido global; mismos pasos que la hoja Sonido; Restablecer como en la hoja
 - Apariencia: segmentado de tema, Cambiar por hora con las horas en el selector de Android, seis círculos de acento (color del sistema solo en Android 12+; personalizado con borde discontinuo y + hasta elegirlo) e idioma Español / English / Sistema (AppCompat; la Activity se rehace y la pila se conserva)
 - Color personalizado: tono y luminosidad (0.15–0.9) con degradado, hex, vistas previas en oscuro y claro. El aviso dice "Poco contraste en el tema oscuro" (el lienzo dice "en el tema claro", pero la comprobación es sobre el fondo oscuro; el claro se deriva con contraste suficiente). "Ajustar" en acento, no en el color elegido, que puede no leerse
+
+### Sin portadas
+
+Aprobado 2026-10-05 (lienzo, versión 151: "Biblioteca sin portadas: lista", "Biblioteca: libros sin portada", "Reproductor sin portadas").
+
+- Libro sin portada, con portadas activadas: portada tipográfica, con el autor arriba en mayúsculas y el título abajo sobre un tono apagado. El tono sale del primer autor (hasta `/`, `;`, `,` o `&`: "Joseph Goldstein/Joseph Goldstein" y "Joseph Goldstein" comparten tono) o, sin autor, del título; misma luminosidad para todos. Oscuro: fondo oscuro y texto casi blanco del mismo tono; claro: fondo claro y texto oscuro. Miniaturas con el mismo tono, sin autor. Carpeta de Episodios o Sesiones: su clase arriba y tono por su nombre. Título según columnas: 26 / 18 / 14
+- "Mostrar portadas" apagado:
+  - Biblioteca en lista, como Simple ABP: título, autor, línea mono de la tarjeta y barra si está en curso, ⋮; separador entre filas. Carpetas de Episodios o Sesiones: icono de carpeta, nombre, "Sesiones · 12". Sin pellizco. En horizontal, también una columna
+  - "Seguir escuchando" sin miniatura, con el autor bajo el título
+  - Vista Carpetas, menú del libro y minirreproductor sin miniatura
+  - Escuchando sin recuadro: autor en mayúsculas, título de 28, "Narrado por…" y "6% · quedan…" arriba; el hueco en medio (deslizarlo hacia abajo hace Atrás) y controles en su sitio. En horizontal, sin portada a la izquierda. Libro inaccesible: título arriba y tarjeta abajo
+  - El visor de portada sigue abriéndose desde "Ver portada" del menú del libro
+- Porcentaje de Escuchando redondeado, como en la tarjeta (antes truncado: 41% frente a 42%)
 
 ## Modelo de datos
 

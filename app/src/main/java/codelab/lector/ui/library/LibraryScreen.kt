@@ -89,6 +89,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -110,6 +111,8 @@ import codelab.lector.library.progress
 import codelab.lector.library.remainingMs
 import codelab.lector.library.status
 import codelab.lector.ui.components.BookCover
+import codelab.lector.ui.components.toneKeyOf
+import codelab.lector.ui.components.ListDivider
 import codelab.lector.ui.components.HeroButton
 import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LocalBottomInset
@@ -298,7 +301,7 @@ fun LibraryScreen(
     classSheetFor?.let { path -> FolderClassSheet(path, viewModel, state.rules, onDismiss = { classSheetFor = null }) }
     fun itemOf(id: String?) = id?.let { state.items.firstOrNull { item -> item.book.id == it } }
     itemOf(menuFor)?.let { item ->
-        BookMenuSheet(item, state.covers[item.book.id].takeIf { state.showCovers }, viewModel, menuActions, onDismiss = { menuFor = null })
+        BookMenuSheet(item, state.covers[item.book.id], viewModel, menuActions, onDismiss = { menuFor = null }, showCover = state.showCovers)
     }
     itemOf(renameFor)?.let { item ->
         RenameDialog(item.book, onSave = { viewModel.rename(item.book, it) }, onDismiss = { renameFor = null })
@@ -450,13 +453,15 @@ private fun BookGrid(
         (WindowInsets.ime.getBottom(this) - WindowInsets.navigationBars.getBottom(this)).coerceAtLeast(0).toDp()
     }
     val bottom = maxOf(LocalBottomInset.current, keyboard)
+    // Sin portadas (Ajustes › Mostrar portadas): lista, como Simple ABP; sin pellizco.
+    val list = !state.showCovers
     // Columnas del pellizco: 1, 2 o 3 en vertical; en horizontal, el doble (mismo tamaño de tarjeta).
     LazyVerticalGrid(
-        columns = GridCells.Fixed(if (landscape) state.columns * 2 else state.columns),
-        modifier = Modifier.fillMaxSize().pinchToZoom(viewModel::zoom),
+        columns = GridCells.Fixed(if (list) 1 else if (landscape) state.columns * 2 else state.columns),
+        modifier = Modifier.fillMaxSize().then(if (list) Modifier else Modifier.pinchToZoom(viewModel::zoom)),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = bottom + 20.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(if (list) 0.dp else 18.dp),
     ) {
         if (top != null) {
             item(key = "header", span = full) {
@@ -469,7 +474,8 @@ private fun BookGrid(
             item(key = "continue", span = full) {
                 ContinueCard(
                     item,
-                    cover = state.covers[item.book.id].takeIf { state.showCovers },
+                    showCover = state.showCovers,
+                    cover = state.covers[item.book.id],
                     playing = state.playing && item.book.id == state.loadedBookId,
                     onOpen = {
                         viewModel.open(item.book.id)
@@ -488,10 +494,36 @@ private fun BookGrid(
                 viewModel::toggleFilter,
                 viewModel::setSort,
                 viewModel::setShowUnavailable,
-                Modifier.padding(top = if (continueItem == null) 10.dp else 2.dp),
+                Modifier.padding(top = if (continueItem == null) 10.dp else 2.dp, bottom = if (list) 8.dp else 0.dp),
             )
         }
         items(state.entries, key = { it.key }) { entry ->
+            if (list) {
+                // A todo el ancho, con su propio margen: las filas llevan separador de lado a lado.
+                Column(Modifier.bleed(20.dp)) {
+                    when (entry) {
+                        is LibraryEntry.BookEntry -> BookListRow(
+                            entry.item,
+                            loaded = entry.item.book.id == state.loadedBookId,
+                            onOpen = if (entry.item.book.removed) null else {
+                                {
+                                    viewModel.open(entry.item.book.id)
+                                    onOpenPlayer()
+                                }
+                            },
+                            onOptions = { onBookOptions(entry.item.book.id) },
+                            terms = state.searchTerms,
+                        )
+                        is LibraryEntry.FolderEntry -> FolderListRow(
+                            entry,
+                            onOpen = { onOpenFolder(entry.path) },
+                            onOptions = { onFolderOptions(entry.path) },
+                            terms = state.searchTerms,
+                        )
+                    }
+                }
+                return@items
+            }
             when (entry) {
                 is LibraryEntry.BookEntry -> BookCard(
                     entry.item,
@@ -506,6 +538,7 @@ private fun BookGrid(
                     },
                     onOptions = { onBookOptions(entry.item.book.id) },
                     terms = state.searchTerms,
+                    columns = state.columns,
                 )
                 is LibraryEntry.FolderEntry -> FolderCard(
                     entry,
@@ -513,17 +546,19 @@ private fun BookGrid(
                     onOpen = { onOpenFolder(entry.path) },
                     onOptions = { onFolderOptions(entry.path) },
                     terms = state.searchTerms,
+                    columns = state.columns,
                 )
             }
         }
         // Mientras busca, dos huecos al final: los libros van apareciendo.
-        if (state.scan.running && !state.scan.quiet) items(2, key = { "skeleton$it" }) { SkeletonCard() }
+        if (state.scan.running && !state.scan.quiet && !list) items(2, key = { "skeleton$it" }) { SkeletonCard() }
     }
 }
 
 @Composable
 private fun ContinueCard(
     item: LibraryItem,
+    showCover: Boolean,
     cover: String?,
     playing: Boolean,
     onOpen: () -> Unit,
@@ -543,10 +578,17 @@ private fun ContinueCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        BookCover(cover, title, Modifier.size(60.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (showCover) {
+            BookCover(cover, title, Modifier.size(60.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp), toneKey = toneKeyOf(item.book.author, title))
+        }
+        Column(Modifier.weight(1f).padding(start = if (showCover) 0.dp else 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.continue_listening).uppercase(), style = t.section, color = c.accent)
             Text(title, style = t.row.copy(fontWeight = FontWeight.SemiBold), color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // Sin portada, el autor ocupa su sitio.
+            val author = item.book.author?.takeIf { it.isNotBlank() }
+            if (!showCover && author != null) {
+                Text(author, style = t.secondary, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             ProgressBar(item.progress, c.accent)
         }
         Box(
@@ -648,7 +690,7 @@ private fun SortButton(sort: LibrarySort, showUnavailable: Boolean, onSort: (Lib
 }
 
 @Composable
-private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>) {
+private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>, columns: Int) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
@@ -682,7 +724,7 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
                     }
                 },
         ) {
-            BookCover(cover, title, Modifier.fillMaxSize())
+            BookCover(cover, title, Modifier.fillMaxSize(), titleStyle = coverTitleStyle(columns), author = book.author)
         }
         if (status == LibraryFilter.IN_PROGRESS && !unavailable) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
         else Spacer(Modifier.height(3.dp))
@@ -712,7 +754,7 @@ internal fun unavailableMeta(item: LibraryItem): String = stringResource(
 )
 
 @Composable
-private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>) {
+private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>, columns: Int) {
     val c = LectorTheme.colors
     val count = entry.items.size
     val meta = when (entry.kind) {
@@ -728,10 +770,96 @@ private fun FolderCard(entry: LibraryEntry.FolderEntry, cover: String?, onOpen: 
             val top = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)
             Box(Modifier.padding(horizontal = 8.dp).fillMaxWidth().height(12.dp).background(c.track, top))
             Box(Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp).fillMaxWidth().height(12.dp).background(c.outline, top))
-            BookCover(cover, entry.name, Modifier.padding(top = 8.dp).fillMaxSize())
+            BookCover(
+                cover,
+                entry.name,
+                Modifier.padding(top = 8.dp).fillMaxSize(),
+                titleStyle = coverTitleStyle(columns),
+                author = stringResource(folderKindName(entry.kind)),
+                toneKey = entry.name,
+            )
         }
         Spacer(Modifier.height(3.dp))
         CardFooter(highlighted(entry.name, terms), meta, optionsLabel = stringResource(R.string.folder_options, entry.name), onOptions = onOptions)
+    }
+}
+
+/** Título de la portada tipográfica según el tamaño de la tarjeta (columnas del pellizco). */
+@Composable
+private fun coverTitleStyle(columns: Int): TextStyle {
+    val t = LectorTheme.type
+    return when (columns) {
+        1 -> t.bookTitle.copy(fontSize = 26.sp)
+        2 -> t.row.copy(fontSize = 18.sp)
+        else -> t.body
+    }
+}
+
+private fun folderKindName(kind: FolderKind) = when (kind) {
+    FolderKind.SESSIONS -> R.string.folder_class_sessions
+    FolderKind.EPISODES -> R.string.folder_class_episodes
+}
+
+/**
+ * Fila de la lista sin portadas (lienzo "Biblioteca sin portadas: lista"): título, autor, línea
+ * mono y barra si está en curso; ⋮ a la derecha. Cargado: título en acento.
+ */
+@Composable
+private fun BookListRow(item: LibraryItem, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val book = item.book
+    val title = book.displayTitle
+    val unavailable = book.inaccessible || book.removed
+    val author = book.author?.takeIf { it.isNotBlank() }
+    ListDivider()
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .alpha(if (unavailable) 0.4f else 1f)
+            .then(if (onOpen != null) Modifier.clickable(role = Role.Button, onClickLabel = stringResource(R.string.listen_to, title), onClick = onOpen) else Modifier)
+            .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                highlighted(title, terms),
+                style = t.row.copy(fontWeight = FontWeight.Medium),
+                color = if (loaded) c.accent else c.text,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (author != null) Text(highlighted(author, terms), style = t.secondary, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(cardMeta(item), style = t.meta, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (item.status == LibraryFilter.IN_PROGRESS && !unavailable) {
+                Box(Modifier.padding(top = 4.dp)) { ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary) }
+            }
+        }
+        IconAction(painterResource(R.drawable.ic_more_vert), stringResource(R.string.book_options, title), onOptions, tint = c.textSecondary, iconSize = 18.dp)
+    }
+}
+
+/** Carpeta de Sesiones o Episodios en la lista: icono de carpeta, nombre, "Sesiones · 12" y ⋮. */
+@Composable
+private fun FolderListRow(entry: LibraryEntry.FolderEntry, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    ListDivider()
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.open_folder, entry.name), onClick = onOpen)
+            .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(20.dp), tint = c.textSecondary)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(highlighted(entry.name, terms), style = t.row.copy(fontWeight = FontWeight.Medium), color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.folder_subtitle_class, stringResource(folderKindName(entry.kind)), entry.items.size), style = t.meta, color = c.textSecondary)
+        }
+        IconAction(painterResource(R.drawable.ic_more_vert), stringResource(R.string.folder_options, entry.name), onOptions, tint = c.textSecondary, iconSize = 18.dp)
     }
 }
 

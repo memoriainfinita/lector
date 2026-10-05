@@ -71,6 +71,7 @@ import codelab.lector.ui.components.SeekBar
 import codelab.lector.ui.components.SegmentedControl
 import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.formatDuration
+import kotlin.math.roundToInt
 import codelab.lector.ui.formatSpeed
 import codelab.lector.ui.theme.LectorTheme
 
@@ -92,6 +93,8 @@ fun PlayerScreen(
     val inaccessible by viewModel.inaccessibleBook.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val bookmarks by viewModel.bookmarkCount.collectAsStateWithLifecycle()
+    val appearance by viewModel.appearance.collectAsStateWithLifecycle()
+    val showCover = appearance.showCovers
     var sheet by remember { mutableStateOf<PlayerSheet?>(null) }
     val undo = LocalUndoState.current
     val removedText = stringResource(R.string.removed_from_library)
@@ -109,6 +112,7 @@ fun PlayerScreen(
             when {
                 np != null -> LandscapePlayer(
                     np = np,
+                    showCover = showCover,
                     skipBack = settings.appSkipBackSec,
                     skipForward = settings.appSkipForwardSec,
                     onAct = viewModel::act,
@@ -119,7 +123,7 @@ fun PlayerScreen(
                     onSpeed = { sheet = PlayerSheet.SPEED },
                     onMenu = { sheet = PlayerSheet.MENU },
                 )
-                lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), viewModel::rescan, { removeLost(lost) }, onMinimize)
+                lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
             }
         } else {
             Column(Modifier.fillMaxSize()) {
@@ -127,6 +131,7 @@ fun PlayerScreen(
                 when {
                     np != null -> Player(
                         np = np,
+                        showCover = showCover,
                         skipBack = settings.appSkipBackSec,
                         skipForward = settings.appSkipForwardSec,
                         bookmarks = bookmarks,
@@ -138,7 +143,7 @@ fun PlayerScreen(
                         onSpeed = { sheet = PlayerSheet.SPEED },
                         onMenu = { sheet = PlayerSheet.MENU },
                     )
-                    lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), viewModel::rescan, { removeLost(lost) }, onMinimize)
+                    lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
                 }
             }
         }
@@ -197,6 +202,7 @@ private fun Header(onMinimize: () -> Unit) {
 @Composable
 private fun ColumnScope.Player(
     np: NowPlaying,
+    showCover: Boolean,
     skipBack: Int,
     skipForward: Int,
     bookmarks: Int,
@@ -208,8 +214,15 @@ private fun ColumnScope.Player(
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
 ) {
-    CoverArea(Modifier.weight(1f)) { PlayerCover(np, onCover, onMinimize) }
-    TitleBlock(np, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+    if (showCover) {
+        CoverArea(Modifier.weight(1f)) { PlayerCover(np, onCover, onMinimize) }
+        TitleBlock(np, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+    } else {
+        // Lienzo "Reproductor sin portadas": el hueco queda en medio; deslizarlo hacia abajo hace Atrás.
+        Column(Modifier.weight(1f).fillMaxWidth().swipeDown(onMinimize)) {
+            NoCoverTitle(np, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
+        }
+    }
     Bars(np, onJump, onChapters, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
 
     // Controles: anterior, −N, play, +N, siguiente.
@@ -242,6 +255,7 @@ private val LandscapeColumnMin = 236.dp
 @Composable
 private fun LandscapePlayer(
     np: NowPlaying,
+    showCover: Boolean,
     skipBack: Int,
     skipForward: Int,
     onAct: (PlayerAction) -> Unit,
@@ -257,7 +271,7 @@ private fun LandscapePlayer(
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 20.dp)) {
             val coverMax = (maxWidth - LandscapeGap - LandscapeColumnMin).coerceAtMost(300.dp)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(LandscapeGap)) {
-                if (coverMax >= 96.dp) {
+                if (showCover && coverMax >= 96.dp) {
                     Box(Modifier.fillMaxHeight().widthIn(max = coverMax), contentAlignment = Alignment.Center) {
                         PlayerCover(np, onCover, onMinimize)
                     }
@@ -323,13 +337,37 @@ private fun PlayerCover(np: NowPlaying, onCover: () -> Unit, onMinimize: () -> U
     BookCover(
         np.coverPath,
         np.title,
-        Modifier
+        author = np.author,
+        modifier = Modifier
             .aspectRatio(ratio, matchHeightConstraintsFirst = true)
             .swipeDown(onMinimize)
             .clickable(onClickLabel = stringResource(R.string.view_cover), role = Role.Image, onClick = onCover),
         titleStyle = LectorTheme.type.headline,
         onAspectRatio = { ratio = it },
     )
+}
+
+/** Sin portadas: autor en mayúsculas, título de 28, narrador y "6% · quedan 24:22:14". */
+@Composable
+private fun NoCoverTitle(np: NowPlaying, modifier: Modifier) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        np.author?.takeIf { it.isNotBlank() }?.let {
+            Text(it.uppercase(), style = t.secondary.copy(letterSpacing = 1.5.sp), color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Text(np.title, style = t.headline.copy(lineHeight = 32.sp), color = c.text, maxLines = 4, overflow = TextOverflow.Ellipsis)
+        np.narrator?.takeIf { it.isNotBlank() && it != np.author }?.let {
+            Text(stringResource(R.string.narrated_by, it), style = t.body, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        val percent = if (np.durationMs > 0) (np.positionMs * 100.0 / np.durationMs).roundToInt() else 0
+        Text(
+            stringResource(R.string.book_progress, percent, formatDuration((np.durationMs - np.positionMs).coerceAtLeast(0))),
+            style = t.meta.copy(fontSize = 14.sp),
+            color = c.textSecondary,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }
 
 /** Título, autor · narrador y porcentaje. */
@@ -344,7 +382,7 @@ private fun TitleBlock(np: NowPlaying, modifier: Modifier) {
             val byline = listOfNotNull(np.author, np.narrator).filter { it.isNotBlank() }.distinct().joinToString(" · ")
             if (byline.isNotEmpty()) Text(byline, style = t.body, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        val percent = if (np.durationMs > 0) (np.positionMs * 100 / np.durationMs).toInt() else 0
+        val percent = if (np.durationMs > 0) (np.positionMs * 100.0 / np.durationMs).roundToInt() else 0
         Text("$percent%", style = mono14, color = c.textSecondary, modifier = Modifier.padding(top = 6.dp))
     }
 }
@@ -558,21 +596,29 @@ private fun SmallAction(
 
 /** Libro sin acceso: portada atenuada y tarjeta con "Volver a buscar" y "Quitar". */
 @Composable
-private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
-    CoverArea(Modifier.weight(1f)) { InaccessibleCover(book, coverPath, onMinimize) }
-    InaccessibleHeading(book, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+    if (showCover) {
+        CoverArea(Modifier.weight(1f)) { InaccessibleCover(book, coverPath, onMinimize) }
+        InaccessibleHeading(book, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+    } else {
+        Column(Modifier.weight(1f).fillMaxWidth().swipeDown(onMinimize)) {
+            InaccessibleHeading(book, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
+        }
+    }
     NotFoundCard(book, onRescan, onRemove, Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 20.dp))
 }
 
 /** Libro sin acceso en horizontal: portada atenuada a la izquierda; título y tarjeta a la derecha. */
 @Composable
-private fun InaccessibleLandscape(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+private fun InaccessibleLandscape(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
     Row(
         Modifier.fillMaxSize().padding(start = 24.dp, top = 20.dp, end = 24.dp, bottom = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Box(Modifier.fillMaxHeight().widthIn(max = 300.dp), contentAlignment = Alignment.Center) {
-            InaccessibleCover(book, coverPath, onMinimize)
+        if (showCover) {
+            Box(Modifier.fillMaxHeight().widthIn(max = 300.dp), contentAlignment = Alignment.Center) {
+                InaccessibleCover(book, coverPath, onMinimize)
+            }
         }
         Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
             InaccessibleHeading(book, Modifier.fillMaxWidth())
@@ -587,7 +633,8 @@ private fun InaccessibleCover(book: Book, coverPath: String?, onMinimize: () -> 
     BookCover(
         coverPath,
         book.customName ?: book.title,
-        Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
+        author = book.author,
+        modifier = Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
         titleStyle = LectorTheme.type.headline,
         onAspectRatio = { ratio = it },
     )

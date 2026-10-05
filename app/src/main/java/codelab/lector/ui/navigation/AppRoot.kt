@@ -139,6 +139,7 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
     val player: PlayerViewModel = viewModel { PlayerViewModel(app) }
     val nowPlaying by player.nowPlaying.collectAsStateWithLifecycle()
     val settings by player.settings.collectAsStateWithLifecycle()
+    val appearance by player.appearance.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { app.playback.connect() }
     // Búsqueda rápida de cambios al abrir la app, discreta; no se repite al girar la pantalla.
     var scanned by rememberSaveable { mutableStateOf(false) }
@@ -187,6 +188,7 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
                     skipForward = settings.appSkipForwardSec,
                     onAct = player::act,
                     onOpen = navigator::openPlayer,
+                    showCover = appearance.showCovers,
                 )
             }
         }

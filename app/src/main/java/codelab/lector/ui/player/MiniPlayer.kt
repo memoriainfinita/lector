@@ -28,6 +28,7 @@ import codelab.lector.R
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlayerAction
 import codelab.lector.ui.components.BookCover
+import codelab.lector.ui.components.toneKeyOf
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.theme.LectorTheme
 
@@ -45,6 +46,7 @@ fun MiniPlayer(
     skipForward: Int,
     onAct: (PlayerAction) -> Unit,
     onOpen: () -> Unit,
+    showCover: Boolean = true,
 ) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
@@ -72,7 +74,9 @@ fun MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                BookCover(np.coverPath, np.title, Modifier.size(44.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp))
+                if (showCover) {
+                    BookCover(np.coverPath, np.title, Modifier.size(44.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 9.sp), toneKey = toneKeyOf(np.author, np.title))
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(np.title, style = t.body, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val inSegment = (np.positionMs - np.segmentStartMs).coerceAtLeast(0)
