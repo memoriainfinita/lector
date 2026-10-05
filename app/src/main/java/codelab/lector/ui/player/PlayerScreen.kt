@@ -51,7 +51,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,7 +64,6 @@ import codelab.lector.playback.ActionCall
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.iconRes
 import codelab.lector.playback.nameRes
-import codelab.lector.playback.skipText
 import codelab.lector.playback.PlayerAction
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.IconAction
@@ -458,8 +456,8 @@ private fun nextLabel(np: NowPlaying) =
     stringResource(if (np.hasChapters) R.string.next_chapter else R.string.next_file)
 
 /**
- * Hueco de Ajustes › Botones. Vertical: saltos con el número dentro de la flecha, iconos de 52.
- * [compact] (horizontal): saltos en texto, iconos de 44. "Nada" deja el hueco vacío.
+ * Hueco de Ajustes › Botones: saltos con el número dentro de la flecha, el resto con su icono.
+ * Vertical, de 56 / 52; [compact] (horizontal), de 44. "Nada" deja el hueco vacío.
  */
 @Composable
 private fun SlotButton(call: ActionCall, np: NowPlaying, compact: Boolean, onCall: (ActionCall) -> Unit) {
@@ -471,11 +469,7 @@ private fun SlotButton(call: ActionCall, np: NowPlaying, compact: Boolean, onCal
         PlayerAction.SKIP_BACK, PlayerAction.SKIP_FORWARD -> {
             val back = call.action == PlayerAction.SKIP_BACK
             val description = stringResource(if (back) R.string.skip_back_seconds else R.string.skip_forward_seconds, call.seconds)
-            if (compact) {
-                TextAction(call.skipText(), description, LectorTheme.type.meta.copy(fontSize = 14.sp), onClick)
-            } else {
-                SkipButton(if (back) R.drawable.ic_replay else R.drawable.ic_forward, if (back) 1.dp else (-1).dp, call.seconds, description, onClick)
-            }
+            SkipButton(if (back) R.drawable.ic_replay else R.drawable.ic_forward, back, call.seconds, description, compact, onClick)
         }
         PlayerAction.PREVIOUS -> RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), size, iconSize, onClick = onClick)
         PlayerAction.NEXT -> RoundIcon(R.drawable.ic_skip_next, nextLabel(np), size, iconSize, onClick = onClick)
@@ -573,39 +567,31 @@ private fun RoundIcon(
 }
 
 /**
- * Salto con el número de segundos dentro de la flecha circular. El círculo de cada icono está 1 dp
- * a un lado del centro (la flecha ocupa el otro): [centerX] lleva el número a su centro. Cifras de
- * ancho fijo para que "10" no quede descompensado por el 1 estrecho.
+ * Salto con el número de segundos dentro de la flecha circular: 56 con icono de 40, o 44 con icono
+ * de 32 si [compact]. El círculo de cada icono está a un lado del centro (la flecha ocupa el otro):
+ * el número se desplaza a su centro. Cifras de ancho fijo para que "10" no quede descompensado por
+ * el 1 estrecho.
  */
 @Composable
-private fun SkipButton(@DrawableRes icon: Int, centerX: Dp, seconds: Int, description: String, onClick: () -> Unit) {
+private fun SkipButton(@DrawableRes icon: Int, back: Boolean, seconds: Int, description: String, compact: Boolean, onClick: () -> Unit) {
     val c = LectorTheme.colors
+    val scale = if (compact) 0.8f else 1f
     Box(
-        Modifier.size(56.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClick),
+        Modifier.size(if (compact) 44.dp else 56.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(icon), description, Modifier.size(40.dp), tint = c.text)
+        Icon(painterResource(icon), description, Modifier.size(40.dp * scale), tint = c.text)
         Text(
             "$seconds",
-            style = LectorTheme.type.meta.copy(fontWeight = FontWeight.SemiBold, fontFamily = LectorTheme.type.body.fontFamily, fontFeatureSettings = "tnum"),
+            style = LectorTheme.type.meta.copy(
+                fontSize = 12.sp * scale,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = LectorTheme.type.body.fontFamily,
+                fontFeatureSettings = "tnum",
+            ),
             color = c.text,
-            modifier = Modifier.offset(x = centerX, y = 0.5.dp),
+            modifier = Modifier.offset(x = (if (back) 1.dp else (-1).dp) * scale, y = 0.5.dp * scale),
         )
-    }
-}
-
-/** Salto en texto (−30, +30) de Escuchando en horizontal: 44 de lado. */
-@Composable
-private fun TextAction(text: String, description: String, style: TextStyle, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .size(44.dp)
-            .clip(CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, style = style, color = LectorTheme.colors.text)
     }
 }
 

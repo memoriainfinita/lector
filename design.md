@@ -10,7 +10,7 @@ Reproductor de audiolibros para Android, clon propio de Simple Audiobook Player 
 
 ## Funciones de Simple ABP a replicar
 
-Todas, también las de pago. Detalle en "Simple ABP: inventario".
+Todas, también las de pago, salvo los retrasos del botón Atrás y de los botones inferiores (2026-10-06, Pantallas › Ajustes › C1). Detalle en "Simple ABP: inventario".
 
 - Reproduce archivos de audio del dispositivo; UI minimalista para audiolibros
 - Marcadores
@@ -170,7 +170,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Renombrar (libro y tag): diálogo con campo, Cancelar y Guardar. Renombrar un libro solo cambia el nombre en LECTOR; carpeta y archivos no se tocan
   - Borrar del móvil: confirmación con número de archivos, tamaño y ruta; "No se puede deshacer"; los marcadores se conservan en la recopilación. Botón Borrar en coral
   - Separar en libros: lista de archivos con casilla en el que empieza cada libro nuevo, en espejo de "Unir libros". Posición y marcadores pasan al libro que contiene cada archivo. Se deshace en Correcciones
-  - Elegir valor: hoja común con − / +, valor grande y atajos (segundos de cada salto, tramo repetido al reanudar, retraso de botones, minutos de la pausa diferida)
+  - Elegir valor: hoja común con − / +, valor grande y atajos (segundos de cada salto, tramo repetido al reanudar, minutos de la pausa diferida)
   - Unir con otro tag: hoja con elección única del tag destino; el tag original desaparece
   - Horas, "Abrir con…" y elegir archivo usan los selectores de Android
 - Sistema de botones (zona táctil mínima 44 px aunque el botón se vea menor):
@@ -299,7 +299,7 @@ Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
 - Una sola pila con Biblioteca en la raíz; Atrás en Biblioteca sale de la app
 - Escuchando y Marcadores se abren encima. Si ya están en la pila, suben arriba en vez de duplicarse. Atrás vuelve a la pantalla anterior. Marcadores lleva flecha de Atrás y título de 20, como las subpantallas (lienzo, versión 148)
 - Cabecera de Biblioteca: buscar, Marcadores y Ajustes. Ajustes también desde el ⋯ del reproductor
-- Todo Atrás pasa por un punto único, para aplicar "Retrasar el botón Atrás" (comportamiento en Simple ABP sin comprobar)
+- Todo Atrás pasa por un punto único (`Navigator.goBack`)
 - Con minirreproductor: Biblioteca, Marcadores y búsqueda en marcadores. La búsqueda en la biblioteca no es pantalla: filtra la propia Biblioteca (Pantallas › Biblioteca › D, 2026-10-05)
 - Biblioteca: Libros / Carpetas es un selector de la misma pantalla. En Carpetas se entra en subcarpetas con la ruta arriba; Atrás sube un nivel
 - Pantallas completas, sin minirreproductor: Ajustes y sus subpáginas (Pausa diferida, Botones, Ecualizador y volumen, Carpetas, Gestionar tags, Apariencia, Datos), explorador de carpetas, unir libros, separar en libros, visor de portada. El visor se cierra con × o deslizando hacia abajo
@@ -342,7 +342,7 @@ Hecha 2026-10-03.
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" lo quita de la biblioteca como el menú del libro (Pantallas › Biblioteca › A), con "Deshacer", y cierra Escuchando (2026-10-05)
 - Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. De lado a lado, sin márgenes ni esquinas redondeadas (la línea de progreso hace de borde superior), y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
-- Horizontal (2026-10-05), lienzo "Horizontal a doble panel": cuando la pantalla es más ancha que alta. Sin cabecera; portada a la izquierda (toma el ancho que deja la columna central, hasta 300; tocar y deslizar como en vertical), columna central con título, barras, controles (anterior, −N / +N en texto con los segundos de los ajustes, play 56, siguiente) y fila pausa diferida · marcar · velocidad · ⋯, sin el botón de marcadores del libro. Panel derecho de 280 con pestañas Capítulos (o Archivos, si el libro no tiene capítulos) y Marcadores, esta inactiva hasta su función; filas de la hoja de capítulos, siguen al tramo en curso, tocar salta con "Deshacer". Libro inaccesible: portada a la izquierda, título y tarjeta a la derecha
+- Horizontal (2026-10-05), lienzo "Horizontal a doble panel": cuando la pantalla es más ancha que alta. Sin cabecera; portada a la izquierda (toma el ancho que deja la columna central, hasta 300; tocar y deslizar como en vertical), columna central con título, barras, controles (los huecos de Ajustes › Botones de 44, saltos con la flecha circular como en vertical desde el 2026-10-06, antes en texto; play 56) y fila pausa diferida · marcar · velocidad · ⋯, sin el botón de marcadores del libro. Panel derecho de 280 con pestañas Capítulos (o Archivos, si el libro no tiene capítulos) y Marcadores, esta inactiva hasta su función; filas de la hoja de capítulos, siguen al tramo en curso, tocar salta con "Deshacer". Libro inaccesible: portada a la izquierda, título y tarjeta a la derecha
 
 ### Biblioteca
 
@@ -413,7 +413,7 @@ Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye
 
 ### Ajustes
 
-Aprobado 2026-10-05. Tres entregas por dependencias: A pantalla principal, Apariencia y Ecualizador y volumen; B Carpetas y explorador de carpetas; C Botones (reproductor, notificación, auricular, teclas multimedia, retrasos, notificación estándar). Código en `ui/settings/`.
+Aprobado 2026-10-05. Tres entregas por dependencias: A pantalla principal, Apariencia y Ecualizador y volumen; B Carpetas y explorador de carpetas; C en dos (2026-10-06): C1 Botones del reproductor y de la notificación; C2 botones remotos (auricular, teclas multimedia), Auricular y notificación estándar. Sin retrasos. Código en `ui/settings/`.
 
 - Filas de funciones que aún no existen: atenuadas e inactivas, no ocultas, como la pausa diferida en Escuchando. Pausa diferida, Gestionar tags y Abrir la hoja al marcar, Datos y saltos del widget llegan con sus funciones
 - "Siguiente archivo desde su posición": activa desde el 2026-10-05 (Reproducción › Posición por tramo), con la nota "Al terminar uno, el siguiente sigue donde se dejó"
@@ -450,12 +450,12 @@ Aprobado 2026-10-05.
 
 #### C1. Botones
 
-Hecha 2026-10-06 (lienzo `Settings-Buttons`, `Action-Picker`). C2 (botones remotos, Auricular, retrasos, notificación estándar) aparte.
+Hecha 2026-10-06 (lienzo `Settings-Buttons`, `Action-Picker`). C2 (botones remotos, Auricular, notificación estándar y quitar las filas de retrasos) aparte.
 
 - Hueco = acción y, si es un salto, sus segundos; 4 del reproductor y 4 de la notificación en DataStore. Por defecto en los dos: anterior, −10, +10, siguiente (el lienzo dice −30, |<, >|, Marca en la notificación: anterior al cambio del 2026-10-05)
 - Acciones de la hoja: saltar atrás, saltar adelante, capítulo o archivo anterior, capítulo o archivo siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, nada. Un salto abre después Elegir valor con los segundos: 1–120, atajos 5, 10, 15, 30, 60
 - Ajustes › Botones: "Saltos" abre la pantalla; "Botones remotos", atenuada hasta C2. Widget atenuado hasta los widgets. "Dividir el salto por la velocidad" con la nota "A 2x, +10 s salta 5 s de libro: 10 s de escucha" (el lienzo dice 20 s, lo contrario de lo que hace el motor)
-- Escuchando: los huecos 1 y 2 a la izquierda de play, 3 y 4 a la derecha. Saltos con el número en la flecha (en horizontal, en texto); el resto, su icono; "Nada", hueco vacío
+- Escuchando: los huecos 1 y 2 a la izquierda de play, 3 y 4 a la derecha. Saltos con el número en la flecha, también en horizontal (44, icono 32); el resto, su icono; "Nada", hueco vacío
 - Minirreproductor: marcar y play fijos; los dos saltos siguen a los huecos 2 y 3 del reproductor
 - Notificación: hueco 2 en `SLOT_BACK`, 3 en `SLOT_FORWARD`, 1 y 4 en `SLOT_OVERFLOW` (extremos en HyperOS). Iconos de Media3 (saltos, anterior, siguiente, play, marcador); deshacer e ir al marcador anterior con iconos propios (`ic_undo`, `ic_bookmark_previous`). Cambia al guardar
 - Saltos sin hueco propio (`COMMAND_SEEK_BACK` / `FORWARD` del sistema): los segundos del primer salto de ese sentido del reproductor, o 10
