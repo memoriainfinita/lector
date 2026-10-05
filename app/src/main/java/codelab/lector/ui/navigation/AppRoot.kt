@@ -57,6 +57,7 @@ import codelab.lector.ui.onboarding.OnboardingFoldersScreen
 import codelab.lector.ui.onboarding.OnboardingFoldersViewModel
 import codelab.lector.ui.onboarding.OnboardingPermissionScreen
 import codelab.lector.ui.settings.AppearanceScreen
+import codelab.lector.ui.settings.ButtonsSettingsScreen
 import codelab.lector.ui.settings.FolderPickerScreen
 import codelab.lector.ui.settings.FolderPickerViewModel
 import codelab.lector.ui.settings.LibrarySettingsScreen
@@ -199,9 +200,10 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
             playing?.let { np ->
                 MiniPlayer(
                     np,
-                    skipBack = settings.appSkipBackSec,
-                    skipForward = settings.appSkipForwardSec,
+                    left = settings.playerButtons[1],
+                    right = settings.playerButtons[2],
                     onAct = player::act,
+                    onCall = player::act,
                     onOpen = navigator::openPlayer,
                     showCover = appearance.showCovers,
                 )
@@ -280,6 +282,7 @@ private fun routeEntries(
                 onSound = { navigator.open(SettingsSoundRoute) },
                 onAppearance = { navigator.open(SettingsAppearanceRoute) },
                 onLibrary = { navigator.open(SettingsLibraryRoute) },
+                onButtons = { navigator.open(SettingsButtonsRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
@@ -291,7 +294,7 @@ private fun routeEntries(
             )
         }
         entry<SettingsSleepRoute> { PlaceholderScreen(stringResource(R.string.settings_sleep), onBack = back) }
-        entry<SettingsButtonsRoute> { PlaceholderScreen(stringResource(R.string.settings_buttons), onBack = back) }
+        entry<SettingsButtonsRoute> { ButtonsSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsTagsRoute> { PlaceholderScreen(stringResource(R.string.settings_tags), onBack = back) }
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }

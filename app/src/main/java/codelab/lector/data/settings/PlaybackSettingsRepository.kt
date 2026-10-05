@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import codelab.lector.playback.ActionCall
+import codelab.lector.playback.PlayerAction
 import codelab.lector.playback.SoundSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -18,11 +20,10 @@ data class PlaybackSettings(
     val rewindOnResumeMs: Int = 3_000,
     val skipDividedBySpeed: Boolean = false,
     val autoNextBook: Boolean = false,
-    /** Segundos de los botones de salto de la app (−10 / +10). */
-    val appSkipBackSec: Int = 10,
-    val appSkipForwardSec: Int = 10,
-    /** Segundos del salto atrás de la notificación (−30). */
-    val notificationSkipBackSec: Int = 30,
+    /** Ajustes › Botones: los 4 huecos de Escuchando, alrededor de play. */
+    val playerButtons: List<ActionCall> = DefaultButtons,
+    /** Ajustes › Botones: los 4 huecos de la notificación (dos en los extremos y dos junto a play). */
+    val notificationButtons: List<ActionCall> = DefaultButtons,
     /** Velocidad con la que empiezan los libros nuevos. */
     val newBookSpeed: Float = 1f,
     /** Ajustes › Reproducir al abrir la app. */
@@ -31,7 +32,32 @@ data class PlaybackSettings(
     val coverOutside: Boolean = true,
     /** Ajustes › Siguiente archivo desde su posición: al terminar un archivo sonando, el siguiente retoma la suya. */
     val nextFileFromPosition: Boolean = true,
+) {
+    /** Segundos de los saltos sin hueco propio (minirreproductor sin salto, coche): los del reproductor. */
+    val appSkipBackSec: Int get() = playerButtons.firstOrNull { it.action == PlayerAction.SKIP_BACK }?.seconds ?: DEFAULT_SKIP_SEC
+    val appSkipForwardSec: Int get() = playerButtons.firstOrNull { it.action == PlayerAction.SKIP_FORWARD }?.seconds ?: DEFAULT_SKIP_SEC
+}
+
+const val DEFAULT_SKIP_SEC = 10
+
+/** Anterior, −10, +10, siguiente: en el reproductor y en la notificación. */
+val DefaultButtons = listOf(
+    ActionCall(PlayerAction.PREVIOUS),
+    ActionCall(PlayerAction.SKIP_BACK, DEFAULT_SKIP_SEC),
+    ActionCall(PlayerAction.SKIP_FORWARD, DEFAULT_SKIP_SEC),
+    ActionCall(PlayerAction.NEXT),
 )
+
+/** "SKIP_BACK:10,PREVIOUS:0,…". Uno ilegible o de otro número de huecos: los de por defecto. */
+private fun decodeButtons(text: String?): List<ActionCall> {
+    val calls = text?.split(',')?.map { part ->
+        val action = runCatching { PlayerAction.valueOf(part.substringBefore(':')) }.getOrNull() ?: return DefaultButtons
+        ActionCall(action, part.substringAfter(':', "0").toIntOrNull() ?: 0)
+    } ?: return DefaultButtons
+    return calls.takeIf { it.size == DefaultButtons.size } ?: DefaultButtons
+}
+
+private fun encodeButtons(calls: List<ActionCall>) = calls.joinToString(",") { "${it.action.name}:${it.seconds}" }
 
 /** Libro que sonaba cuando el proceso murió sin pasar por una pausa o un cierre normal. */
 data class InterruptedPlayback(val bookId: String)
@@ -44,9 +70,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             rewindOnResumeMs = p[REWIND_MS] ?: d.rewindOnResumeMs,
             skipDividedBySpeed = p[SKIP_DIVIDE] ?: d.skipDividedBySpeed,
             autoNextBook = p[AUTO_NEXT] ?: d.autoNextBook,
-            appSkipBackSec = p[APP_BACK] ?: d.appSkipBackSec,
-            appSkipForwardSec = p[APP_FORWARD] ?: d.appSkipForwardSec,
-            notificationSkipBackSec = p[NOTIF_BACK] ?: d.notificationSkipBackSec,
+            playerButtons = decodeButtons(p[PLAYER_BUTTONS]),
+            notificationButtons = decodeButtons(p[NOTIFICATION_BUTTONS]),
             newBookSpeed = p[NEW_BOOK_SPEED] ?: d.newBookSpeed,
             playOnOpen = p[PLAY_ON_OPEN] ?: d.playOnOpen,
             coverOutside = p[COVER_OUTSIDE] ?: d.coverOutside,
@@ -71,6 +96,16 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
     }
 
     suspend fun setNewBookSpeed(speed: Float) = store.edit { it[NEW_BOOK_SPEED] = speed }
+
+    suspend fun setSkipDividedBySpeed(enabled: Boolean) = store.edit { it[SKIP_DIVIDE] = enabled }
+
+    suspend fun setPlayerButton(index: Int, call: ActionCall) = store.edit {
+        it[PLAYER_BUTTONS] = encodeButtons(decodeButtons(it[PLAYER_BUTTONS]).toMutableList().also { list -> list[index] = call })
+    }
+
+    suspend fun setNotificationButton(index: Int, call: ActionCall) = store.edit {
+        it[NOTIFICATION_BUTTONS] = encodeButtons(decodeButtons(it[NOTIFICATION_BUTTONS]).toMutableList().also { list -> list[index] = call })
+    }
 
     suspend fun setAutoNextBook(enabled: Boolean) = store.edit { it[AUTO_NEXT] = enabled }
 
@@ -104,9 +139,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val REWIND_MS = intPreferencesKey("rewind_on_resume_ms")
         val SKIP_DIVIDE = booleanPreferencesKey("skip_divided_by_speed")
         val AUTO_NEXT = booleanPreferencesKey("auto_next_book")
-        val APP_BACK = intPreferencesKey("app_skip_back_sec")
-        val APP_FORWARD = intPreferencesKey("app_skip_forward_sec")
-        val NOTIF_BACK = intPreferencesKey("notification_skip_back_sec")
+        val PLAYER_BUTTONS = stringPreferencesKey("player_buttons")
+        val NOTIFICATION_BUTTONS = stringPreferencesKey("notification_buttons")
         val LAST_BOOK = stringPreferencesKey("last_book_id")
         val PLAYING_BOOK = stringPreferencesKey("playing_book_id")
         val NEW_BOOK_SPEED = floatPreferencesKey("new_book_speed")

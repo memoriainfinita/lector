@@ -262,4 +262,22 @@
         <item quantity="one">%d archivo de audio</item>
         <item quantity="other">%d archivos de audio</item>
     </plurals>
+    <string name="action_name_skip_back">Saltar atrás</string>
+    <string name="action_name_skip_forward">Saltar adelante</string>
+    <string name="action_name_previous">Capítulo o archivo anterior</string>
+    <string name="action_name_next">Capítulo o archivo siguiente</string>
+    <string name="action_name_play_pause">Play / pausa</string>
+    <string name="action_name_previous_bookmark">Ir al marcador anterior</string>
+    <string name="action_name_undo_jump">Deshacer salto</string>
+    <string name="action_name_none">Nada</string>
+    <string name="buttons_player">Saltos en el reproductor</string>
+    <string name="buttons_notification">Saltos en la notificación</string>
+    <string name="buttons_widget">Saltos en el widget</string>
+    <string name="widget_left">Izquierda</string>
+    <string name="widget_right">Derecha</string>
+    <string name="skip_divided_by_speed">Dividir el salto por la velocidad</string>
+    <string name="skip_divided_by_speed_note">A 2x, +10 s salta 5 s de libro: 10 s de escucha</string>
+    <string name="button_of_player">Botón %1$d del reproductor</string>
+    <string name="button_of_notification">Botón %1$d de la notificación</string>
+    <string name="button_actions_note">Las mismas acciones sirven para la notificación, el widget, el auricular y las teclas multimedia</string>
 </resources>

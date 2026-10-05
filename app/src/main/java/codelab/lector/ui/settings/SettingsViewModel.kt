@@ -1,5 +1,6 @@
 package codelab.lector.ui.settings
 
+import codelab.lector.playback.ActionCall
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import codelab.lector.AppContainer
@@ -49,6 +50,9 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     fun setNewBookSpeed(speed: Float) = save { app.playbackSettings.setNewBookSpeed(speed) }
     fun setCoverOutside(enabled: Boolean) = save { app.playbackSettings.setCoverOutside(enabled) }
     fun setNextFileFromPosition(enabled: Boolean) = save { app.playbackSettings.setNextFileFromPosition(enabled) }
+    fun setSkipDividedBySpeed(enabled: Boolean) = save { app.playbackSettings.setSkipDividedBySpeed(enabled) }
+    fun setPlayerButton(index: Int, call: ActionCall) = save { app.playbackSettings.setPlayerButton(index, call) }
+    fun setNotificationButton(index: Int, call: ActionCall) = save { app.playbackSettings.setNotificationButton(index, call) }
 
     // Sonido global
     fun setGlobalSound(sound: SoundSettings) = app.playback.setGlobalSound(sound)

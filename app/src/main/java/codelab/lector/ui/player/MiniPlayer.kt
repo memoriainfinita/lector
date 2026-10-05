@@ -25,7 +25,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import codelab.lector.R
+import codelab.lector.playback.ActionCall
 import codelab.lector.playback.NowPlaying
+import codelab.lector.playback.iconRes
+import codelab.lector.playback.nameRes
+import codelab.lector.playback.skipText
 import codelab.lector.playback.PlayerAction
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.toneKeyOf
@@ -37,14 +41,16 @@ val MiniPlayerHeight = 62.dp
 
 /**
  * Minirreproductor sobre el menú inferior: progreso del libro, portada, título, tramo y botones
- * marcar, −N, play / pausa, +N. Tocar la portada o el título abre Escuchando.
+ * marcar, [left], play / pausa, [right] (los huecos 2 y 3 del reproductor; por defecto −N y +N).
+ * Tocar la portada o el título abre Escuchando.
  */
 @Composable
 fun MiniPlayer(
     np: NowPlaying,
-    skipBack: Int,
-    skipForward: Int,
+    left: ActionCall,
+    right: ActionCall,
     onAct: (PlayerAction) -> Unit,
+    onCall: (ActionCall) -> Unit,
     onOpen: () -> Unit,
     showCover: Boolean = true,
 ) {
@@ -92,15 +98,35 @@ fun MiniPlayer(
             MiniButton(44.dp, stringResource(R.string.add_bookmark), { onAct(PlayerAction.ADD_BOOKMARK) }) {
                 Icon(painterResource(R.drawable.ic_bookmark), null, Modifier.size(20.dp), tint = c.accent)
             }
-            MiniButton(40.dp, stringResource(R.string.skip_back_seconds, skipBack), { onAct(PlayerAction.SKIP_BACK) }) {
-                Text("−$skipBack", style = t.meta.copy(fontSize = 13.sp), color = c.iconSoft)
-            }
+            MiniSlot(left, np, onCall)
             val playing = np.playWhenReady
             MiniButton(44.dp, stringResource(if (playing) R.string.pause else R.string.play), { onAct(PlayerAction.PLAY_PAUSE) }) {
                 Icon(painterResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play), null, Modifier.size(22.dp), tint = c.text)
             }
-            MiniButton(40.dp, stringResource(R.string.skip_forward_seconds, skipForward), { onAct(PlayerAction.SKIP_FORWARD) }) {
-                Text("+$skipForward", style = t.meta.copy(fontSize = 13.sp), color = c.iconSoft)
+            MiniSlot(right, np, onCall)
+        }
+    }
+}
+
+/** Hueco del reproductor en pequeño: salto en texto o icono de 20. "Nada", vacío. */
+@Composable
+private fun MiniSlot(call: ActionCall, np: NowPlaying, onCall: (ActionCall) -> Unit) {
+    val c = LectorTheme.colors
+    val onClick = { onCall(call) }
+    when (call.action) {
+        PlayerAction.NONE -> Box(Modifier.size(width = 40.dp, height = 44.dp))
+        PlayerAction.SKIP_BACK, PlayerAction.SKIP_FORWARD -> {
+            val back = call.action == PlayerAction.SKIP_BACK
+            MiniButton(40.dp, stringResource(if (back) R.string.skip_back_seconds else R.string.skip_forward_seconds, call.seconds), onClick) {
+                Text(call.skipText(), style = LectorTheme.type.meta.copy(fontSize = 13.sp), color = c.iconSoft)
+            }
+        }
+        else -> {
+            val playing = np.playWhenReady
+            val icon = if (call.action == PlayerAction.PLAY_PAUSE && playing) R.drawable.ic_pause else call.action.iconRes() ?: return
+            val name = if (call.action == PlayerAction.PLAY_PAUSE) (if (playing) R.string.pause else R.string.play) else call.action.nameRes()
+            MiniButton(40.dp, stringResource(name), onClick) {
+                Icon(painterResource(icon), null, Modifier.size(20.dp), tint = if (call.action == PlayerAction.ADD_BOOKMARK) c.accent else c.iconSoft)
             }
         }
     }

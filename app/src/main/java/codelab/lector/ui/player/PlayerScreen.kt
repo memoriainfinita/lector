@@ -61,7 +61,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import codelab.lector.R
 import codelab.lector.data.db.Book
+import codelab.lector.playback.ActionCall
 import codelab.lector.playback.NowPlaying
+import codelab.lector.playback.iconRes
+import codelab.lector.playback.nameRes
+import codelab.lector.playback.skipText
 import codelab.lector.playback.PlayerAction
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.IconAction
@@ -113,9 +117,9 @@ fun PlayerScreen(
                 np != null -> LandscapePlayer(
                     np = np,
                     showCover = showCover,
-                    skipBack = settings.appSkipBackSec,
-                    skipForward = settings.appSkipForwardSec,
+                    buttons = settings.playerButtons,
                     onAct = viewModel::act,
+                    onCall = viewModel::act,
                     onJump = viewModel::jumpTo,
                     onSegment = viewModel::jumpToSegment,
                     onCover = { onOpenCover(np.bookId) },
@@ -133,8 +137,8 @@ fun PlayerScreen(
                     np != null -> Player(
                         np = np,
                         showCover = showCover,
-                        skipBack = settings.appSkipBackSec,
-                        skipForward = settings.appSkipForwardSec,
+                        buttons = settings.playerButtons,
+                        onCall = viewModel::act,
                         bookmarks = bookmarks,
                         onAct = viewModel::act,
                         onJump = viewModel::jumpTo,
@@ -204,8 +208,8 @@ private fun Header(onMinimize: () -> Unit) {
 private fun ColumnScope.Player(
     np: NowPlaying,
     showCover: Boolean,
-    skipBack: Int,
-    skipForward: Int,
+    buttons: List<ActionCall>,
+    onCall: (ActionCall) -> Unit,
     bookmarks: Int,
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
@@ -226,17 +230,17 @@ private fun ColumnScope.Player(
     }
     Bars(np, onJump, onChapters, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
 
-    // Controles: anterior, −N, play, +N, siguiente.
+    // Controles: los huecos 1 y 2, play, los huecos 3 y 4 (Ajustes › Botones).
     Row(
         Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.PREVIOUS) }
-        SkipButton(R.drawable.ic_replay, 1.dp, skipBack, stringResource(R.string.skip_back_seconds, skipBack)) { onAct(PlayerAction.SKIP_BACK) }
+        SlotButton(buttons[0], np, compact = false, onCall)
+        SlotButton(buttons[1], np, compact = false, onCall)
         PlayButton(np, 76.dp, 30.dp, onAct)
-        SkipButton(R.drawable.ic_forward, (-1).dp, skipForward, stringResource(R.string.skip_forward_seconds, skipForward)) { onAct(PlayerAction.SKIP_FORWARD) }
-        RoundIcon(R.drawable.ic_skip_next, nextLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.NEXT) }
+        SlotButton(buttons[2], np, compact = false, onCall)
+        SlotButton(buttons[3], np, compact = false, onCall)
     }
 
     ActionRow(np, bookmarks, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
@@ -257,8 +261,8 @@ private val LandscapeColumnMin = 236.dp
 private fun LandscapePlayer(
     np: NowPlaying,
     showCover: Boolean,
-    skipBack: Int,
-    skipForward: Int,
+    buttons: List<ActionCall>,
+    onCall: (ActionCall) -> Unit,
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
     onSegment: (Int) -> Unit,
@@ -268,7 +272,6 @@ private fun LandscapePlayer(
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
 ) {
-    val mono14 = LectorTheme.type.meta.copy(fontSize = 14.sp)
     Row(Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 20.dp)) {
             val coverMax = (maxWidth - LandscapeGap - LandscapeColumnMin).coerceAtMost(300.dp)
@@ -288,11 +291,11 @@ private fun LandscapePlayer(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), 44.dp, 22.dp) { onAct(PlayerAction.PREVIOUS) }
-                        TextAction("−$skipBack", stringResource(R.string.skip_back_seconds, skipBack), mono14) { onAct(PlayerAction.SKIP_BACK) }
+                        SlotButton(buttons[0], np, compact = true, onCall)
+                        SlotButton(buttons[1], np, compact = true, onCall)
                         PlayButton(np, 56.dp, 24.dp, onAct)
-                        TextAction("+$skipForward", stringResource(R.string.skip_forward_seconds, skipForward), mono14) { onAct(PlayerAction.SKIP_FORWARD) }
-                        RoundIcon(R.drawable.ic_skip_next, nextLabel(np), 44.dp, 22.dp) { onAct(PlayerAction.NEXT) }
+                        SlotButton(buttons[2], np, compact = true, onCall)
+                        SlotButton(buttons[3], np, compact = true, onCall)
                     }
                     // Sin marcadores del libro: el panel de la derecha los tiene.
                     ActionRow(np, null, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
@@ -453,6 +456,38 @@ private fun previousLabel(np: NowPlaying) =
 @Composable
 private fun nextLabel(np: NowPlaying) =
     stringResource(if (np.hasChapters) R.string.next_chapter else R.string.next_file)
+
+/**
+ * Hueco de Ajustes › Botones. Vertical: saltos con el número dentro de la flecha, iconos de 52.
+ * [compact] (horizontal): saltos en texto, iconos de 44. "Nada" deja el hueco vacío.
+ */
+@Composable
+private fun SlotButton(call: ActionCall, np: NowPlaying, compact: Boolean, onCall: (ActionCall) -> Unit) {
+    val size = if (compact) 44.dp else 52.dp
+    val iconSize = if (compact) 22.dp else 26.dp
+    val onClick = { onCall(call) }
+    when (call.action) {
+        PlayerAction.NONE -> Spacer(Modifier.size(size))
+        PlayerAction.SKIP_BACK, PlayerAction.SKIP_FORWARD -> {
+            val back = call.action == PlayerAction.SKIP_BACK
+            val description = stringResource(if (back) R.string.skip_back_seconds else R.string.skip_forward_seconds, call.seconds)
+            if (compact) {
+                TextAction(call.skipText(), description, LectorTheme.type.meta.copy(fontSize = 14.sp), onClick)
+            } else {
+                SkipButton(if (back) R.drawable.ic_replay else R.drawable.ic_forward, if (back) 1.dp else (-1).dp, call.seconds, description, onClick)
+            }
+        }
+        PlayerAction.PREVIOUS -> RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), size, iconSize, onClick = onClick)
+        PlayerAction.NEXT -> RoundIcon(R.drawable.ic_skip_next, nextLabel(np), size, iconSize, onClick = onClick)
+        PlayerAction.PLAY_PAUSE -> {
+            val playing = np.playWhenReady
+            RoundIcon(if (playing) R.drawable.ic_pause else R.drawable.ic_play, stringResource(if (playing) R.string.pause else R.string.play), size, iconSize, onClick = onClick)
+        }
+        PlayerAction.ADD_BOOKMARK ->
+            RoundIcon(R.drawable.ic_bookmark, stringResource(R.string.add_bookmark), size, iconSize - 2.dp, tint = LectorTheme.colors.accent, onClick = onClick)
+        else -> RoundIcon(call.action.iconRes() ?: R.drawable.ic_more, stringResource(call.action.nameRes()), size, iconSize - 2.dp, onClick = onClick)
+    }
+}
 
 /** Play / pausa en acento, según "va a sonar". */
 @Composable

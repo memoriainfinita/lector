@@ -44,6 +44,7 @@ fun SettingsScreen(
     onSound: () -> Unit,
     onAppearance: () -> Unit,
     onLibrary: () -> Unit,
+    onButtons: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
@@ -74,7 +75,7 @@ fun SettingsScreen(
         LinkRow(stringResource(R.string.sleep_timer_and_schedule), {}, enabled = false)
 
         SectionHeader(stringResource(R.string.settings_buttons))
-        LinkRow(stringResource(R.string.skip_buttons), {}, note = stringResource(R.string.skip_buttons_note), enabled = false)
+        LinkRow(stringResource(R.string.skip_buttons), onButtons, note = stringResource(R.string.skip_buttons_note))
         LinkRow(stringResource(R.string.remote_buttons), {}, note = stringResource(R.string.remote_buttons_note), enabled = false)
         SwitchRow(stringResource(R.string.delay_bottom_buttons), false, {}, note = stringResource(R.string.delay_bottom_buttons_note), enabled = false)
         SwitchRow(stringResource(R.string.delay_back_button), false, {}, enabled = false)

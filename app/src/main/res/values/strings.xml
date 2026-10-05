@@ -263,4 +263,22 @@
         <item quantity="one">%d audio file</item>
         <item quantity="other">%d audio files</item>
     </plurals>
+    <string name="action_name_skip_back">Skip back</string>
+    <string name="action_name_skip_forward">Skip forward</string>
+    <string name="action_name_previous">Previous chapter or file</string>
+    <string name="action_name_next">Next chapter or file</string>
+    <string name="action_name_play_pause">Play / pause</string>
+    <string name="action_name_previous_bookmark">Go to previous bookmark</string>
+    <string name="action_name_undo_jump">Undo jump</string>
+    <string name="action_name_none">Nothing</string>
+    <string name="buttons_player">Skips in the player</string>
+    <string name="buttons_notification">Skips in the notification</string>
+    <string name="buttons_widget">Skips in the widget</string>
+    <string name="widget_left">Left</string>
+    <string name="widget_right">Right</string>
+    <string name="skip_divided_by_speed">Divide the skip by the speed</string>
+    <string name="skip_divided_by_speed_note">At 2x, +10 s moves 5 s of the book: 10 s of listening</string>
+    <string name="button_of_player">Player button %1$d</string>
+    <string name="button_of_notification">Notification button %1$d</string>
+    <string name="button_actions_note">The same actions work for the notification, the widget, the headset and the media keys</string>
 </resources>

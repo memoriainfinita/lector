@@ -62,12 +62,12 @@ class PlaybackService : MediaLibraryService() {
         )
         session = MediaLibrarySession.Builder(this, LectorPlayer(exo, engine), Callback())
             .setSessionActivity(openApp)
-            .setMediaButtonPreferences(notificationButtons(engine.currentPrefs.appSkipBackSec, engine.currentPrefs.appSkipForwardSec))
+            .setMediaButtonPreferences(notificationButtons(engine.currentPrefs.notificationButtons))
             .build()
 
         scope.launch {
-            app.playbackSettings.settings.map { it.appSkipBackSec to it.appSkipForwardSec }.distinctUntilChanged().collect { (back, forward) ->
-                session?.setMediaButtonPreferences(notificationButtons(back, forward))
+            app.playbackSettings.settings.map { it.notificationButtons }.distinctUntilChanged().collect { buttons ->
+                session?.setMediaButtonPreferences(notificationButtons(buttons))
             }
         }
         // Al arrancar, el último libro queda cargado y en pausa; uno quitado de la biblioteca, no.
@@ -81,33 +81,40 @@ class PlaybackService : MediaLibraryService() {
     }
 
     /**
-     * Notificación: anterior, −N, play, +N, siguiente (design.md › Reproducción). Junto a play, los
-     * saltos cortos: un toque sin querer se corrige con otro. Capítulo anterior y siguiente, como
-     * botones propios en los huecos extra (HyperOS los pone en los extremos). Las órdenes anterior y
-     * siguiente del reproductor siguen disponibles para auricular, coche y teclas multimedia.
+     * Notificación (design.md › Reproducción): los 4 huecos de Ajustes › Botones. El 2 y el 3 van
+     * junto a play; el 1 y el 4, en los huecos extra (HyperOS los pone en los extremos). Por defecto,
+     * capítulo anterior, −N, +N, capítulo siguiente: junto a play, los saltos cortos, que un toque
+     * sin querer corrige con otro. Las órdenes anterior y siguiente del reproductor siguen
+     * disponibles para auricular, coche y teclas multimedia. "Nada" deja el hueco vacío.
      */
-    private fun notificationButtons(backSec: Int, forwardSec: Int): ImmutableList<CommandButton> = ImmutableList.of(
-        CommandButton.Builder(skipBackIcon(backSec))
-            .setDisplayName(getString(R.string.action_skip_back, backSec))
-            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.SKIP_BACK, backSec)))
-            .setSlots(CommandButton.SLOT_BACK)
-            .build(),
-        CommandButton.Builder(skipForwardIcon(forwardSec))
-            .setDisplayName(getString(R.string.action_skip_forward, forwardSec))
-            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.SKIP_FORWARD, forwardSec)))
-            .setSlots(CommandButton.SLOT_FORWARD)
-            .build(),
-        CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-            .setDisplayName(getString(R.string.previous_chapter))
-            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.PREVIOUS)))
-            .setSlots(CommandButton.SLOT_OVERFLOW)
-            .build(),
-        CommandButton.Builder(CommandButton.ICON_NEXT)
-            .setDisplayName(getString(R.string.next_chapter))
-            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.NEXT)))
-            .setSlots(CommandButton.SLOT_OVERFLOW)
-            .build(),
-    )
+    private fun notificationButtons(slots: List<ActionCall>): ImmutableList<CommandButton> {
+        val placed = listOf(1 to CommandButton.SLOT_BACK, 2 to CommandButton.SLOT_FORWARD, 0 to CommandButton.SLOT_OVERFLOW, 3 to CommandButton.SLOT_OVERFLOW)
+        return ImmutableList.copyOf(placed.mapNotNull { (i, slot) -> slots.getOrNull(i)?.let { commandButton(it, slot) } })
+    }
+
+    private fun commandButton(call: ActionCall, slot: Int): CommandButton? {
+        val icon = when (call.action) {
+            PlayerAction.SKIP_BACK -> skipBackIcon(call.seconds)
+            PlayerAction.SKIP_FORWARD -> skipForwardIcon(call.seconds)
+            PlayerAction.PREVIOUS -> CommandButton.ICON_PREVIOUS
+            PlayerAction.NEXT -> CommandButton.ICON_NEXT
+            PlayerAction.PLAY_PAUSE -> CommandButton.ICON_PLAY
+            PlayerAction.ADD_BOOKMARK -> CommandButton.ICON_BOOKMARK_UNFILLED
+            PlayerAction.UNDO_JUMP, PlayerAction.PREVIOUS_BOOKMARK, PlayerAction.NEXT_BOOK -> CommandButton.ICON_UNDEFINED
+            PlayerAction.NONE -> return null
+        }
+        val name = when (call.action) {
+            PlayerAction.SKIP_BACK -> getString(R.string.action_skip_back, call.seconds)
+            PlayerAction.SKIP_FORWARD -> getString(R.string.action_skip_forward, call.seconds)
+            else -> getString(call.action.nameRes())
+        }
+        return CommandButton.Builder(icon)
+            .apply { if (icon == CommandButton.ICON_UNDEFINED) call.action.iconRes()?.let(::setCustomIconResId) }
+            .setDisplayName(name)
+            .setSessionCommand(LectorCommands.action(call))
+            .setSlots(slot)
+            .build()
+    }
 
     private fun skipBackIcon(seconds: Int) = when (seconds) {
         5 -> CommandButton.ICON_SKIP_BACK_5

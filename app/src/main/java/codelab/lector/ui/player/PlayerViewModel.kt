@@ -9,6 +9,7 @@ import codelab.lector.data.settings.AppearanceSettings
 import codelab.lector.data.settings.PlaybackSettings
 import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlaybackError
+import codelab.lector.playback.ActionCall
 import codelab.lector.playback.PlayerAction
 import codelab.lector.playback.SoundSettings
 import codelab.lector.playback.Volume
@@ -59,6 +60,8 @@ class PlayerViewModel(private val app: AppContainer) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun act(action: PlayerAction) = playback.act(action)
+
+    fun act(call: ActionCall) = playback.act(call)
 
     fun jumpTo(bookMs: Long) = playback.jumpTo(bookMs)
     fun jumpToSegment(index: Int) = playback.jumpToSegment(index)

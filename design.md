@@ -272,7 +272,7 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Tramo repetido al reanudar tras una pausa: valor en DataStore, 3 s por defecto
 - Al terminar, según la clase de carpeta: Libros, terminado y siguiente libro si está activado (desactivado por defecto); Episodios, terminado sin pasar a otra obra; Álbumes y Sesiones, vuelve al inicio, nunca terminado
 - Acciones: un solo conjunto con ejecutor (saltar atrás, saltar adelante, anterior, siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, siguiente libro). Marcar guarda en la posición actual; la hoja llega con las pantallas. Ir al marcador anterior: el inmediatamente anterior a la posición
-- Notificación (2026-10-05): capítulo anterior, −N, play, +N, capítulo siguiente, con los segundos de los saltos de la app. Antes: −30, anterior, play, siguiente, marcar; un toque sin querer en anterior o siguiente saltaba de capítulo sin "Deshacer". −N y +N como `CommandButton` en `SLOT_BACK` / `SLOT_FORWARD`; capítulos como botones propios en `SLOT_OVERFLOW`, que HyperOS pone en los extremos. Los cinco del mismo tamaño (lo decide el sistema). Marcar no cabe: vuelve con Ajustes C. Con los huecos ocupados, Media3 quita anterior y siguiente de las acciones de `PlaybackState`; las teclas multimedia siguen funcionando (comprobado con `KEYCODE_MEDIA_NEXT` y con el auricular Bluetooth del usuario). Sin comprobar en coche o reloj. Acciones propias como `SessionCommand`, concedidas en `onConnectAsync`
+- Notificación (2026-10-05): capítulo anterior, −N, play, +N, capítulo siguiente, con los segundos de los saltos de la app. Antes: −30, anterior, play, siguiente, marcar; un toque sin querer en anterior o siguiente saltaba de capítulo sin "Deshacer". −N y +N como `CommandButton` en `SLOT_BACK` / `SLOT_FORWARD`; capítulos como botones propios en `SLOT_OVERFLOW`, que HyperOS pone en los extremos. Los cinco del mismo tamaño (lo decide el sistema). Marcar no cabe por defecto; se asigna a un hueco en Ajustes › Botones (Ajustes › C1, 2026-10-06). Con los huecos ocupados, Media3 quita anterior y siguiente de las acciones de `PlaybackState`; las teclas multimedia siguen funcionando (comprobado con `KEYCODE_MEDIA_NEXT` y con el auricular Bluetooth del usuario). Sin comprobar en coche o reloj. Acciones propias como `SessionCommand`, concedidas en `onConnectAsync`
 - Sesión con título, autor, capítulo y portada (notificación y pantalla de bloqueo)
 - Conexión con la interfaz (`PlaybackConnection`): un punto que expone el estado (libro, posición, capítulo, sonando, velocidad) para reproductor, minirreproductor, horizontal y widgets. `connect()` al abrir la app arranca el servicio, que carga el último libro en pausa
 - Cierre del sistema: se guarda que estaba sonando, para el aviso al abrir
@@ -447,6 +447,19 @@ Aprobado 2026-10-05.
 - Explorador (pantalla completa, lienzo `Folder-Picker`): selector Principal / Tarjeta SD solo con SD; flecha de subir y ruta; Atrás sube un nivel y en la raíz cierra. Filas de subcarpeta con "n archivos de audio" o "Sin audio", contados en segundo plano. Sin ocultas ni `Android/`. Una carpeta de la biblioteca, o dentro de una, atenuada con "Ya en la biblioteca" y sin abrir
 - "Usar esta carpeta": sustituye a las carpetas de la lista que contiene, lanza una búsqueda rápida visible y vuelve a la pantalla de origen
 - Se abre desde Ajustes › Biblioteca, "Añadir carpeta" de la Biblioteca vacía y "Elegir otra carpeta" del primer arranque
+
+#### C1. Botones
+
+Hecha 2026-10-06 (lienzo `Settings-Buttons`, `Action-Picker`). C2 (botones remotos, Auricular, retrasos, notificación estándar) aparte.
+
+- Hueco = acción y, si es un salto, sus segundos; 4 del reproductor y 4 de la notificación en DataStore. Por defecto en los dos: anterior, −10, +10, siguiente (el lienzo dice −30, |<, >|, Marca en la notificación: anterior al cambio del 2026-10-05)
+- Acciones de la hoja: saltar atrás, saltar adelante, capítulo o archivo anterior, capítulo o archivo siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, nada. Un salto abre después Elegir valor con los segundos: 1–120, atajos 5, 10, 15, 30, 60
+- Ajustes › Botones: "Saltos" abre la pantalla; "Botones remotos", atenuada hasta C2. Widget atenuado hasta los widgets. "Dividir el salto por la velocidad" con la nota "A 2x, +10 s salta 5 s de libro: 10 s de escucha" (el lienzo dice 20 s, lo contrario de lo que hace el motor)
+- Escuchando: los huecos 1 y 2 a la izquierda de play, 3 y 4 a la derecha. Saltos con el número en la flecha (en horizontal, en texto); el resto, su icono; "Nada", hueco vacío
+- Minirreproductor: marcar y play fijos; los dos saltos siguen a los huecos 2 y 3 del reproductor
+- Notificación: hueco 2 en `SLOT_BACK`, 3 en `SLOT_FORWARD`, 1 y 4 en `SLOT_OVERFLOW` (extremos en HyperOS). Iconos de Media3 (saltos, anterior, siguiente, play, marcador); deshacer e ir al marcador anterior con iconos propios (`ic_undo`, `ic_bookmark_previous`). Cambia al guardar
+- Saltos sin hueco propio (`COMMAND_SEEK_BACK` / `FORWARD` del sistema): los segundos del primer salto de ese sentido del reproductor, o 10
+- Retrasos: Simple ABP no muestra retraso en nada (comprobado por el usuario 2026-10-06). Sin retrasos (decidido 2026-10-06): las dos filas salen en C2. En LECTOR los toques accidentales se corrigen con "Deshacer" o con el salto contrario
 
 ### Sin portadas
 
