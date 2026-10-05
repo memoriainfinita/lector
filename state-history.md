@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-05 — Sin portadas: lista y portada tipográfica
+
+**Qué cambió:** la decisión del 2026-10-04 ("Mostrar portadas" apagado: la superficie con el título en cuadrícula, filas, búsqueda y reproductor) se sustituyó. Sin portadas, la Biblioteca pasa a lista y Escuchando quita el recuadro; los libros sin portada, con portadas activadas, llevan una portada tipográfica con tono por autor.
+**Por qué:** al probarlo, el usuario vio que el reproductor no quitaba la portada y que la cuadrícula sin portadas era una pared de recuadros vacíos. Sin imágenes, la cuadrícula pierde su función; la lista, como Simple ABP, es más densa y legible. Colores aleatorios por libro descartados: no significan nada y chocan con el oscuro de un solo acento.
+
 ### 2026-10-04 — Sin menú inferior: una sola pila
 
 **Qué cambió:** la navegación aprobada el 2026-10-03 (menú inferior con Biblioteca, Escuchando y Marcadores, una pila por pestaña) se sustituyó por una sola pila con Biblioteca en la raíz. Marcadores y Ajustes se abren desde la cabecera de Biblioteca; Escuchando, desde el minirreproductor.
