@@ -4,6 +4,16 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-05 — Posición por tramo y "Deshacer" de 10 s
+
+**Qué cambió:** LECTOR guardaba una sola posición por libro; ahora guarda también la de cada tramo (capítulo, o archivo sin capítulos) al salir de él a medias, y volver lo retoma. "Siguiente archivo desde su posición" dejó de estar inactiva. El "Deshacer" de los saltos grandes pasó de 5 a 10 s.
+**Por qué:** el usuario pasó de capítulo para probar y ya no pudo volver a donde iba: "anterior" empezaba el capítulo de nuevo. En Simple ABP se comprobó (2026-10-05) que guarda posición por archivo y que la opción "Allow next file to start from non-zero position" solo decide si el paso automático al terminar un archivo retoma el siguiente; los botones siempre retoman. Lista de capítulos: retoma, decidido por el usuario ("si el usuario quiere comenzarlo puede").
+
+### 2026-10-05 — Notificación: saltos cortos junto a play
+
+**Qué cambió:** de −30, anterior, play, siguiente, marcar a capítulo anterior, −10, play, +10, capítulo siguiente. Marcar sale hasta Ajustes C.
+**Por qué:** el usuario pasaba de capítulo sin querer desde la notificación, donde no hay "Deshacer". Pidió los capítulos "más pequeños y a los lados": el tamaño lo decide HyperOS (cinco botones iguales); los huecos extra salen en los extremos, así que los capítulos van ahí.
+
 ### 2026-10-05 — Sin portadas: lista y portada tipográfica
 
 **Qué cambió:** la decisión del 2026-10-04 ("Mostrar portadas" apagado: la superficie con el título en cuadrícula, filas, búsqueda y reproductor) se sustituyó. Sin portadas, la Biblioteca pasa a lista y Escuchando quita el recuadro; los libros sin portada, con portadas activadas, llevan una portada tipográfica con tono por autor.
