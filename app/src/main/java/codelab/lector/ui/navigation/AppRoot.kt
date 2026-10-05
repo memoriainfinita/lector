@@ -52,6 +52,10 @@ import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
 import codelab.lector.ui.screens.PlaceholderScreen
 import codelab.lector.ui.settings.AppearanceScreen
+import codelab.lector.ui.settings.FolderPickerScreen
+import codelab.lector.ui.settings.FolderPickerViewModel
+import codelab.lector.ui.settings.LibrarySettingsScreen
+import codelab.lector.ui.settings.LibrarySettingsViewModel
 import codelab.lector.ui.settings.SettingsScreen
 import codelab.lector.ui.settings.SettingsViewModel
 import codelab.lector.ui.settings.SoundSettingsScreen
@@ -121,9 +125,7 @@ private fun Onboarding(withPermission: Boolean, onFinished: () -> Unit) {
                     ),
                 )
             }
-            entry<FolderPickerRoute> {
-                PlaceholderScreen(stringResource(R.string.folder_picker), onBack = { stack.removeAt(stack.lastIndex) })
-            }
+            entry<FolderPickerRoute> { FolderPicker(onClose = { stack.removeAt(stack.lastIndex) }) }
         },
     )
 }
@@ -241,7 +243,7 @@ private fun routeEntries(
                 showContinue = !session,
                 onFolderShown = { state.pendingFolder = null },
                 onLoaded = onReady,
-                storage = remember { StorageRoots(Environment.getExternalStorageDirectory().path, storageRoots(context).map { it.path }) },
+                storage = remember { storageRootsOf(context) },
             )
         }
         entry<ListeningRoute> {
@@ -263,10 +265,16 @@ private fun routeEntries(
                 onBack = back,
                 onSound = { navigator.open(SettingsSoundRoute) },
                 onAppearance = { navigator.open(SettingsAppearanceRoute) },
+                onLibrary = { navigator.open(SettingsLibraryRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
-            PlaceholderScreen(stringResource(R.string.settings_library), onBack = back, links = listOf(link(R.string.folder_picker, FolderPickerRoute)))
+            val context = LocalContext.current
+            LibrarySettingsScreen(
+                viewModel = viewModel { LibrarySettingsViewModel(app, storageRootsOf(context)) },
+                onBack = back,
+                onAddFolder = { navigator.open(FolderPickerRoute) },
+            )
         }
         entry<SettingsSleepRoute> { PlaceholderScreen(stringResource(R.string.settings_sleep), onBack = back) }
         entry<SettingsButtonsRoute> { PlaceholderScreen(stringResource(R.string.settings_buttons), onBack = back) }
@@ -274,9 +282,21 @@ private fun routeEntries(
         entry<SettingsTagsRoute> { PlaceholderScreen(stringResource(R.string.settings_tags), onBack = back) }
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsDataRoute> { PlaceholderScreen(stringResource(R.string.settings_data), onBack = back) }
-        entry<FolderPickerRoute> { PlaceholderScreen(stringResource(R.string.folder_picker), onBack = back) }
+        entry<FolderPickerRoute> { FolderPicker(onClose = back) }
         entry<MergeBooksRoute> { PlaceholderScreen(stringResource(R.string.merge_books), onBack = back) }
         entry<SplitBookRoute> { PlaceholderScreen(stringResource(R.string.split_book), onBack = back) }
         entry<CoverViewerRoute> { key -> CoverViewer(key.bookId, onClose = back) }
     }
+}
+
+/** Almacenamiento principal y SD, para rutas y explorador. */
+private fun storageRootsOf(context: android.content.Context) =
+    StorageRoots(Environment.getExternalStorageDirectory().path, storageRoots(context).map { it.path })
+
+/** Explorador de carpetas, desde Ajustes, la Biblioteca vacía o el primer arranque. */
+@Composable
+private fun FolderPicker(onClose: () -> Unit) {
+    val context = LocalContext.current
+    val app = context.container
+    FolderPickerScreen(viewModel { FolderPickerViewModel(app, storageRootsOf(context)) }, onClose)
 }

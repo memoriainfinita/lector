@@ -240,4 +240,21 @@
     <string name="more">More</string>
     <string name="seconds_value">%1$d s</string>
     <string name="narrated_by">Narrated by %1$s</string>
+    <!-- Ajustes › Biblioteca y explorador de carpetas -->
+    <plurals name="folders_count">
+        <item quantity="one">%d folder</item>
+        <item quantity="other">%d folders</item>
+    </plurals>
+    <string name="dot_join">%1$s · %2$s</string>
+    <string name="folder_removed">Folder removed</string>
+    <string name="remove_folder">Remove folder %1$s</string>
+    <string name="add_folder_plus">+ Add folder</string>
+    <string name="last_scan">Last: %1$s · %2$s</string>
+    <string name="use_this_folder">Use this folder</string>
+    <string name="already_in_library">Already in the library</string>
+    <string name="no_audio">No audio</string>
+    <plurals name="audio_files">
+        <item quantity="one">%d audio file</item>
+        <item quantity="other">%d audio files</item>
+    </plurals>
 </resources>

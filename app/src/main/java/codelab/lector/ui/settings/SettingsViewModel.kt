@@ -13,6 +13,7 @@ import codelab.lector.ui.theme.ThemeMode
 import codelab.lector.ui.theme.ThemeSchedule
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -26,6 +27,10 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
         app.appearance.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppearanceSettings())
 
     val scan: StateFlow<ScanState> = app.scanner.state
+
+    val folders: StateFlow<List<String>> = app.database.folders().observeFolders()
+        .map { list -> list.map { it.path } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val globalSound: StateFlow<SoundSettings> =
         app.playback.globalSound.stateIn(viewModelScope, SharingStarted.Eagerly, SoundSettings())

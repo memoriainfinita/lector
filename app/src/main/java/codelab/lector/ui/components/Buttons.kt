@@ -75,10 +75,15 @@ private fun TextStyle.weight(w: FontWeight) = copy(fontWeight = w)
 
 /** Principal relleno (Listo, Aplicar, Guardar…): 40 / radio 6 / 14 seminegrita. */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, danger: Boolean = false) {
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, danger: Boolean = false, enabled: Boolean = true) {
     val c = LectorTheme.colors
-    ButtonBase(onClick, 40.dp, RoundedCornerShape(6.dp), modifier, background = if (danger) c.danger else c.accent, horizontalPadding = 16.dp) {
-        Text(text, style = LectorTheme.type.body.weight(FontWeight.SemiBold), color = c.onAccent)
+    val background = when {
+        !enabled -> c.track
+        danger -> c.danger
+        else -> c.accent
+    }
+    ButtonBase(onClick, 40.dp, RoundedCornerShape(6.dp), modifier, background = background, horizontalPadding = 16.dp, enabled = enabled) {
+        Text(text, style = LectorTheme.type.body.weight(FontWeight.SemiBold), color = if (enabled) c.onAccent else c.inactive)
     }
 }
 

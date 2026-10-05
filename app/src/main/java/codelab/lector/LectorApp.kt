@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import codelab.lector.data.db.LectorDatabase
 import codelab.lector.data.settings.AppearanceRepository
+import codelab.lector.data.settings.LastScan
 import codelab.lector.data.settings.LibrarySettingsRepository
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.library.CoverStore
@@ -17,6 +18,9 @@ import codelab.lector.playback.PlaybackStateHolder
 import codelab.lector.playback.VolumeControl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import java.io.File
 
 private val Context.settingsStore by preferencesDataStore(name = "settings")
@@ -38,6 +42,16 @@ class AppContainer(context: Context) {
     val nowPlaying = PlaybackStateHolder()
     val playback = PlaybackConnection(context, nowPlaying, playbackSettings, appScope)
     val volume = VolumeControl(context)
+
+    init {
+        // Cada búsqueda terminada queda como la última (Ajustes › Biblioteca). Sin errores: un
+        // escaneo fallido no tiene fecha de fin.
+        appScope.launch {
+            scanner.state.mapNotNull { s -> s.finishedAt?.let { LastScan(it, s.found) } }
+                .distinctUntilChanged()
+                .collect { librarySettings.setLastScan(it) }
+        }
+    }
 }
 
 class LectorApp : Application() {

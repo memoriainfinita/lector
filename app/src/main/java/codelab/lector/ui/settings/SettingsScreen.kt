@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,12 +43,14 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onSound: () -> Unit,
     onAppearance: () -> Unit,
+    onLibrary: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
     val playback by viewModel.playback.collectAsStateWithLifecycle()
     val appearance by viewModel.appearance.collectAsStateWithLifecycle()
     val scan by viewModel.scan.collectAsStateWithLifecycle()
+    val folders by viewModel.folders.collectAsStateWithLifecycle()
     var picker by remember { mutableStateOf<Picker?>(null) }
     val seconds = { v: Float -> context.getString(R.string.seconds_value, v.toInt()) }
 
@@ -82,7 +85,7 @@ fun SettingsScreen(
         SwitchRow(stringResource(R.string.resume_on_replug), false, {}, note = stringResource(R.string.resume_on_replug_note), enabled = false)
 
         SectionHeader(stringResource(R.string.settings_library))
-        LinkRow(stringResource(R.string.library_folders), {}, enabled = false)
+        LinkRow(stringResource(R.string.library_folders), onLibrary, note = foldersSummary(folders))
         SettingRow(
             stringResource(R.string.rescan_books),
             note = if (scan.running && !scan.quiet) stringResource(R.string.scanning_found, scan.found) else null,
@@ -147,6 +150,14 @@ fun SettingsScreen(
         )
         null -> Unit
     }
+}
+
+/** "Audiobooks" con una carpeta; "Audiobooks · 3 carpetas" con varias; nada sin carpetas. */
+@Composable
+private fun foldersSummary(folders: List<String>): String? {
+    val first = folders.firstOrNull()?.substringAfterLast('/') ?: return null
+    return if (folders.size == 1) first
+    else stringResource(R.string.dot_join, first, pluralStringResource(R.plurals.folders_count, folders.size, folders.size))
 }
 
 fun themeLabel(mode: ThemeMode) = when (mode) {

@@ -239,4 +239,21 @@
     <string name="more">Más</string>
     <string name="seconds_value">%1$d s</string>
     <string name="narrated_by">Narrado por %1$s</string>
+    <!-- Ajustes › Biblioteca y explorador de carpetas -->
+    <plurals name="folders_count">
+        <item quantity="one">%d carpeta</item>
+        <item quantity="other">%d carpetas</item>
+    </plurals>
+    <string name="dot_join">%1$s · %2$s</string>
+    <string name="folder_removed">Carpeta quitada</string>
+    <string name="remove_folder">Quitar la carpeta %1$s</string>
+    <string name="add_folder_plus">+ Añadir carpeta</string>
+    <string name="last_scan">Última: %1$s · %2$s</string>
+    <string name="use_this_folder">Usar esta carpeta</string>
+    <string name="already_in_library">Ya en la biblioteca</string>
+    <string name="no_audio">Sin audio</string>
+    <plurals name="audio_files">
+        <item quantity="one">%d archivo de audio</item>
+        <item quantity="other">%d archivos de audio</item>
+    </plurals>
 </resources>

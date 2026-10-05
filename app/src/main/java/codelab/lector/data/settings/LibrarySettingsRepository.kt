@@ -5,11 +5,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import codelab.lector.library.LibrarySort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+
+/** Última búsqueda terminada: fecha y libros encontrados (Ajustes › Biblioteca). */
+data class LastScan(val at: Long, val books: Int)
 
 /** Orden y tamaño de la cuadrícula. Los filtros no se guardan: al abrir, toda la biblioteca. */
 class LibrarySettingsRepository(private val store: DataStore<Preferences>) {
@@ -30,11 +34,22 @@ class LibrarySettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setShowUnavailable(show: Boolean) = store.edit { it[SHOW_UNAVAILABLE] = show }
 
+    val lastScan: Flow<LastScan?> = store.data.map { p ->
+        p[LAST_SCAN_AT]?.let { LastScan(it, p[LAST_SCAN_BOOKS] ?: 0) }
+    }.distinctUntilChanged()
+
+    suspend fun setLastScan(scan: LastScan) = store.edit {
+        it[LAST_SCAN_AT] = scan.at
+        it[LAST_SCAN_BOOKS] = scan.books
+    }
+
     companion object {
         const val MinColumns = 1
         const val MaxColumns = 3
         private val SORT = stringPreferencesKey("library_sort")
         private val GRID_COLUMNS = intPreferencesKey("library_grid_columns")
         private val SHOW_UNAVAILABLE = booleanPreferencesKey("library_show_unavailable")
+        private val LAST_SCAN_AT = longPreferencesKey("library_last_scan_at")
+        private val LAST_SCAN_BOOKS = intPreferencesKey("library_last_scan_books")
     }
 }

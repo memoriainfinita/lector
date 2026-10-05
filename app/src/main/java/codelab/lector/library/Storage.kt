@@ -33,19 +33,25 @@ fun isScannableDir(dir: File) = !dir.name.startsWith(".") && dir.name != "Androi
 
 data class AudioFolder(val dir: File, val audioFiles: Int)
 
+/** Archivos de audio dentro de [dir] y sus subcarpetas, sin ocultos ni `Android/`. */
+fun countAudioFiles(dir: File): Int = dir.listFiles().orEmpty().sumOf { f ->
+    when {
+        f.isDirectory -> if (isScannableDir(f)) countAudioFiles(f) else 0
+        !f.name.startsWith(".") && extensionOf(f.name) in AudioExtensions -> 1
+        else -> 0
+    }
+}
+
+/** Subcarpetas que recorre el escaneo, por nombre sin distinguir mayúsculas (explorador). */
+fun scannableSubfolders(dir: File): List<File> =
+    dir.listFiles().orEmpty().filter { it.isDirectory && isScannableDir(it) }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+
 /** Carpetas con audio para el primer arranque: niveles 1 y 2 bajo cada almacenamiento. */
 fun findAudioFolders(roots: List<File>, maxDepth: Int = 2): List<AudioFolder> {
-    fun count(dir: File): Int = dir.listFiles().orEmpty().sumOf { f ->
-        when {
-            f.isDirectory -> if (isScannableDir(f)) count(f) else 0
-            extensionOf(f.name) in AudioExtensions -> 1
-            else -> 0
-        }
-    }
     val out = mutableListOf<AudioFolder>()
     fun visit(dir: File, depth: Int) {
         dir.listFiles().orEmpty().filter { it.isDirectory && isScannableDir(it) }.forEach { sub ->
-            val n = count(sub)
+            val n = countAudioFiles(sub)
             if (n > 0) {
                 out += AudioFolder(sub, n)
                 if (depth < maxDepth) visit(sub, depth + 1)
