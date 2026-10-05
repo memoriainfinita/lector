@@ -10,11 +10,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,8 +24,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,6 +68,7 @@ import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.components.PrimaryButton
 import codelab.lector.ui.components.SeekBar
+import codelab.lector.ui.components.SegmentedControl
 import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.formatSpeed
@@ -85,34 +96,51 @@ fun PlayerScreen(
     val undo = LocalUndoState.current
     val removedText = stringResource(R.string.removed_from_library)
 
-    Column(Modifier.fillMaxSize()) {
-        Header(onMinimize)
+    // Horizontal (más ancha que alta): doble panel, sin cabecera.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val landscape = maxWidth > maxHeight
         val np = playing
         val lost = inaccessible
-        when {
-            np != null -> Player(
-                np = np,
-                skipBack = settings.appSkipBackSec,
-                skipForward = settings.appSkipForwardSec,
-                bookmarks = bookmarks,
-                onAct = viewModel::act,
-                onJump = viewModel::jumpTo,
-                onCover = { onOpenCover(np.bookId) },
-                onMinimize = onMinimize,
-                onChapters = { sheet = PlayerSheet.CHAPTERS },
-                onSpeed = { sheet = PlayerSheet.SPEED },
-                onMenu = { sheet = PlayerSheet.MENU },
-            )
-            lost != null -> Inaccessible(
-                lost,
-                viewModel.coverPath(lost.id),
-                viewModel::rescan,
-                onRemove = {
-                    undo.show(removedText, viewModel.removeInaccessible(lost.id))
-                    onMinimize()
-                },
-                onMinimize,
-            )
+        val removeLost = { book: Book ->
+            undo.show(removedText, viewModel.removeInaccessible(book.id))
+            onMinimize()
+        }
+        if (landscape) {
+            when {
+                np != null -> LandscapePlayer(
+                    np = np,
+                    skipBack = settings.appSkipBackSec,
+                    skipForward = settings.appSkipForwardSec,
+                    onAct = viewModel::act,
+                    onJump = viewModel::jumpTo,
+                    onCover = { onOpenCover(np.bookId) },
+                    onMinimize = onMinimize,
+                    onChapters = { sheet = PlayerSheet.CHAPTERS },
+                    onSpeed = { sheet = PlayerSheet.SPEED },
+                    onMenu = { sheet = PlayerSheet.MENU },
+                )
+                lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), viewModel::rescan, { removeLost(lost) }, onMinimize)
+            }
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                Header(onMinimize)
+                when {
+                    np != null -> Player(
+                        np = np,
+                        skipBack = settings.appSkipBackSec,
+                        skipForward = settings.appSkipForwardSec,
+                        bookmarks = bookmarks,
+                        onAct = viewModel::act,
+                        onJump = viewModel::jumpTo,
+                        onCover = { onOpenCover(np.bookId) },
+                        onMinimize = onMinimize,
+                        onChapters = { sheet = PlayerSheet.CHAPTERS },
+                        onSpeed = { sheet = PlayerSheet.SPEED },
+                        onMenu = { sheet = PlayerSheet.MENU },
+                    )
+                    lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), viewModel::rescan, { removeLost(lost) }, onMinimize)
+                }
+            }
         }
     }
 
@@ -180,30 +208,137 @@ private fun ColumnScope.Player(
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
 ) {
+    CoverArea(Modifier.weight(1f)) { PlayerCover(np, onCover, onMinimize) }
+    TitleBlock(np, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+    Bars(np, onJump, onChapters, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
+
+    // Controles: anterior, −N, play, +N, siguiente.
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.PREVIOUS) }
+        SkipButton(R.drawable.ic_replay, skipBack, stringResource(R.string.skip_back_seconds, skipBack)) { onAct(PlayerAction.SKIP_BACK) }
+        PlayButton(np, 76.dp, 30.dp, onAct)
+        SkipButton(R.drawable.ic_forward, skipForward, stringResource(R.string.skip_forward_seconds, skipForward)) { onAct(PlayerAction.SKIP_FORWARD) }
+        RoundIcon(R.drawable.ic_skip_next, nextLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.NEXT) }
+    }
+
+    ActionRow(np, bookmarks, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
+}
+
+/** Separación entre la portada y la columna central en horizontal. */
+private val LandscapeGap = 18.dp
+
+/** Ancho mínimo de la columna central en horizontal: lo que ocupan los cinco controles. */
+private val LandscapeColumnMin = 236.dp
+
+/**
+ * Escuchando en horizontal (lienzo: "Horizontal a doble panel"): portada, columna con título,
+ * barras y controles, y panel de 280 con los tramos. La portada se queda con el ancho que deja la
+ * columna central, hasta 300.
+ */
+@Composable
+private fun LandscapePlayer(
+    np: NowPlaying,
+    skipBack: Int,
+    skipForward: Int,
+    onAct: (PlayerAction) -> Unit,
+    onJump: (Long) -> Unit,
+    onCover: () -> Unit,
+    onMinimize: () -> Unit,
+    onChapters: () -> Unit,
+    onSpeed: () -> Unit,
+    onMenu: () -> Unit,
+) {
+    val mono14 = LectorTheme.type.meta.copy(fontSize = 14.sp)
+    Row(Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 20.dp)) {
+            val coverMax = (maxWidth - LandscapeGap - LandscapeColumnMin).coerceAtMost(300.dp)
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(LandscapeGap)) {
+                if (coverMax >= 96.dp) {
+                    Box(Modifier.fillMaxHeight().widthIn(max = coverMax), contentAlignment = Alignment.Center) {
+                        PlayerCover(np, onCover, onMinimize)
+                    }
+                }
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    TitleBlock(np, Modifier.fillMaxWidth())
+                    Spacer(Modifier.weight(1f))
+                    Bars(np, onJump, onChapters, Modifier.fillMaxWidth())
+                    Spacer(Modifier.weight(1f))
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), 44.dp, 22.dp) { onAct(PlayerAction.PREVIOUS) }
+                        TextAction("−$skipBack", stringResource(R.string.skip_back_seconds, skipBack), mono14) { onAct(PlayerAction.SKIP_BACK) }
+                        PlayButton(np, 56.dp, 24.dp, onAct)
+                        TextAction("+$skipForward", stringResource(R.string.skip_forward_seconds, skipForward), mono14) { onAct(PlayerAction.SKIP_FORWARD) }
+                        RoundIcon(R.drawable.ic_skip_next, nextLabel(np), 44.dp, 22.dp) { onAct(PlayerAction.NEXT) }
+                    }
+                    // Sin marcadores del libro: el panel de la derecha los tiene.
+                    ActionRow(np, null, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
+                }
+            }
+        }
+        Box(Modifier.width(1.dp).fillMaxHeight().background(LectorTheme.colors.divider))
+        SidePanel(np, onJump, Modifier.width(280.dp).fillMaxHeight())
+    }
+}
+
+/**
+ * Panel derecho en horizontal: pestañas Capítulos (o Archivos) y Marcadores, esta inactiva hasta
+ * su función. Los tramos con las filas de la hoja de capítulos; sigue al tramo en curso.
+ */
+@Composable
+private fun SidePanel(np: NowPlaying, onJump: (Long) -> Unit, modifier: Modifier) {
+    val c = LectorTheme.colors
+    Column(modifier.padding(top = 16.dp)) {
+        SegmentedControl(
+            listOf(stringResource(if (np.hasChapters) R.string.chapters else R.string.files), stringResource(R.string.tab_bookmarks)),
+            selected = 0,
+            onSelect = {},
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+            disabled = setOf(1),
+        )
+        val list = rememberLazyListState(initialFirstVisibleItemIndex = (np.segmentIndex - 2).coerceAtLeast(0))
+        // Al cambiar de tramo, si el nuevo no se ve, se desplaza hasta él.
+        LaunchedEffect(np.bookId, np.segmentIndex) {
+            if (list.layoutInfo.visibleItemsInfo.none { it.index == np.segmentIndex }) {
+                list.animateScrollToItem((np.segmentIndex - 2).coerceAtLeast(0))
+            }
+        }
+        LazyColumn(Modifier.weight(1f), state = list) {
+            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onJump, base = c.background, highlight = c.surface) }
+        }
+    }
+}
+
+/** Portada: marco de 358 × 411 hasta conocer la imagen; después, su proporción, sin recortar. */
+@Composable
+private fun PlayerCover(np: NowPlaying, onCover: () -> Unit, onMinimize: () -> Unit) {
+    var ratio by remember(np.coverPath) { mutableStateOf(CoverRatio) }
+    BookCover(
+        np.coverPath,
+        np.title,
+        Modifier
+            .aspectRatio(ratio, matchHeightConstraintsFirst = true)
+            .swipeDown(onMinimize)
+            .clickable(onClickLabel = stringResource(R.string.view_cover), role = Role.Image, onClick = onCover),
+        titleStyle = LectorTheme.type.headline,
+        onAspectRatio = { ratio = it },
+    )
+}
+
+/** Título, autor · narrador y porcentaje. */
+@Composable
+private fun TitleBlock(np: NowPlaying, modifier: Modifier) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val mono14 = t.meta.copy(fontSize = 14.sp)
-    val mono13 = t.meta.copy(fontSize = 13.sp)
-    var bookDrag by remember { mutableStateOf<Float?>(null) }
-    var segmentDrag by remember { mutableStateOf<Float?>(null) }
-
-    // Marco de 358 × 411 hasta conocer la imagen; después, su proporción, sin recortar.
-    var ratio by remember(np.coverPath) { mutableStateOf(CoverRatio) }
-    CoverArea(Modifier.weight(1f)) {
-        BookCover(
-            np.coverPath,
-            np.title,
-            Modifier
-                .aspectRatio(ratio, matchHeightConstraintsFirst = true)
-                .swipeDown(onMinimize)
-                .clickable(onClickLabel = stringResource(R.string.view_cover), role = Role.Image, onClick = onCover),
-            titleStyle = t.headline,
-            onAspectRatio = { ratio = it },
-        )
-    }
-
-    // Título, autor · narrador y porcentaje.
-    Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(np.title, style = t.bookTitle, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val byline = listOfNotNull(np.author, np.narrator).filter { it.isNotBlank() }.distinct().joinToString(" · ")
@@ -212,9 +347,17 @@ private fun ColumnScope.Player(
         val percent = if (np.durationMs > 0) (np.positionMs * 100 / np.durationMs).toInt() else 0
         Text("$percent%", style = mono14, color = c.textSecondary, modifier = Modifier.padding(top = 6.dp))
     }
+}
 
-    // Barra del libro con marcas de tramo, tiempos, tramo actual y su barra.
-    Column(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp)) {
+/** Barra del libro con marcas de tramo, tiempos, tramo actual y su barra. */
+@Composable
+private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit, modifier: Modifier) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val mono13 = t.meta.copy(fontSize = 13.sp)
+    var bookDrag by remember { mutableStateOf<Float?>(null) }
+    var segmentDrag by remember { mutableStateOf<Float?>(null) }
+    Column(modifier) {
         val total = np.durationMs.coerceAtLeast(1)
         val bookPos = bookDrag?.let { (it * total).toLong() } ?: np.positionMs
         val marks = remember(np.segments, total) {
@@ -261,40 +404,54 @@ private fun ColumnScope.Player(
             onDrag = { segmentDrag = it },
         )
     }
+}
 
-    // Controles: anterior, −N, play, +N, siguiente.
-    Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+@Composable
+private fun previousLabel(np: NowPlaying) =
+    stringResource(if (np.hasChapters) R.string.previous_chapter else R.string.previous_file)
+
+@Composable
+private fun nextLabel(np: NowPlaying) =
+    stringResource(if (np.hasChapters) R.string.next_chapter else R.string.next_file)
+
+/** Play / pausa en acento, según "va a sonar". */
+@Composable
+private fun PlayButton(np: NowPlaying, size: Dp, iconSize: Dp, onAct: (PlayerAction) -> Unit) {
+    val c = LectorTheme.colors
+    val playing = np.playWhenReady
+    Box(
+        Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(c.accent)
+            .clickable(role = Role.Button) { onAct(PlayerAction.PLAY_PAUSE) },
+        contentAlignment = Alignment.Center,
     ) {
-        val prev = stringResource(if (np.hasChapters) R.string.previous_chapter else R.string.previous_file)
-        val next = stringResource(if (np.hasChapters) R.string.next_chapter else R.string.next_file)
-        RoundIcon(R.drawable.ic_skip_previous, prev, 52.dp, 26.dp) { onAct(PlayerAction.PREVIOUS) }
-        SkipButton(R.drawable.ic_replay, skipBack, stringResource(R.string.skip_back_seconds, skipBack)) { onAct(PlayerAction.SKIP_BACK) }
-        val playing = np.playWhenReady
-        Box(
-            Modifier
-                .size(76.dp)
-                .clip(CircleShape)
-                .background(c.accent)
-                .clickable(role = Role.Button) { onAct(PlayerAction.PLAY_PAUSE) },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play),
-                stringResource(if (playing) R.string.pause else R.string.play),
-                Modifier.size(30.dp),
-                tint = c.onAccent,
-            )
-        }
-        SkipButton(R.drawable.ic_forward, skipForward, stringResource(R.string.skip_forward_seconds, skipForward)) { onAct(PlayerAction.SKIP_FORWARD) }
-        RoundIcon(R.drawable.ic_skip_next, next, 52.dp, 26.dp) { onAct(PlayerAction.NEXT) }
+        Icon(
+            painterResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play),
+            stringResource(if (playing) R.string.pause else R.string.play),
+            Modifier.size(iconSize),
+            tint = c.onAccent,
+        )
     }
+}
 
-    // Fila bajo los controles: pausa diferida, marcar, velocidad, marcadores del libro y ⋯ (su menú sale por abajo).
+/**
+ * Fila bajo los controles: pausa diferida, marcar, velocidad, marcadores del libro ([bookmarks];
+ * null la quita) y ⋯ (su menú sale por abajo).
+ */
+@Composable
+private fun ActionRow(
+    np: NowPlaying,
+    bookmarks: Int?,
+    onAct: (PlayerAction) -> Unit,
+    onSpeed: () -> Unit,
+    onMenu: () -> Unit,
+    modifier: Modifier,
+) {
+    val c = LectorTheme.colors
     Row(
-        Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp),
+        modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -305,9 +462,11 @@ private fun ColumnScope.Player(
         }
         val speed = formatSpeed(np.speed)
         SmallAction(null, speed, stringResource(R.string.speed_value, speed), c.iconSoft, onClick = onSpeed)
-        SmallAction(
-            R.drawable.ic_list, "$bookmarks", stringResource(R.string.book_bookmarks_count, bookmarks), c.inactive, enabled = false,
-        ) {}
+        if (bookmarks != null) {
+            SmallAction(
+                R.drawable.ic_list, "$bookmarks", stringResource(R.string.book_bookmarks_count, bookmarks), c.inactive, enabled = false,
+            ) {}
+        }
         SmallAction(R.drawable.ic_more, null, stringResource(R.string.more_options), c.iconSoft, onClick = onMenu)
     }
 }
@@ -356,6 +515,21 @@ private fun SkipButton(@DrawableRes icon: Int, seconds: Int, description: String
     }
 }
 
+/** Salto en texto (−30, +30) de Escuchando en horizontal: 44 de lado. */
+@Composable
+private fun TextAction(text: String, description: String, style: TextStyle, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = style, color = LectorTheme.colors.text)
+    }
+}
+
 /** Botón pequeño de la fila inferior: icono 18 y texto mínimo en mono 13. */
 @Composable
 private fun SmallAction(
@@ -385,27 +559,58 @@ private fun SmallAction(
 /** Libro sin acceso: portada atenuada y tarjeta con "Volver a buscar" y "Quitar". */
 @Composable
 private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+    CoverArea(Modifier.weight(1f)) { InaccessibleCover(book, coverPath, onMinimize) }
+    InaccessibleHeading(book, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+    NotFoundCard(book, onRescan, onRemove, Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 20.dp))
+}
+
+/** Libro sin acceso en horizontal: portada atenuada a la izquierda; título y tarjeta a la derecha. */
+@Composable
+private fun InaccessibleLandscape(book: Book, coverPath: String?, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+    Row(
+        Modifier.fillMaxSize().padding(start = 24.dp, top = 20.dp, end = 24.dp, bottom = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Box(Modifier.fillMaxHeight().widthIn(max = 300.dp), contentAlignment = Alignment.Center) {
+            InaccessibleCover(book, coverPath, onMinimize)
+        }
+        Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
+            InaccessibleHeading(book, Modifier.fillMaxWidth())
+            NotFoundCard(book, onRescan, onRemove, Modifier.padding(top = 16.dp))
+        }
+    }
+}
+
+@Composable
+private fun InaccessibleCover(book: Book, coverPath: String?, onMinimize: () -> Unit) {
+    var ratio by remember(coverPath) { mutableStateOf(CoverRatio) }
+    BookCover(
+        coverPath,
+        book.customName ?: book.title,
+        Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
+        titleStyle = LectorTheme.type.headline,
+        onAspectRatio = { ratio = it },
+    )
+}
+
+@Composable
+private fun InaccessibleHeading(book: Book, modifier: Modifier) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
-    val title = book.customName ?: book.title
-    CoverArea(Modifier.weight(1f)) {
-        var ratio by remember(coverPath) { mutableStateOf(CoverRatio) }
-        BookCover(
-            coverPath,
-            title,
-            Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
-            titleStyle = t.headline,
-            onAspectRatio = { ratio = it },
-        )
-    }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = t.bookTitle, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(book.customName ?: book.title, style = t.bookTitle, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
         val byline = listOfNotNull(book.author, book.narrator).filter { it.isNotBlank() }.distinct().joinToString(" · ")
         if (byline.isNotEmpty()) Text(byline, style = t.body, color = c.textSecondary)
     }
+}
+
+/** Tarjeta "No se encuentra el libro" con "Volver a buscar" y "Quitar". */
+@Composable
+private fun NotFoundCard(book: Book, onRescan: (String) -> Unit, onRemove: () -> Unit, modifier: Modifier) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
     Column(
-        Modifier
-            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 20.dp)
+        modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(c.surface)

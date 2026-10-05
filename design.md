@@ -340,7 +340,7 @@ Hecha 2026-10-03.
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" lo quita de la biblioteca como el menú del libro (Pantallas › Biblioteca › A), con "Deshacer", y cierra Escuchando (2026-10-05)
 - Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. De lado a lado, sin márgenes ni esquinas redondeadas (la línea de progreso hace de borde superior), y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
-- Horizontal: pendiente
+- Horizontal (2026-10-05), lienzo "Horizontal a doble panel": cuando la pantalla es más ancha que alta. Sin cabecera; portada a la izquierda (toma el ancho que deja la columna central, hasta 300; tocar y deslizar como en vertical), columna central con título, barras, controles (anterior, −N / +N en texto con los segundos de los ajustes, play 56, siguiente) y fila pausa diferida · marcar · velocidad · ⋯, sin el botón de marcadores del libro. Panel derecho de 280 con pestañas Capítulos (o Archivos, si el libro no tiene capítulos) y Marcadores, esta inactiva hasta su función; filas de la hoja de capítulos, siguen al tramo en curso, tocar salta con "Deshacer". Libro inaccesible: portada a la izquierda, título y tarjeta a la derecha
 
 ### Biblioteca
 

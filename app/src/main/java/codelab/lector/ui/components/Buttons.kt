@@ -122,9 +122,15 @@ fun SheetLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
-/** Segmentado (Libros / Carpetas, tema, idioma): 36 / 14. */
+/** Segmentado (Libros / Carpetas, tema, idioma): 36 / 14. [disabled]: opciones atenuadas que no se eligen. */
 @Composable
-fun SegmentedControl(options: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun SegmentedControl(
+    options: List<String>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    disabled: Set<Int> = emptySet(),
+) {
     val c = LectorTheme.colors
     Row(
         modifier = modifier
@@ -140,13 +146,17 @@ fun SegmentedControl(options: List<String>, selected: Int, onSelect: (Int) -> Un
                     .height(36.dp)
                     .clip(RoundedCornerShape(7.dp))
                     .background(if (isSelected) c.track else Color.Transparent)
-                    .selectable(isSelected, role = Role.Tab) { onSelect(i) },
+                    .selectable(isSelected, enabled = i !in disabled, role = Role.Tab) { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     label,
                     style = LectorTheme.type.body.let { if (isSelected) it.weight(FontWeight.Medium) else it },
-                    color = if (isSelected) c.text else c.textSecondary,
+                    color = when {
+                        isSelected -> c.text
+                        i in disabled -> c.inactive
+                        else -> c.textSecondary
+                    },
                 )
             }
         }

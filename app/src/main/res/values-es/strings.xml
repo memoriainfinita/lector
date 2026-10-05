@@ -61,6 +61,7 @@
     <string name="equalizer">Ecualizador</string>
     <string name="db_value">%1$s dB</string>
     <string name="chapters">Capítulos</string>
+    <string name="files">Archivos</string>
     <string name="chapters_count">%1$d capítulos</string>
     <string name="next_book">Siguiente libro</string>
     <string name="theme">Tema</string>

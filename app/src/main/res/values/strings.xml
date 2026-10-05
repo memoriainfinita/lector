@@ -62,6 +62,7 @@
     <string name="equalizer">Equalizer</string>
     <string name="db_value">%1$s dB</string>
     <string name="chapters">Chapters</string>
+    <string name="files">Files</string>
     <string name="chapters_count">%1$d chapters</string>
     <string name="next_book">Next book</string>
     <string name="theme">Theme</string>
