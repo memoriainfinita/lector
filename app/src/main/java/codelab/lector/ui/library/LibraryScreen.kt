@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import codelab.lector.library.searchHighlights
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
@@ -265,7 +266,10 @@ fun LibraryScreen(
                 onBookOptions = { menuFor = it.book.id },
                 top = top,
             )
-            else -> BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue && !searching, top = top)
+            // Una cuadrícula nueva al abrir y al cerrar la búsqueda: las dos empiezan arriba del todo.
+            else -> key(searching) {
+                BookGrid(state, viewModel, onOpenPlayer, onOpenFolder, { classSheetFor = it }, { menuFor = it }, landscape, showContinue && !searching, top = top)
+            }
         }
     }
     classSheetFor?.let { path -> FolderClassSheet(path, viewModel, state.rules, onDismiss = { classSheetFor = null }) }

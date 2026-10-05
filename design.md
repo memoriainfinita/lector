@@ -399,7 +399,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye a la pantalla "Buscar en la biblioteca" del lienzo).
 
 - La lupa convierte la cabecera en el campo: flecha atrás, campo y ×, con el teclado abierto. Mientras se busca, el selector Libros / Carpetas y los demás iconos se ocultan
-- La flecha o Atrás cierran la búsqueda y la Biblioteca vuelve a como estaba
+- La flecha o Atrás cierran la búsqueda y la Biblioteca vuelve a como estaba, arriba del todo
 - La cuadrícula se filtra a medida que se escribe, con lo encontrado en acento en el título de la tarjeta. Bajo el campo, línea "n libros · título, autor o carpeta"
 - Busca en título, autor, narrador, serie y carpeta (ruta dentro de la carpeta de la biblioteca). Sin distinguir mayúsculas ni acentos; cada palabra tiene que aparecer. En memoria sobre la lista de la biblioteca
 - Carpeta de Episodios o Sesiones: sale su tarjeta si coincide su nombre o alguno de sus archivos, como con los filtros
