@@ -368,7 +368,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Columnas con el pellizco: 1, 2 o 3 en vertical (por defecto 2), el doble en horizontal. Un nivel por gesto; se guarda en DataStore
 - Sin portadas (Ajustes › Apariencia › Mostrar portadas): la superficie con el título en cuadrícula, filas, búsqueda y reproductor
 - Al abrir la app, búsqueda rápida de cambios en segundo plano
-- Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros nuevos aparecen al terminar (el escaneo guarda en una transacción); dos tarjetas grises al final mientras dura la búsqueda
+- Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros nuevos aparecen al terminar (el escaneo guarda en una transacción); dos tarjetas grises al final mientras dura la búsqueda. Así solo la búsqueda completa ("Volver a buscar"), el cambio de clase de carpeta y la primera búsqueda. La rápida al abrir es discreta (2026-10-05): solo la línea, superpuesta al borde inferior de la cabecera, sin texto ni tarjetas; no ocupa sitio y no desplaza la cuadrícula al terminar
 - Sin carpetas: icono, "Aún no hay libros", "LECTOR busca los audiolibros dentro y los ordena por libro" y "Añadir carpeta" (destacado), que abre el explorador de carpetas
 - Reserva abajo los 62 del minirreproductor
 

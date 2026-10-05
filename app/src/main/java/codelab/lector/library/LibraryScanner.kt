@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class ScanState(
     val running: Boolean = false,
+    /** Discreto (el rápido al abrir): solo la línea de progreso, sin texto ni tarjetas grises. */
+    val quiet: Boolean = false,
     val found: Int = 0,
     val currentFolder: String? = null,
     val finishedAt: Long? = null,
@@ -52,21 +54,27 @@ class LibraryScanner(
     /**
      * Rápido: solo relee lo que cambió. Completo ([full]): relee todo y rehace las portadas.
      * Devuelve el trabajo en curso (el que ya corría, si lo había) para esperar a que termine.
+     * [quiet]: solo la línea de progreso. Pedir uno no discreto con otro en curso lo hace visible.
      */
-    fun start(full: Boolean = false): Job {
-        job?.takeIf { it.isActive }?.let { return it }
+    fun start(full: Boolean = false, quiet: Boolean = false): Job {
+        job?.takeIf { it.isActive }?.let { running ->
+            if (!quiet) _state.update { it.copy(quiet = false) }
+            return running
+        }
         return scope.launch(Dispatchers.IO) {
-            runCatching { scan(full) }.onFailure { e ->
+            runCatching { scan(full, quiet) }.onFailure { e ->
                 _state.update { it.copy(running = false, currentFolder = null, error = e.message ?: e.toString()) }
             }
         }.also { job = it }
     }
 
-    private suspend fun scan(full: Boolean) {
-        _state.value = ScanState(running = true)
+    private suspend fun scan(full: Boolean, quiet: Boolean) {
+        _state.value = ScanState(running = true, quiet = quiet)
         val roots = db.folders().folders().map { File(it.path) }.filter { it.isDirectory }
         val rules = db.folders().rules()
         val stored = db.fileMeta().all()
+        // Primera búsqueda (nada leído aún): lee todo, se muestra entera aunque se pidiera discreta.
+        if (stored.isEmpty()) _state.update { it.copy(quiet = false) }
         val cache = if (full) emptyMap() else stored.associateBy { it.path }
         val seen = ConcurrentHashMap.newKeySet<String>()
         val fresh = ConcurrentHashMap.newKeySet<FileMeta>()

@@ -27,5 +27,4 @@ Reproductor de audiolibros para Android, clon propio de Simple ABP: mismo minima
 ## TODO
 
 - [ ] Lienzo: casilla "No disponibles" en ordenar, menú del libro sin archivos, regenerar "Iconos en uso" con los 9 iconos nuevos del menú, y cambiar "Buscar en la biblioteca" por la búsqueda dentro de la Biblioteca (cabecera con campo, cuadrícula filtrada)
-- [ ] Línea de "Buscando libros…" al abrir: ocupa un hueco y al desaparecer desplaza la cuadrícula de golpe. Pendiente de decidir cómo mostrarla sin mover el contenido
 

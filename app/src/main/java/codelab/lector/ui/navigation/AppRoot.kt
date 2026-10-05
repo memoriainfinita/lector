@@ -133,12 +133,12 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
     val nowPlaying by player.nowPlaying.collectAsStateWithLifecycle()
     val settings by player.settings.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { app.playback.connect() }
-    // Búsqueda rápida de cambios al abrir la app; no se repite al girar la pantalla.
+    // Búsqueda rápida de cambios al abrir la app, discreta; no se repite al girar la pantalla.
     var scanned by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (!scanned) {
             scanned = true
-            app.scanner.start()
+            app.scanner.start(quiet = true)
         }
     }
     LaunchedEffect(openPlayer) { openPlayer.collect { navigator.openPlayer() } }

@@ -245,18 +245,29 @@ fun LibraryScreen(
 
     // Título, selector y buscar en una fila. En horizontal la altura escasea: la cabecera se va
     // con el scroll de la lista para dejar sitio a las portadas.
+    // Escaneo discreto (el rápido al abrir): solo la línea, sobre el borde de la cabecera, sin
+    // ocupar sitio; así no desplaza la cuadrícula al terminar. El completo, con texto.
+    val fullScan = state.scan.running && !state.scan.quiet
+    val headerWithScan = @Composable {
+        Box {
+            Column { header() }
+            if (state.scan.running && state.scan.quiet) {
+                ScanLine(Modifier.align(Alignment.BottomCenter).padding(horizontal = 20.dp))
+            }
+        }
+    }
     Column(Modifier.fillMaxSize()) {
         val scrollingHeader = landscape && state.hasFolders == true
-        if (!scrollingHeader) header()
+        if (!scrollingHeader) headerWithScan()
         if (state.hasFolders == false) {
             EmptyLibrary(onAddFolder)
             return@Column
         }
-        if (state.scan.running && !scrollingHeader) ScanProgress(state.scan.found, state.scanFolder)
+        if (fullScan && !scrollingHeader) ScanProgress(state.scan.found, state.scanFolder)
         val top: (@Composable () -> Unit)? = if (scrollingHeader) {
             {
-                header()
-                if (state.scan.running) ScanProgress(state.scan.found, state.scanFolder)
+                headerWithScan()
+                if (fullScan) ScanProgress(state.scan.found, state.scanFolder)
             }
         } else null
         when {
@@ -506,7 +517,7 @@ private fun BookGrid(
             }
         }
         // Mientras busca, dos huecos al final: los libros van apareciendo.
-        if (state.scan.running) items(2, key = { "skeleton$it" }) { SkeletonCard() }
+        if (state.scan.running && !state.scan.quiet) items(2, key = { "skeleton$it" }) { SkeletonCard() }
     }
 }
 
@@ -765,18 +776,25 @@ internal fun ProgressBar(fraction: Float, color: androidx.compose.ui.graphics.Co
     }
 }
 
+/** Línea de progreso indeterminada de 2 dp. */
+@Composable
+internal fun ScanLine(modifier: Modifier = Modifier) {
+    val c = LectorTheme.colors
+    LinearProgressIndicator(
+        modifier = modifier.fillMaxWidth().height(2.dp),
+        color = c.accent,
+        trackColor = c.track,
+        gapSize = 0.dp,
+    )
+}
+
 /** Línea fina de progreso bajo el selector, con el recuento y la carpeta que se recorre. */
 @Composable
 internal fun ScanProgress(found: Int, folder: String?) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        LinearProgressIndicator(
-            modifier = Modifier.fillMaxWidth().height(2.dp),
-            color = c.accent,
-            trackColor = c.track,
-            gapSize = 0.dp,
-        )
+        ScanLine()
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val text = stringResource(R.string.scanning_found, found)
             val number = found.toString()
