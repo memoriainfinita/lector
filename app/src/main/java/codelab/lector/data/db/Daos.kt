@@ -250,3 +250,18 @@ interface CorrectionDao {
     @Query("SELECT * FROM correction ORDER BY createdAt")
     suspend fun all(): List<Correction>
 }
+
+@Dao
+interface SegmentPositionDao {
+    @Query("SELECT * FROM segment_position WHERE bookId = :bookId")
+    suspend fun forBook(bookId: String): List<SegmentPosition>
+
+    @Upsert
+    suspend fun save(position: SegmentPosition)
+
+    @Query("DELETE FROM segment_position WHERE bookId = :bookId AND file = :file AND startMs = :startMs")
+    suspend fun forget(bookId: String, file: String, startMs: Long)
+
+    @Query("DELETE FROM segment_position WHERE bookId = :bookId")
+    suspend fun clear(bookId: String)
+}

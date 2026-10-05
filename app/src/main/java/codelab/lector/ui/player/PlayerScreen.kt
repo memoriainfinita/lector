@@ -117,6 +117,7 @@ fun PlayerScreen(
                     skipForward = settings.appSkipForwardSec,
                     onAct = viewModel::act,
                     onJump = viewModel::jumpTo,
+                    onSegment = viewModel::jumpToSegment,
                     onCover = { onOpenCover(np.bookId) },
                     onMinimize = onMinimize,
                     onChapters = { sheet = PlayerSheet.CHAPTERS },
@@ -170,9 +171,9 @@ fun PlayerScreen(
         PlayerSheet.SOUND -> SoundSheet(np, viewModel, onDismiss = { sheet = null })
         PlayerSheet.CHAPTERS -> ChaptersSheet(
             np,
-            onJump = {
+            onSegment = {
                 sheet = null
-                viewModel.jumpTo(it)
+                viewModel.jumpToSegment(it)
             },
             onDismiss = { sheet = null },
         )
@@ -260,6 +261,7 @@ private fun LandscapePlayer(
     skipForward: Int,
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
+    onSegment: (Int) -> Unit,
     onCover: () -> Unit,
     onMinimize: () -> Unit,
     onChapters: () -> Unit,
@@ -298,7 +300,7 @@ private fun LandscapePlayer(
             }
         }
         Box(Modifier.width(1.dp).fillMaxHeight().background(LectorTheme.colors.divider))
-        SidePanel(np, onJump, Modifier.width(280.dp).fillMaxHeight())
+        SidePanel(np, onSegment, Modifier.width(280.dp).fillMaxHeight())
     }
 }
 
@@ -307,7 +309,7 @@ private fun LandscapePlayer(
  * su función. Los tramos con las filas de la hoja de capítulos; sigue al tramo en curso.
  */
 @Composable
-private fun SidePanel(np: NowPlaying, onJump: (Long) -> Unit, modifier: Modifier) {
+private fun SidePanel(np: NowPlaying, onSegment: (Int) -> Unit, modifier: Modifier) {
     val c = LectorTheme.colors
     Column(modifier.padding(top = 16.dp)) {
         SegmentedControl(
@@ -325,7 +327,7 @@ private fun SidePanel(np: NowPlaying, onJump: (Long) -> Unit, modifier: Modifier
             }
         }
         LazyColumn(Modifier.weight(1f), state = list) {
-            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onJump, base = c.background, highlight = c.surface) }
+            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onSegment, base = c.background, highlight = c.surface) }
         }
     }
 }

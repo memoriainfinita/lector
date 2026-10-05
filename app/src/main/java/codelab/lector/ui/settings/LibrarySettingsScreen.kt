@@ -93,7 +93,7 @@ fun LibrarySettingsScreen(viewModel: LibrarySettingsViewModel, onBack: () -> Uni
         folders.forEach { folder ->
             FolderRow(folder) {
                 viewModel.remove(folder.path)
-                undo.show(removedText) { viewModel.restore(folder.path) }
+                undo.show(removedText, onUndo = { viewModel.restore(folder.path) })
             }
         }
         OutlineButton(stringResource(R.string.add_folder_plus), onAddFolder, Modifier.padding(horizontal = 20.dp, vertical = 8.dp))

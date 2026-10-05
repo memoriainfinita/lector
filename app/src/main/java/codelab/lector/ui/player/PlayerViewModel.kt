@@ -61,6 +61,7 @@ class PlayerViewModel(private val app: AppContainer) : ViewModel() {
     fun act(action: PlayerAction) = playback.act(action)
 
     fun jumpTo(bookMs: Long) = playback.jumpTo(bookMs)
+    fun jumpToSegment(index: Int) = playback.jumpToSegment(index)
 
     fun setSpeed(speed: Float) = playback.setSpeed(speed)
 

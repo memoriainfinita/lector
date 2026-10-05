@@ -172,3 +172,21 @@ data class Correction(
     val splitStartFiles: List<String> = emptyList(),
     val createdAt: Long,
 )
+
+/**
+ * Posición guardada de un tramo (capítulo, o archivo sin capítulos) al salir de él a medias: volver
+ * al tramo la retoma. Se borra al escucharlo hasta el final. [startMs] y [positionMs], en ms del
+ * archivo [file] (ruta relativa, como la posición del libro).
+ */
+@Entity(
+    tableName = "segment_position",
+    primaryKeys = ["bookId", "file", "startMs"],
+    foreignKeys = [ForeignKey(Book::class, ["id"], ["bookId"], onDelete = ForeignKey.CASCADE)],
+)
+data class SegmentPosition(
+    val bookId: String,
+    val file: String,
+    val startMs: Long,
+    val positionMs: Long,
+    val updatedAt: Long,
+)

@@ -48,6 +48,7 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     fun setPlayOnOpen(enabled: Boolean) = save { app.playbackSettings.setPlayOnOpen(enabled) }
     fun setNewBookSpeed(speed: Float) = save { app.playbackSettings.setNewBookSpeed(speed) }
     fun setCoverOutside(enabled: Boolean) = save { app.playbackSettings.setCoverOutside(enabled) }
+    fun setNextFileFromPosition(enabled: Boolean) = save { app.playbackSettings.setNextFileFromPosition(enabled) }
 
     // Sonido global
     fun setGlobalSound(sound: SoundSettings) = app.playback.setGlobalSound(sound)

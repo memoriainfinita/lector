@@ -175,6 +175,7 @@ class PlaybackService : MediaLibraryService() {
                     engine.open(it, args.getBoolean(LectorCommands.ARG_PLAY))
                 }
                 LectorCommands.JUMP_TO -> engine.jumpTo(args.getLong(LectorCommands.ARG_BOOK_MS))
+                LectorCommands.JUMP_TO_SEGMENT -> engine.jumpToSegment(args.getInt(LectorCommands.ARG_SEGMENT))
                 LectorCommands.SET_SKIP_SILENCE -> engine.setSkipSilence(args.getBoolean(LectorCommands.ARG_ENABLED))
                 LectorCommands.SET_OWN_SOUND -> engine.setOwnSound(args.getBoolean(LectorCommands.ARG_ENABLED))
                 LectorCommands.SET_BOOK_SOUND -> engine.setBookSound(LectorCommands.readSound(args))

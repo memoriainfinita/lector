@@ -32,13 +32,14 @@ import kotlinx.coroutines.delay
 /** Aviso con "Deshacer", patrón de toda la app. Uno a la vez; el nuevo sustituye al anterior. */
 @Stable
 class UndoState {
-    internal class Message(val text: String, val onUndo: () -> Unit)
+    internal class Message(val text: String, val onUndo: () -> Unit, val durationMs: Long)
 
     internal var current by mutableStateOf<Message?>(null)
         private set
 
-    fun show(text: String, onUndo: () -> Unit) {
-        current = Message(text, onUndo)
+    /** [durationMs]: 5 s por defecto; el de los saltos dura lo que el reproductor permite deshacer. */
+    fun show(text: String, onUndo: () -> Unit, durationMs: Long = UndoDurationMs) {
+        current = Message(text, onUndo, durationMs)
     }
 
     internal fun dismiss(message: Message) {
@@ -60,7 +61,7 @@ fun UndoBar(state: UndoState, modifier: Modifier = Modifier) {
     val message = state.current
     LaunchedEffect(message) {
         if (message != null) {
-            delay(UndoDurationMs)
+            delay(message.durationMs)
             state.dismiss(message)
         }
     }

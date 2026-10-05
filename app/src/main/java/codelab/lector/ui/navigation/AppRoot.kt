@@ -209,7 +209,8 @@ private fun JumpUndo(playing: NowPlaying?, onUndo: () -> Unit) {
     val from = playing?.undoFromMs
     val text = from?.let { stringResource(R.string.jumped_from, formatDuration(it)) }
     LaunchedEffect(until) {
-        if (until != null && text != null && until > System.currentTimeMillis()) undo.show(text, onUndo)
+        val left = until?.minus(System.currentTimeMillis())
+        if (left != null && text != null && left > 0) undo.show(text, onUndo, left)
     }
 }
 

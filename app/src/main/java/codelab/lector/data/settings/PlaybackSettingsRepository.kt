@@ -29,6 +29,8 @@ data class PlaybackSettings(
     val playOnOpen: Boolean = false,
     /** Ajustes › Portada en la pantalla de bloqueo: portada en la sesión (bloqueo y notificación). */
     val coverOutside: Boolean = true,
+    /** Ajustes › Siguiente archivo desde su posición: al terminar un archivo sonando, el siguiente retoma la suya. */
+    val nextFileFromPosition: Boolean = true,
 )
 
 /** Libro que sonaba cuando el proceso murió sin pasar por una pausa o un cierre normal. */
@@ -48,6 +50,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             newBookSpeed = p[NEW_BOOK_SPEED] ?: d.newBookSpeed,
             playOnOpen = p[PLAY_ON_OPEN] ?: d.playOnOpen,
             coverOutside = p[COVER_OUTSIDE] ?: d.coverOutside,
+            nextFileFromPosition = p[NEXT_FILE_FROM_POSITION] ?: d.nextFileFromPosition,
         )
     }
 
@@ -76,6 +79,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setPlayOnOpen(enabled: Boolean) = store.edit { it[PLAY_ON_OPEN] = enabled }
 
     suspend fun setCoverOutside(enabled: Boolean) = store.edit { it[COVER_OUTSIDE] = enabled }
+
+    suspend fun setNextFileFromPosition(enabled: Boolean) = store.edit { it[NEXT_FILE_FROM_POSITION] = enabled }
 
     suspend fun current(): PlaybackSettings = settings.first()
 
@@ -107,6 +112,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val NEW_BOOK_SPEED = floatPreferencesKey("new_book_speed")
         val PLAY_ON_OPEN = booleanPreferencesKey("play_on_open")
         val COVER_OUTSIDE = booleanPreferencesKey("cover_outside")
+        val NEXT_FILE_FROM_POSITION = booleanPreferencesKey("next_file_from_position")
         val PREAMP = floatPreferencesKey("sound_preamp_db")
         val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
         val EQ_BANDS = stringPreferencesKey("sound_eq_bands")

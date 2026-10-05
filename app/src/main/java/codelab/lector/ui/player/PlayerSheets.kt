@@ -267,9 +267,9 @@ private fun LabeledSlider(label: String, value: String, slider: @Composable () -
     }
 }
 
-/** Capítulos: pasados atenuados con marca, el actual resaltado con su progreso. Tocar salta. */
+/** Capítulos: pasados atenuados con marca, el actual resaltado con su progreso. Tocar va al tramo, donde se dejó. */
 @Composable
-fun ChaptersSheet(np: NowPlaying, onJump: (Long) -> Unit, onDismiss: () -> Unit) {
+fun ChaptersSheet(np: NowPlaying, onSegment: (Int) -> Unit, onDismiss: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (np.segmentIndex - 2).coerceAtLeast(0))
@@ -280,7 +280,7 @@ fun ChaptersSheet(np: NowPlaying, onJump: (Long) -> Unit, onDismiss: () -> Unit)
             Text(stringResource(R.string.chapters_count, np.segments.size), style = t.secondary, color = c.textSecondary)
         }
         LazyColumn(state = list, modifier = Modifier.padding(bottom = 12.dp)) {
-            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onJump, base = c.surface, highlight = c.popup) }
+            itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onSegment, base = c.surface, highlight = c.popup) }
         }
     }
 }
@@ -290,7 +290,7 @@ fun ChaptersSheet(np: NowPlaying, onJump: (Long) -> Unit, onDismiss: () -> Unit)
  * La usan la hoja de capítulos y el panel Archivos de Escuchando en horizontal.
  */
 @Composable
-internal fun SegmentRow(np: NowPlaying, i: Int, onJump: (Long) -> Unit, base: Color, highlight: Color) {
+internal fun SegmentRow(np: NowPlaying, i: Int, onSegment: (Int) -> Unit, base: Color, highlight: Color) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val seg = np.segments[i]
@@ -301,7 +301,7 @@ internal fun SegmentRow(np: NowPlaying, i: Int, onJump: (Long) -> Unit, base: Co
             .fillMaxWidth()
             .height(if (current) 52.dp else 44.dp)
             .background(if (current) highlight else base)
-            .clickable(role = Role.Button) { onJump(seg.startMs) },
+            .clickable(role = Role.Button) { onSegment(i) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(3.dp).fillMaxHeight().background(if (current) c.accent else base))

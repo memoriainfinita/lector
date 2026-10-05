@@ -14,6 +14,7 @@ import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.BookmarkKind
 import codelab.lector.data.db.Bookmark
 import codelab.lector.data.db.LectorDatabase
+import codelab.lector.data.db.SegmentPosition
 import codelab.lector.data.settings.PlaybackSettings
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.library.CoverStore
@@ -53,6 +54,10 @@ class BookEngine(
     private var ticker: Job? = null
     private var lastSaveAt = 0L
     private var globalSound = SoundSettings()
+    /** Posición guardada de cada tramo, en ms de su archivo (design.md › Reproducción). */
+    private val memory = mutableMapOf<SegmentKey, Long>()
+    /** El último cambio de posición fue un salto: un cambio de tramo no es paso natural. */
+    private var seeked = false
 
     val loaded: Boolean get() = book != null
     val currentPrefs: PlaybackSettings get() = prefs
@@ -106,6 +111,8 @@ class BookEngine(
         undo.clear()
         rewindPending = false
         segmentIndex = -1
+        memory.clear()
+        db.segmentPositions().forBook(bookId).forEach { memory[SegmentKey(it.file, it.startMs)] = it.positionMs }
         holder.fail(null)
 
         var start = b.positionFile?.let(timeline::indexOfFile)?.takeIf { it >= 0 }
@@ -194,10 +201,24 @@ class BookEngine(
         seekToBook(target.coerceIn(0, timeline.totalMs))
     }
 
-    fun previous() = jumpTo(timeline.previousTarget(position()))
+    /** Con más de 3 s dentro del tramo, a su inicio; si no, al tramo anterior, donde se dejó. */
+    fun previous() {
+        val pos = position()
+        val i = timeline.segmentIndexAt(pos)
+        if (i < 0) return
+        val back = timeline.previousSegment(pos)
+        if (back == null) jumpTo(timeline.segments[i].startMs) else jumpToSegment(back)
+    }
 
     fun next() {
-        timeline.nextTarget(position())?.let(::jumpTo)
+        val i = timeline.segmentIndexAt(position())
+        if (i + 1 < timeline.segments.size) jumpToSegment(i + 1)
+    }
+
+    /** Ir a un tramo (anterior, siguiente, lista de capítulos): retoma su posición guardada. */
+    fun jumpToSegment(index: Int) {
+        val seg = timeline.segments.getOrNull(index) ?: return
+        jumpTo(entryPoint(seg, savedBookMs(index)))
     }
 
     /** Salto grande: barra, capítulo, archivo o marcador. Se puede deshacer. */
@@ -223,6 +244,7 @@ class BookEngine(
     fun reset(bookId: String) {
         if (book?.id != bookId) return
         exo.pause()
+        clearMemory()
         seekToBook(0)
     }
 
@@ -358,6 +380,45 @@ class BookEngine(
         appScope.launch { db.books().savePosition(b.id, file, ms, now) }
     }
 
+    // ---- Posición por tramo ----
+
+    private fun savedBookMs(index: Int): Long? {
+        val key = timeline.segmentKey(index) ?: return null
+        return memory[key]?.let { timeline.savedBookMs(key, it) }
+    }
+
+    /** Al salir del tramo [index] en [bookMs] con un salto. */
+    private fun leave(index: Int, bookMs: Long) {
+        val seg = timeline.segments.getOrNull(index) ?: return
+        when (leaveAction(seg, bookMs)) {
+            LeaveAction.REMEMBER -> remember(index, bookMs)
+            LeaveAction.FORGET -> forget(index)
+            LeaveAction.KEEP -> Unit
+        }
+    }
+
+    private fun remember(index: Int, bookMs: Long) {
+        val b = book ?: return
+        val key = timeline.segmentKey(index) ?: return
+        val ms = timeline.toFile(bookMs).ms
+        memory[key] = ms
+        val now = System.currentTimeMillis()
+        appScope.launch { db.segmentPositions().save(SegmentPosition(b.id, key.file, key.startMs, ms, now)) }
+    }
+
+    private fun forget(index: Int) {
+        val b = book ?: return
+        val key = timeline.segmentKey(index) ?: return
+        if (memory.remove(key) == null) return
+        appScope.launch { db.segmentPositions().forget(b.id, key.file, key.startMs) }
+    }
+
+    private fun clearMemory() {
+        val b = book ?: return
+        memory.clear()
+        appScope.launch { db.segmentPositions().clear(b.id) }
+    }
+
     // ---- Eventos del reproductor ----
 
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -393,11 +454,28 @@ class BookEngine(
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         updateSegment()
+        // Archivo terminado sonando: con "Siguiente archivo desde su posición", el siguiente
+        // retoma la suya. No es un salto: no se deshace.
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && prefs.nextFileFromPosition) {
+            val i = timeline.segmentIndexAt(position())
+            val seg = timeline.segments.getOrNull(i)
+            if (seg != null) {
+                val target = entryPoint(seg, savedBookMs(i))
+                if (target != seg.startMs) seekToBook(target)
+            }
+        }
         publish()
         save()
     }
 
     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+        if (loaded && reason == Player.DISCONTINUITY_REASON_SEEK) {
+            val from = timeline.toBook(FilePosition(oldPosition.mediaItemIndex, oldPosition.positionMs))
+            val to = timeline.toBook(FilePosition(newPosition.mediaItemIndex, newPosition.positionMs))
+            val left = timeline.segmentIndexAt(from)
+            if (left >= 0 && left != timeline.segmentIndexAt(to)) leave(left, from)
+            seeked = true
+        }
         updateSegment()
         publish()
     }
@@ -430,12 +508,19 @@ class BookEngine(
         holder.fail(PlaybackError.Inaccessible(bookId))
     }
 
-    /** Cambio de capítulo: actualiza el subtítulo de la notificación sin cortar el audio. */
+    /**
+     * Cambio de tramo: actualiza el subtítulo de la notificación sin cortar el audio. Pasar al
+     * siguiente sonando, sin salto, es haber escuchado el anterior entero: se borra su posición.
+     */
     private fun updateSegment() {
         if (!loaded) return
         val i = timeline.segmentIndexAt(position())
+        val jumped = seeked
+        seeked = false
         if (i == segmentIndex) return
+        val previous = segmentIndex
         segmentIndex = i
+        if (!jumped && previous >= 0 && i == previous + 1) forget(previous)
         if (timeline.hasChapters && exo.mediaItemCount > 0) {
             exo.replaceMediaItem(exo.currentMediaItemIndex, mediaItem(exo.currentMediaItemIndex, timeline.segments.getOrNull(i)))
         }
@@ -461,6 +546,7 @@ class BookEngine(
 
     private suspend fun onFinished() {
         val b = book ?: return
+        clearMemory()
         when (finishActionFor(db.folders().ruleFor(b.path))) {
             FinishAction.FINISH_THEN_NEXT -> {
                 setFinished(b, true)
@@ -531,7 +617,8 @@ class BookEngine(
     private companion object {
         const val TickMs = 500L
         const val SaveEveryMs = 5_000L
-        const val UndoWindowMs = 5_000L
+        /** Deshacer un salto grande: más que los demás avisos (5 s). */
+        const val UndoWindowMs = 10_000L
         const val EndToleranceMs = 1_000L
         const val MinSpeed = 0.5f
         const val MaxSpeed = 3.5f

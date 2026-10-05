@@ -59,6 +59,9 @@ class PlaybackConnection(
     /** Salto grande a una posición del libro (barra, capítulo, marcador). */
     fun jumpTo(bookMs: Long) = send(LectorCommands.JUMP_TO, Bundle().apply { putLong(LectorCommands.ARG_BOOK_MS, bookMs) })
 
+    /** Ir a un tramo de la lista de capítulos: retoma su posición guardada. */
+    fun jumpToSegment(index: Int) = send(LectorCommands.JUMP_TO_SEGMENT, Bundle().apply { putInt(LectorCommands.ARG_SEGMENT, index) })
+
     /** Velocidad del libro actual (0.5x–3.5x); se guarda en el libro. */
     fun setSpeed(speed: Float) {
         scope.launch(Dispatchers.Main.immediate) { controller().setPlaybackSpeed(speed) }

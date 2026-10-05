@@ -177,7 +177,7 @@
     <string name="auto_next_book">Empezar el siguiente libro</string>
     <string name="auto_next_book_note">Al terminar el actual</string>
     <string name="next_file_from_position">Siguiente archivo desde su posición</string>
-    <string name="next_file_from_position_note">Si ya se había empezado</string>
+    <string name="next_file_from_position_note">Al terminar uno, el siguiente sigue donde se dejó</string>
     <string name="rewind_on_resume">Repetir un tramo al reanudar</string>
     <string name="rewind_on_resume_note">Tras cada pausa</string>
     <string name="play_on_open">Reproducir al abrir la app</string>

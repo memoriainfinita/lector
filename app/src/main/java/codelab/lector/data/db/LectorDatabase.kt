@@ -14,10 +14,11 @@ import kotlinx.coroutines.Dispatchers
         Book::class, BookFile::class, Chapter::class,
         Bookmark::class, Tag::class, BookmarkTag::class,
         LibraryFolder::class, FolderRule::class, Correction::class, FileMeta::class,
+        SegmentPosition::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 @ColumnTypeConverters(Converters::class)
 abstract class LectorDatabase : RoomDatabase() {
@@ -27,6 +28,7 @@ abstract class LectorDatabase : RoomDatabase() {
     abstract fun folders(): FolderDao
     abstract fun corrections(): CorrectionDao
     abstract fun fileMeta(): FileMetaDao
+    abstract fun segmentPositions(): SegmentPositionDao
 
     companion object {
         fun create(context: Context): LectorDatabase =

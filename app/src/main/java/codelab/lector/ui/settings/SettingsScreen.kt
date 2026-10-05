@@ -57,8 +57,7 @@ fun SettingsScreen(
     SettingsPage(stringResource(R.string.settings), onBack) {
         SectionHeader(stringResource(R.string.settings_playback))
         SwitchRow(stringResource(R.string.auto_next_book), playback.autoNextBook, viewModel::setAutoNextBook, note = stringResource(R.string.auto_next_book_note))
-        // Comportamiento en Simple ABP sin comprobar (design.md › Reproducción).
-        SwitchRow(stringResource(R.string.next_file_from_position), false, {}, note = stringResource(R.string.next_file_from_position_note), enabled = false)
+        SwitchRow(stringResource(R.string.next_file_from_position), playback.nextFileFromPosition, viewModel::setNextFileFromPosition, note = stringResource(R.string.next_file_from_position_note))
         ValueRow(
             stringResource(R.string.rewind_on_resume),
             seconds(playback.rewindOnResumeMs / 1_000f),

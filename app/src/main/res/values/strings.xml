@@ -178,7 +178,7 @@
     <string name="auto_next_book">Start the next book</string>
     <string name="auto_next_book_note">When the current one ends</string>
     <string name="next_file_from_position">Next file from its position</string>
-    <string name="next_file_from_position_note">If it was already started</string>
+    <string name="next_file_from_position_note">When one ends, the next resumes where it was left</string>
     <string name="rewind_on_resume">Repeat a stretch on resume</string>
     <string name="rewind_on_resume_note">After each pause</string>
     <string name="play_on_open">Play when the app opens</string>

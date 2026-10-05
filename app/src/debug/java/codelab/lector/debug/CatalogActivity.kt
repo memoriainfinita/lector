@@ -172,7 +172,7 @@ private fun Catalog() {
                 ListDivider()
                 MenuRow("Abrir hoja", { sheetOpen = true }, Modifier.fillMaxWidth(), trailing = "3")
                 MenuRow("Abrir diálogo", { dialogOpen = true }, Modifier.fillMaxWidth())
-                MenuRow("Mostrar Deshacer", { undo.show("Marcador borrado") {} }, Modifier.fillMaxWidth())
+                MenuRow("Mostrar Deshacer", { undo.show("Marcador borrado", onUndo = {}) }, Modifier.fillMaxWidth())
                 MenuRow("Borrar del móvil", {}, Modifier.fillMaxWidth(), danger = true)
             }
 

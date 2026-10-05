@@ -28,6 +28,7 @@ object LectorCommands {
     const val ACTION = "codelab.lector.ACTION"
     const val OPEN_BOOK = "codelab.lector.OPEN_BOOK"
     const val JUMP_TO = "codelab.lector.JUMP_TO"
+    const val JUMP_TO_SEGMENT = "codelab.lector.JUMP_TO_SEGMENT"
     const val SET_SKIP_SILENCE = "codelab.lector.SET_SKIP_SILENCE"
     const val SET_OWN_SOUND = "codelab.lector.SET_OWN_SOUND"
     const val SET_BOOK_SOUND = "codelab.lector.SET_BOOK_SOUND"
@@ -41,12 +42,13 @@ object LectorCommands {
     const val ARG_BOOK_ID = "bookId"
     const val ARG_PLAY = "play"
     const val ARG_BOOK_MS = "bookMs"
+    const val ARG_SEGMENT = "segment"
     const val ARG_ENABLED = "enabled"
     const val ARG_PREAMP = "preampDb"
     const val ARG_EQ_ENABLED = "eqEnabled"
     const val ARG_BANDS = "bandsDb"
 
-    val all = listOf(ACTION, OPEN_BOOK, JUMP_TO, SET_SKIP_SILENCE, SET_OWN_SOUND, SET_BOOK_SOUND, RESET_BOOK, REFRESH_BOOK, UNLOAD_BOOK)
+    val all = listOf(ACTION, OPEN_BOOK, JUMP_TO, JUMP_TO_SEGMENT, SET_SKIP_SILENCE, SET_OWN_SOUND, SET_BOOK_SOUND, RESET_BOOK, REFRESH_BOOK, UNLOAD_BOOK)
         .map { SessionCommand(it, Bundle.EMPTY) }
 
     fun action(call: ActionCall) = SessionCommand(

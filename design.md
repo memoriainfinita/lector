@@ -121,7 +121,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
 - Cuadrícula de la biblioteca: ⋮ pequeño junto al título de cada libro, bajo la portada. Descartados: pulsación larga (no es intuitiva) y ⋯ sobre la portada
 - Ecualizador accesible desde el ⋯ del reproductor como hoja, además de en Ajustes
 - Capítulos: en libros con capítulos, la segunda barra es la del capítulo; tocar su nombre abre la lista; anterior/siguiente saltan de capítulo. Anterior con más de 3 s dentro del capítulo vuelve a su inicio
-- Deshacer salto: aviso temporal abajo, sobre el minirreproductor si lo hay, con "Deshacer", unos 5 s. Solo en saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo), no en ±10 s. Con saltos encadenados vuelve a la posición previa al primero
+- Deshacer salto: aviso temporal abajo, sobre el minirreproductor si lo hay, con "Deshacer", 10 s (antes 5; los demás avisos, 5 s; 2026-10-05). Solo en saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo), no en ±10 s. Con saltos encadenados vuelve a la posición previa al primero
 - Aviso con "Deshacer" como patrón de la app: saltos, borrar marcador, unir libros, quitar carpeta, borrar tag, reiniciar posición, quitar de recientes. Excepción: borrar del móvil pide confirmación porque no se puede deshacer
 - Marcadores: botón de play en cada marcador ("escuchar desde aquí"). Tocar la fila abre la edición (hoja de marcador). El ⋮ queda en copiar texto y borrar. Borrar sin confirmación, con "Deshacer"
 - Marcadores sin límite de número ni de longitud del título
@@ -266,7 +266,9 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Libro = lista de reproducción con un elemento por archivo. Capítulos calculados sobre la posición desde la tabla `chapter`, sin cortar el audio. Posición global del libro ↔ archivo + punto
 - Posición guardada cada ~5 s sonando, al pausar, al saltar y al cerrar el servicio, con `positionUpdatedAt` y `lastPlayedAt`. Al abrir un libro se restauran posición, velocidad y saltar silencios
 - Saltos ±N s cruzando archivos. Anterior / siguiente: capítulo si el libro tiene capítulos, si no archivo; anterior con más de 3 s vuelve al inicio. Ajustes de salto: segundos por botón, dividir el tiempo por la velocidad, siguiente archivo desde posición distinta de cero
-- Deshacer salto: solo saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo). Con saltos encadenados vuelve a la posición previa al primero
+- Deshacer salto: solo saltos grandes (barra, cambio de capítulo o archivo, ir a un marcador o capítulo). Con saltos encadenados vuelve a la posición previa al primero. Ventana de 10 s, la misma que el aviso (2026-10-05)
+- Posición por tramo (2026-10-05): al salir con un salto de un tramo (capítulo, o archivo sin capítulos) a medias, se guarda dónde estaba (tabla `segment_position`, base de datos versión 4). Volver a él con anterior, siguiente, la lista de capítulos o la notificación retoma ese punto; para empezarlo, anterior con más de 3 s dentro. Salir en los primeros 3 s deja lo guardado; en los últimos 5 s, o pasar al siguiente tramo sonando, lo borra. Reiniciar el libro y terminarlo borran todo. Como Simple ABP, que guarda posición por archivo (comprobado en la app 2026-10-05)
+- Siguiente archivo desde su posición (Simple ABP: "Allow next file to start from non-zero position", comprobado 2026-10-05): al terminar un archivo sonando, el siguiente retoma su posición guardada; apagado, empieza en 0. No afecta a los botones, que siempre retoman. Entre capítulos de un mismo archivo no se aplica: el audio sigue de corrido. Activado por defecto
 - Tramo repetido al reanudar tras una pausa: valor en DataStore, 3 s por defecto
 - Al terminar, según la clase de carpeta: Libros, terminado y siguiente libro si está activado (desactivado por defecto); Episodios, terminado sin pasar a otra obra; Álbumes y Sesiones, vuelve al inicio, nunca terminado
 - Acciones: un solo conjunto con ejecutor (saltar atrás, saltar adelante, anterior, siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, siguiente libro). Marcar guarda en la posición actual; la hoja llega con las pantallas. Ir al marcador anterior: el inmediatamente anterior a la posición
@@ -288,7 +290,6 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Duración 0 en el escaneo: el reproductor la lee al cargar el archivo y se guarda en `book_file`, `book` y `file_meta`. Casos (2026-10-03): `00.12 The Heir of Caladan.m4b` y `00.13 Princess of Dune.m4b`, MP4 de ~1 GB con el índice (`moov`) al final
 - `00.05 Mentats of Dune.m4b` no es audio: es un ZIP (cabecera `PK`) con el m4b dentro. Ningún extractor lo lee; error de reproducción
 - Pendiente: capítulos de los MP4 con el índice al final (el escaneo no los lee; Heir of Caladan sin capítulos en la base de datos, sin comprobar si los tiene)
-- Pendiente: "siguiente archivo desde posición distinta de cero" (ajuste de Simple ABP, comportamiento sin comprobar); sin implementar
 
 ## Navegación
 
@@ -415,7 +416,7 @@ Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye
 Aprobado 2026-10-05. Tres entregas por dependencias: A pantalla principal, Apariencia y Ecualizador y volumen; B Carpetas y explorador de carpetas; C Botones (reproductor, notificación, auricular, teclas multimedia, retrasos, notificación estándar). Código en `ui/settings/`.
 
 - Filas de funciones que aún no existen: atenuadas e inactivas, no ocultas, como la pausa diferida en Escuchando. Pausa diferida, Gestionar tags y Abrir la hoja al marcar, Datos y saltos del widget llegan con sus funciones
-- "Siguiente archivo desde su posición": inactiva hasta comprobar en Simple ABP qué hace ("Allow next file to start from non-zero position"); puede depender de una posición por archivo, y LECTOR guarda una por libro
+- "Siguiente archivo desde su posición": activa desde el 2026-10-05 (Reproducción › Posición por tramo), con la nota "Al terminar uno, el siguiente sigue donde se dejó"
 
 #### A. Pantalla principal, Apariencia y Sonido
 
