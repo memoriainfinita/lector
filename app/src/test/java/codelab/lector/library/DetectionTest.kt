@@ -190,9 +190,29 @@ class DetectionTest {
             book("renamed", "old-key", 70_000_400),
             book("gone", "gone-key", 1_000),
         )
-        val r = reconcile(detected, existing)
+        val r = reconcile(detected, existing, listOf("/old"))
         assertEquals("same", r.matches[0].existing?.id)
         assertEquals("renamed", r.matches[1].existing?.id)
         assertEquals(listOf("gone"), r.missing.map { it.id })
+    }
+
+    @Test
+    fun booksOfARemovedFolderAreLeftAlone() {
+        val d = "$root/New"
+        val detected = detectBooks(folder(d, listOf(file(d, "a.m4b", durationMs = 50_000_000), file(d, "b.m4b", durationMs = 70_000_000))), emptyList())
+        fun book(id: String, path: String, key: String, duration: Long) =
+            Book(id = id, identityKey = key, totalDurationMs = duration, path = path, title = id, addedAt = 0, speed = 1f)
+        val existing = listOf(
+            // Movido desde la carpeta quitada a la biblioteca: se reconecta por firma.
+            book("moved", "/removed/Moved", detected[0].identityKey, 50_000_000),
+            // Misma duración que uno nuevo, pero de la carpeta quitada: no se empareja.
+            book("other", "/removed/Other", "other-key", 70_000_000),
+            book("lost", "$root/Lost", "lost-key", 1_000),
+            book("sdOut", "/storage/SD/Book", "sd-key", 2_000),
+        )
+        val r = reconcile(detected, existing, listOf(root, "/storage/SD"))
+        assertEquals("moved", r.matches[0].existing?.id)
+        assertEquals(null, r.matches[1].existing)
+        assertEquals(listOf("lost", "sdOut"), r.missing.map { it.id })
     }
 }

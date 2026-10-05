@@ -70,7 +70,8 @@ class LibraryScanner(
 
     private suspend fun scan(full: Boolean, quiet: Boolean) {
         _state.value = ScanState(running = true, quiet = quiet)
-        val roots = db.folders().folders().map { File(it.path) }.filter { it.isDirectory }
+        val folders = db.folders().folders().map { it.path }
+        val roots = folders.map(::File).filter { it.isDirectory }
         val rules = db.folders().rules()
         val stored = db.fileMeta().all()
         // Primera búsqueda (nada leído aún): lee todo, se muestra entera aunque se pidiera discreta.
@@ -88,7 +89,7 @@ class LibraryScanner(
         _state.update { it.copy(currentFolder = null) }
         val detected = applyCorrections(trees.flatMap { detectBooks(it, rules) }, db.corrections().all())
         val existing = db.books().all()
-        val result = reconcile(detected, existing)
+        val result = reconcile(detected, existing, folders)
         val now = System.currentTimeMillis()
         val written = mutableListOf<Pair<String, DetectedBook>>()
         val created = mutableSetOf<String>()

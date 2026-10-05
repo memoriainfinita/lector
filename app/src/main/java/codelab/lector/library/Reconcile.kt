@@ -85,12 +85,17 @@ data class Match(val detected: DetectedBook, val existing: Book?)
 
 data class Reconciliation(val matches: List<Match>, val missing: List<Book>)
 
-/** Por firma; si no, por duración ±1 s entre los libros que no han aparecido. */
-fun reconcile(detected: List<DetectedBook>, existing: List<Book>): Reconciliation {
+/**
+ * Por firma entre todos los libros (uno movido desde una carpeta quitada se reconecta); si no, por
+ * duración ±1 s entre los que no han aparecido. Solo los de [folders] entran por duración y quedan
+ * como perdidos: los de una carpeta quitada no se tocan.
+ */
+fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<String>): Reconciliation {
     val unmatched = existing.toMutableList()
     val byIdentity = detected.associateWith { d ->
         unmatched.firstOrNull { it.identityKey == d.identityKey }?.also { unmatched.remove(it) }
     }
+    unmatched.retainAll { book -> folders.any { isInside(book.path, it) } }
     val matches = detected.map { d ->
         val found = byIdentity[d] ?: unmatched
             .filter { abs(it.totalDurationMs - d.durationMs) <= DurationToleranceMs }
@@ -100,6 +105,9 @@ fun reconcile(detected: List<DetectedBook>, existing: List<Book>): Reconciliatio
     }
     return Reconciliation(matches, unmatched)
 }
+
+/** [path] es [folder] o está dentro. */
+fun isInside(path: String, folder: String) = path == folder || path.startsWith("$folder/")
 
 /** Datos leídos del primer archivo con etiquetas. */
 private fun DetectedBook.tag(pick: (FileMeta) -> String?): String? =
