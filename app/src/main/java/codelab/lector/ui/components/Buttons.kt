@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,6 +50,7 @@ private fun ButtonBase(
     border: BorderStroke? = null,
     horizontalPadding: Dp = 14.dp,
     enabled: Boolean = true,
+    fill: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     Box(
@@ -59,6 +61,7 @@ private fun ButtonBase(
     ) {
         Row(
             modifier = Modifier
+                .then(if (fill) Modifier.fillMaxWidth() else Modifier)
                 .height(height)
                 .clip(shape)
                 .background(background, shape)
@@ -87,12 +90,12 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     }
 }
 
-/** Destacado (primer arranque, estados vacíos): 48 / radio 8 / 15 seminegrita. */
+/** Destacado (primer arranque, estados vacíos): 48 / radio 8 / 15 seminegrita. [fill]: todo el ancho. */
 @Composable
-fun HeroButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun HeroButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, fill: Boolean = false) {
     val c = LectorTheme.colors
-    ButtonBase(onClick, 48.dp, RoundedCornerShape(8.dp), modifier, background = c.accent, horizontalPadding = 20.dp) {
-        Text(text, style = LectorTheme.type.row.weight(FontWeight.SemiBold), color = c.onAccent)
+    ButtonBase(onClick, 48.dp, RoundedCornerShape(8.dp), modifier, background = if (enabled) c.accent else c.track, horizontalPadding = 20.dp, enabled = enabled, fill = fill) {
+        Text(text, style = LectorTheme.type.row.weight(FontWeight.SemiBold), color = if (enabled) c.onAccent else c.inactive)
     }
 }
 

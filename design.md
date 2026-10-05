@@ -446,7 +446,7 @@ Aprobado 2026-10-05.
 - Correcciones: con Unir y Separar, que las crean; hasta entonces no hay ninguna
 - Explorador (pantalla completa, lienzo `Folder-Picker`): selector Principal / Tarjeta SD solo con SD; flecha de subir y ruta; Atrás sube un nivel y en la raíz cierra. Filas de subcarpeta con "n archivos de audio" o "Sin audio", contados en segundo plano. Sin ocultas ni `Android/`. Una carpeta de la biblioteca, o dentro de una, atenuada con "Ya en la biblioteca" y sin abrir
 - "Usar esta carpeta": sustituye a las carpetas de la lista que contiene, lanza una búsqueda rápida visible y vuelve a la pantalla de origen
-- Se abre desde Ajustes › Biblioteca, "Añadir carpeta" de la Biblioteca vacía y "Elegir otra carpeta" del primer arranque (el resto del primer arranque sigue vacío)
+- Se abre desde Ajustes › Biblioteca, "Añadir carpeta" de la Biblioteca vacía y "Elegir otra carpeta" del primer arranque
 
 ### Sin portadas
 
@@ -460,6 +460,17 @@ Aprobado 2026-10-05 (lienzo, versión 151: "Biblioteca sin portadas: lista", "Bi
   - Escuchando sin recuadro: autor en mayúsculas, título de 28, "Narrado por…" y "6% · quedan…" arriba; el hueco en medio (deslizarlo hacia abajo hace Atrás) y controles en su sitio. En horizontal, sin portada a la izquierda. Libro inaccesible: título arriba y tarjeta abajo
   - El visor de portada sigue abriéndose desde "Ver portada" del menú del libro
 - Porcentaje de Escuchando redondeado, como en la tarjeta (antes truncado: 41% frente a 42%)
+
+### Primer arranque
+
+Hecho 2026-10-05 (lienzo `Onboarding-Permission`, `Onboarding-Folder`).
+
+- Permiso: "Dar permiso" abre el ajuste de acceso a todos los archivos de la app (Android 11+) o pide la lectura clásica (8–10; denegada para siempre, la ficha de la app). Al volver con el acceso, Carpetas; con carpetas ya guardadas (permiso retirado), directo a la Biblioteca. Carpetas sustituye a Permiso: Atrás sale de la app
+- Sin "Importar una copia de otro móvil" hasta la importación de Ajustes › Datos
+- Carpetas: casillas con las carpetas con audio de niveles 1 y 2, por nombre, buscadas en segundo plano ("Buscando carpetas con audio…"). Fila: ruta desde la raíz y "Almacenamiento principal · n archivos de audio" en todas (no "n libros": contarlos exige la detección)
+- Marcadas de entrada las de nombre de audiolibros (audiobook, audio book, audiolibro, libros)
+- "Elegir otra carpeta" abre el explorador; la elegida aparece al final de la lista, marcada
+- "Empezar", activo con alguna marcada: las carpetas de la biblioteca pasan a ser las marcadas (las contenidas en otra marcada salen) y la Biblioteca abre con la búsqueda visible
 
 ## Modelo de datos
 

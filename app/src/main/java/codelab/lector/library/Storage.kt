@@ -46,11 +46,11 @@ fun countAudioFiles(dir: File): Int = dir.listFiles().orEmpty().sumOf { f ->
 fun scannableSubfolders(dir: File): List<File> =
     dir.listFiles().orEmpty().filter { it.isDirectory && isScannableDir(it) }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
 
-/** Carpetas con audio para el primer arranque: niveles 1 y 2 bajo cada almacenamiento. */
+/** Carpetas con audio para el primer arranque: niveles 1 y 2 bajo cada almacenamiento, por nombre. */
 fun findAudioFolders(roots: List<File>, maxDepth: Int = 2): List<AudioFolder> {
     val out = mutableListOf<AudioFolder>()
     fun visit(dir: File, depth: Int) {
-        dir.listFiles().orEmpty().filter { it.isDirectory && isScannableDir(it) }.forEach { sub ->
+        scannableSubfolders(dir).forEach { sub ->
             val n = countAudioFiles(sub)
             if (n > 0) {
                 out += AudioFolder(sub, n)

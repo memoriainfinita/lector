@@ -27,6 +27,12 @@
     <string name="onboarding_welcome">Tus audiolibros, desde tus carpetas</string>
     <string name="onboarding_folders">¿Dónde están tus libros?</string>
     <string name="onboarding_start">Empezar</string>
+    <string name="onboarding_permission_body">Necesita permiso para leer el audio del móvil. No sube nada a internet.</string>
+    <string name="onboarding_grant">Dar permiso</string>
+    <string name="onboarding_searching">Buscando carpetas con audio…</string>
+    <string name="onboarding_found">Carpetas con audio encontradas</string>
+    <string name="onboarding_none_found">No se han encontrado carpetas con audio</string>
+    <string name="onboarding_other_folder">Elegir otra carpeta</string>
     <string name="back">Volver</string>
     <string name="close">Cerrar</string>
     <string name="minimize_player">Minimizar el reproductor</string>

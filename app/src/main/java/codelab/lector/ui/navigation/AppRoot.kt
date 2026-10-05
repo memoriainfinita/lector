@@ -11,7 +11,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,9 @@ import codelab.lector.ui.components.UndoBar
 import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
 import codelab.lector.ui.screens.PlaceholderScreen
+import codelab.lector.ui.onboarding.OnboardingFoldersScreen
+import codelab.lector.ui.onboarding.OnboardingFoldersViewModel
+import codelab.lector.ui.onboarding.OnboardingPermissionScreen
 import codelab.lector.ui.settings.AppearanceScreen
 import codelab.lector.ui.settings.FolderPickerScreen
 import codelab.lector.ui.settings.FolderPickerViewModel
@@ -61,6 +66,7 @@ import codelab.lector.ui.settings.SettingsViewModel
 import codelab.lector.ui.settings.SoundSettingsScreen
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import codelab.lector.ui.theme.LectorTheme
 import kotlinx.coroutines.flow.Flow
@@ -77,6 +83,7 @@ fun AppRoot(openPlayer: Flow<Unit>, onReady: () -> Unit = {}) {
     val context = LocalContext.current
     val app = context.container
     var mode by rememberSaveable { mutableStateOf(StartMode.LOADING) }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         if (mode == StartMode.LOADING) {
             val access = hasStorageAccess(context)
@@ -94,35 +101,41 @@ fun AppRoot(openPlayer: Flow<Unit>, onReady: () -> Unit = {}) {
         Box(Modifier.fillMaxSize().background(LectorTheme.colors.background).systemBarsPadding()) {
             when (mode) {
                 StartMode.LOADING -> Unit
-                StartMode.ONBOARDING_PERMISSION, StartMode.ONBOARDING_FOLDERS ->
-                    Onboarding(withPermission = mode == StartMode.ONBOARDING_PERMISSION) { mode = StartMode.MAIN }
+                StartMode.ONBOARDING_PERMISSION, StartMode.ONBOARDING_FOLDERS -> key(mode) {
+                    Onboarding(
+                        withPermission = mode == StartMode.ONBOARDING_PERMISSION,
+                        // Permiso retirado con carpetas ya guardadas: directo a la Biblioteca.
+                        onGranted = {
+                            scope.launch {
+                                mode = if (app.database.folders().folders().isEmpty()) StartMode.ONBOARDING_FOLDERS else StartMode.MAIN
+                            }
+                        },
+                        onFinished = { mode = StartMode.MAIN },
+                    )
+                }
                 StartMode.MAIN -> MainScreen(openPlayer, onReady)
             }
         }
     }
 }
 
+/** Primer arranque: permiso, sustituido por Carpetas al concederlo. Atrás en cualquiera de las dos sale. */
 @Composable
-private fun Onboarding(withPermission: Boolean, onFinished: () -> Unit) {
+private fun Onboarding(withPermission: Boolean, onGranted: () -> Unit, onFinished: () -> Unit) {
+    val context = LocalContext.current
+    val app = context.container
     val stack = rememberNavBackStack(if (withPermission) OnboardingPermissionRoute else OnboardingFoldersRoute)
     NavDisplay(
         backStack = stack,
         onBack = { stack.removeAt(stack.lastIndex) },
         entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()),
         entryProvider = entryProvider {
-            entry<OnboardingPermissionRoute> {
-                PlaceholderScreen(
-                    stringResource(R.string.onboarding_welcome),
-                    links = listOf(PlaceholderLink(stringResource(R.string.onboarding_folders)) { stack.add(OnboardingFoldersRoute) }),
-                )
-            }
+            entry<OnboardingPermissionRoute> { OnboardingPermissionScreen(onGranted) }
             entry<OnboardingFoldersRoute> {
-                PlaceholderScreen(
-                    stringResource(R.string.onboarding_folders),
-                    links = listOf(
-                        PlaceholderLink(stringResource(R.string.folder_picker)) { stack.add(FolderPickerRoute) },
-                        PlaceholderLink(stringResource(R.string.onboarding_start), onFinished),
-                    ),
+                OnboardingFoldersScreen(
+                    viewModel { OnboardingFoldersViewModel(app, storageRootsOf(context)) },
+                    onPickFolder = { stack.add(FolderPickerRoute) },
+                    onStart = onFinished,
                 )
             }
             entry<FolderPickerRoute> { FolderPicker(onClose = { stack.removeAt(stack.lastIndex) }) }
