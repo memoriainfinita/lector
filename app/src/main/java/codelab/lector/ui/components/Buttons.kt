@@ -304,28 +304,36 @@ fun CheckBox(checked: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
-/** Interruptor del lienzo: pista 42 × 24, botón 18. */
+/** Interruptor del lienzo: pista 42 × 24, botón 18. Sin [enabled], apagado y atenuado. */
 @Composable
-fun LectorSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun LectorSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val c = LectorTheme.colors
+    val on = checked && enabled
     Box(
         modifier = modifier
             .minimumInteractiveComponentSize()
-            .selectable(checked, role = Role.Switch) { onCheckedChange(!checked) },
+            .selectable(checked, enabled = enabled, role = Role.Switch) { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .width(42.dp)
                 .height(24.dp)
-                .background(if (checked) c.accent else c.track, RoundedCornerShape(12.dp))
+                .background(if (on) c.accent else c.track, RoundedCornerShape(12.dp))
                 .padding(3.dp),
-            contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
+            contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
         ) {
             Box(
                 Modifier
                     .size(18.dp)
-                    .background(if (checked) c.background else c.textSecondary, RoundedCornerShape(9.dp)),
+                    .background(
+                        when {
+                            on -> c.background
+                            enabled -> c.textSecondary
+                            else -> c.inactive
+                        },
+                        RoundedCornerShape(9.dp),
+                    ),
             )
         }
     }

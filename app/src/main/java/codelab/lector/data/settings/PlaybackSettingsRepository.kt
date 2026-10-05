@@ -25,6 +25,10 @@ data class PlaybackSettings(
     val notificationSkipBackSec: Int = 30,
     /** Velocidad con la que empiezan los libros nuevos. */
     val newBookSpeed: Float = 1f,
+    /** Ajustes › Reproducir al abrir la app. */
+    val playOnOpen: Boolean = false,
+    /** Ajustes › Portada en la pantalla de bloqueo: portada en la sesión (bloqueo y notificación). */
+    val coverOutside: Boolean = true,
 )
 
 /** Libro que sonaba cuando el proceso murió sin pasar por una pausa o un cierre normal. */
@@ -42,6 +46,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             appSkipForwardSec = p[APP_FORWARD] ?: d.appSkipForwardSec,
             notificationSkipBackSec = p[NOTIF_BACK] ?: d.notificationSkipBackSec,
             newBookSpeed = p[NEW_BOOK_SPEED] ?: d.newBookSpeed,
+            playOnOpen = p[PLAY_ON_OPEN] ?: d.playOnOpen,
+            coverOutside = p[COVER_OUTSIDE] ?: d.coverOutside,
         )
     }
 
@@ -62,6 +68,14 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
     }
 
     suspend fun setNewBookSpeed(speed: Float) = store.edit { it[NEW_BOOK_SPEED] = speed }
+
+    suspend fun setAutoNextBook(enabled: Boolean) = store.edit { it[AUTO_NEXT] = enabled }
+
+    suspend fun setRewindOnResumeMs(ms: Int) = store.edit { it[REWIND_MS] = ms.coerceAtLeast(0) }
+
+    suspend fun setPlayOnOpen(enabled: Boolean) = store.edit { it[PLAY_ON_OPEN] = enabled }
+
+    suspend fun setCoverOutside(enabled: Boolean) = store.edit { it[COVER_OUTSIDE] = enabled }
 
     suspend fun current(): PlaybackSettings = settings.first()
 
@@ -91,6 +105,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val LAST_BOOK = stringPreferencesKey("last_book_id")
         val PLAYING_BOOK = stringPreferencesKey("playing_book_id")
         val NEW_BOOK_SPEED = floatPreferencesKey("new_book_speed")
+        val PLAY_ON_OPEN = booleanPreferencesKey("play_on_open")
+        val COVER_OUTSIDE = booleanPreferencesKey("cover_outside")
         val PREAMP = floatPreferencesKey("sound_preamp_db")
         val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
         val EQ_BANDS = stringPreferencesKey("sound_eq_bands")

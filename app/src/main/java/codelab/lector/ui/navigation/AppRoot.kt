@@ -51,6 +51,13 @@ import codelab.lector.ui.components.UndoBar
 import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
 import codelab.lector.ui.screens.PlaceholderScreen
+import codelab.lector.ui.settings.AppearanceScreen
+import codelab.lector.ui.settings.SettingsScreen
+import codelab.lector.ui.settings.SettingsViewModel
+import codelab.lector.ui.settings.SoundSettingsScreen
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import codelab.lector.ui.theme.LectorTheme
 import kotlinx.coroutines.flow.Flow
 
@@ -141,6 +148,17 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
             app.scanner.start(quiet = true)
         }
     }
+    // Ajustes › Reproducir al abrir la app: una vez por apertura, cuando el último libro está cargado.
+    var autoPlayChecked by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!autoPlayChecked) {
+            autoPlayChecked = true
+            if (app.playbackSettings.current().playOnOpen) {
+                val loaded = withTimeoutOrNull(5_000) { app.playback.state.filterNotNull().first() }
+                if (loaded != null && !loaded.playWhenReady) player.act(PlayerAction.PLAY_PAUSE)
+            }
+        }
+    }
     LaunchedEffect(openPlayer) { openPlayer.collect { navigator.openPlayer() } }
     JumpUndo(nowPlaying, onUndo = { player.act(PlayerAction.UNDO_JUMP) })
 
@@ -201,15 +219,6 @@ private fun routeEntries(
 ): (NavKey) -> NavEntry<NavKey> {
     val app = LocalContext.current.container
     val back = navigator::goBack
-    val settings = listOf(
-        R.string.settings_sleep to SettingsSleepRoute,
-        R.string.settings_buttons to SettingsButtonsRoute,
-        R.string.settings_sound to SettingsSoundRoute,
-        R.string.settings_library to SettingsLibraryRoute,
-        R.string.settings_tags to SettingsTagsRoute,
-        R.string.settings_appearance to SettingsAppearanceRoute,
-        R.string.settings_data to SettingsDataRoute,
-    )
     @Composable
     fun link(text: Int, route: Route) = PlaceholderLink(stringResource(text)) { navigator.open(route) }
 
@@ -247,16 +256,21 @@ private fun routeEntries(
         }
         entry<BookmarksSearchRoute> { PlaceholderScreen(stringResource(R.string.search_bookmarks), onBack = back) }
         entry<SettingsRoute> {
-            PlaceholderScreen(stringResource(R.string.settings), onBack = back, links = settings.map { (text, route) -> link(text, route) })
+            SettingsScreen(
+                viewModel = viewModel { SettingsViewModel(app) },
+                onBack = back,
+                onSound = { navigator.open(SettingsSoundRoute) },
+                onAppearance = { navigator.open(SettingsAppearanceRoute) },
+            )
         }
         entry<SettingsLibraryRoute> {
             PlaceholderScreen(stringResource(R.string.settings_library), onBack = back, links = listOf(link(R.string.folder_picker, FolderPickerRoute)))
         }
         entry<SettingsSleepRoute> { PlaceholderScreen(stringResource(R.string.settings_sleep), onBack = back) }
         entry<SettingsButtonsRoute> { PlaceholderScreen(stringResource(R.string.settings_buttons), onBack = back) }
-        entry<SettingsSoundRoute> { PlaceholderScreen(stringResource(R.string.settings_sound), onBack = back) }
+        entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsTagsRoute> { PlaceholderScreen(stringResource(R.string.settings_tags), onBack = back) }
-        entry<SettingsAppearanceRoute> { PlaceholderScreen(stringResource(R.string.settings_appearance), onBack = back) }
+        entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsDataRoute> { PlaceholderScreen(stringResource(R.string.settings_data), onBack = back) }
         entry<FolderPickerRoute> { PlaceholderScreen(stringResource(R.string.folder_picker), onBack = back) }
         entry<MergeBooksRoute> { PlaceholderScreen(stringResource(R.string.merge_books), onBack = back) }

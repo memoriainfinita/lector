@@ -409,6 +409,27 @@ Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye
 - Desde Carpetas, buscar pasa a la vista Libros; al cerrar, vuelve a donde estaba
 - Tocar un resultado lo carga y abre Escuchando; un quitado, como en la cuadrícula
 
+### Ajustes
+
+Aprobado 2026-10-05. Tres entregas por dependencias: A pantalla principal, Apariencia y Ecualizador y volumen; B Carpetas y explorador de carpetas; C Botones (reproductor, notificación, auricular, teclas multimedia, retrasos, notificación estándar). Código en `ui/settings/`.
+
+- Filas de funciones que aún no existen: atenuadas e inactivas, no ocultas, como la pausa diferida en Escuchando. Pausa diferida, Gestionar tags y Abrir la hoja al marcar, Datos y saltos del widget llegan con sus funciones
+- "Siguiente archivo desde su posición": inactiva hasta comprobar en Simple ABP qué hace ("Allow next file to start from non-zero position"); puede depender de una posición por archivo, y LECTOR guarda una por libro
+
+#### A. Pantalla principal, Apariencia y Sonido
+
+Hecha 2026-10-05.
+
+- Pantalla principal con las secciones del lienzo: Reproducción, Sonido, Pausa diferida, Botones, Auricular, Biblioteca, Marcadores, Apariencia, Notificación y bloqueo, Datos, Sistema
+- Hoja "Elegir valor": título y nota, − / valor / +, atajos y Listo; se guarda con Listo, cerrar la descarta. Tramo al reanudar: 0–30 s, atajos 0, 2, 3, 5, 10. Velocidad de los libros nuevos: 0.5x–3.5x en pasos de 0.05, atajos de la hoja de velocidad
+- Reproducir al abrir la app (nuevo en DataStore): una vez por apertura de la app, cuando el último libro está cargado, si no suena ya
+- Portada en la pantalla de bloqueo (nuevo en DataStore): quita la portada de la sesión, también de la notificación, como "Display cover outside the app" de Simple ABP. Se aplica al momento
+- Volver a buscar libros: búsqueda completa, con "Buscando libros… n encontrados" en la fila mientras dura
+- Seguir con la pantalla apagada: con la optimización de batería activa, el diálogo de Android para quitarla (permiso `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`); sin ella, la ficha de la app (en el Xiaomi abre "Battery details"). Permisos: la ficha de la app. Acerca de: "LECTOR" y la versión
+- Ecualizador y volumen: edita el sonido global; mismos pasos que la hoja Sonido; Restablecer como en la hoja
+- Apariencia: segmentado de tema, Cambiar por hora con las horas en el selector de Android, seis círculos de acento (color del sistema solo en Android 12+; personalizado con borde discontinuo y + hasta elegirlo) e idioma Español / English / Sistema (AppCompat; la Activity se rehace y la pila se conserva)
+- Color personalizado: tono y luminosidad (0.15–0.9) con degradado, hex, vistas previas en oscuro y claro. El aviso dice "Poco contraste en el tema oscuro" (el lienzo dice "en el tema claro", pero la comprobación es sobre el fondo oscuro; el claro se deriva con contraste suficiente). "Ajustar" en acento, no en el color elegido, que puede no leerse
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.

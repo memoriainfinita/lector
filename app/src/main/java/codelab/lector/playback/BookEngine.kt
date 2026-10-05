@@ -59,7 +59,17 @@ class BookEngine(
 
     init {
         exo.addListener(this)
-        scope.launch { settings.settings.collect { prefs = it } }
+        scope.launch {
+            settings.settings.collect {
+                val coverChanged = it.coverOutside != prefs.coverOutside
+                prefs = it
+                // Portada fuera de la app: se ve al momento en la notificación y el bloqueo.
+                if (coverChanged && loaded && exo.mediaItemCount > 0) {
+                    val i = exo.currentMediaItemIndex
+                    exo.replaceMediaItem(i, mediaItem(i, timeline.segments.getOrNull(timeline.segmentIndexAt(position()))))
+                }
+            }
+        }
         scope.launch {
             settings.globalSound.collect {
                 globalSound = it
@@ -129,10 +139,10 @@ class BookEngine(
             .build()
     }
 
-    /** Título del libro; debajo, el capítulo si lo hay, si no el autor. Portada para notificación y bloqueo. */
+    /** Título del libro; debajo, el capítulo si lo hay, si no el autor. Portada para notificación y bloqueo, si está activada. */
     private fun metadata(b: Book, segment: Segment?): MediaMetadata {
         val title = b.customName ?: b.title
-        val cover = covers.file(b.id).takeIf { it.exists() }
+        val cover = covers.file(b.id).takeIf { prefs.coverOutside && it.exists() }
         return MediaMetadata.Builder()
             .setTitle(title)
             .setAlbumTitle(title)
