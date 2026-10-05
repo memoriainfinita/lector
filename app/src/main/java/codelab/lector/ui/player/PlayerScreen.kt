@@ -232,9 +232,9 @@ private fun ColumnScope.Player(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RoundIcon(R.drawable.ic_skip_previous, previousLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.PREVIOUS) }
-        SkipButton(R.drawable.ic_replay, skipBack, stringResource(R.string.skip_back_seconds, skipBack)) { onAct(PlayerAction.SKIP_BACK) }
+        SkipButton(R.drawable.ic_replay, 1.dp, skipBack, stringResource(R.string.skip_back_seconds, skipBack)) { onAct(PlayerAction.SKIP_BACK) }
         PlayButton(np, 76.dp, 30.dp, onAct)
-        SkipButton(R.drawable.ic_forward, skipForward, stringResource(R.string.skip_forward_seconds, skipForward)) { onAct(PlayerAction.SKIP_FORWARD) }
+        SkipButton(R.drawable.ic_forward, (-1).dp, skipForward, stringResource(R.string.skip_forward_seconds, skipForward)) { onAct(PlayerAction.SKIP_FORWARD) }
         RoundIcon(R.drawable.ic_skip_next, nextLabel(np), 52.dp, 26.dp) { onAct(PlayerAction.NEXT) }
     }
 
@@ -535,9 +535,13 @@ private fun RoundIcon(
     }
 }
 
-/** Salto con el número de segundos dentro de la flecha circular. */
+/**
+ * Salto con el número de segundos dentro de la flecha circular. El círculo de cada icono está 1 dp
+ * a un lado del centro (la flecha ocupa el otro): [centerX] lleva el número a su centro. Cifras de
+ * ancho fijo para que "10" no quede descompensado por el 1 estrecho.
+ */
 @Composable
-private fun SkipButton(@DrawableRes icon: Int, seconds: Int, description: String, onClick: () -> Unit) {
+private fun SkipButton(@DrawableRes icon: Int, centerX: Dp, seconds: Int, description: String, onClick: () -> Unit) {
     val c = LectorTheme.colors
     Box(
         Modifier.size(56.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClick),
@@ -546,9 +550,9 @@ private fun SkipButton(@DrawableRes icon: Int, seconds: Int, description: String
         Icon(painterResource(icon), description, Modifier.size(40.dp), tint = c.text)
         Text(
             "$seconds",
-            style = LectorTheme.type.meta.copy(fontWeight = FontWeight.SemiBold, fontFamily = LectorTheme.type.body.fontFamily),
+            style = LectorTheme.type.meta.copy(fontWeight = FontWeight.SemiBold, fontFamily = LectorTheme.type.body.fontFamily, fontFeatureSettings = "tnum"),
             color = c.text,
-            modifier = Modifier.offset(y = 2.dp),
+            modifier = Modifier.offset(x = centerX, y = 0.5.dp),
         )
     }
 }

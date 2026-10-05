@@ -270,7 +270,7 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Tramo repetido al reanudar tras una pausa: valor en DataStore, 3 s por defecto
 - Al terminar, según la clase de carpeta: Libros, terminado y siguiente libro si está activado (desactivado por defecto); Episodios, terminado sin pasar a otra obra; Álbumes y Sesiones, vuelve al inicio, nunca terminado
 - Acciones: un solo conjunto con ejecutor (saltar atrás, saltar adelante, anterior, siguiente, play / pausa, añadir marcador, ir al marcador anterior, deshacer salto, siguiente libro). Marcar guarda en la posición actual; la hoja llega con las pantallas. Ir al marcador anterior: el inmediatamente anterior a la posición
-- Notificación: −30, anterior, play, siguiente, marcar. −30 y marcar con `setMediaButtonPreferences` y `CommandButton`; anterior y siguiente son los del sistema, que `LectorPlayer` pasa por los tramos (como botones propios, Media3 los quita de las acciones estándar que leen coches y pantallas de bloqueo). Acciones propias como `SessionCommand`, concedidas en `onConnectAsync`
+- Notificación (2026-10-05): capítulo anterior, −N, play, +N, capítulo siguiente, con los segundos de los saltos de la app. Antes: −30, anterior, play, siguiente, marcar; un toque sin querer en anterior o siguiente saltaba de capítulo sin "Deshacer". −N y +N como `CommandButton` en `SLOT_BACK` / `SLOT_FORWARD`; capítulos como botones propios en `SLOT_OVERFLOW`, que HyperOS pone en los extremos. Los cinco del mismo tamaño (lo decide el sistema). Marcar no cabe: vuelve con Ajustes C. Con los huecos ocupados, Media3 quita anterior y siguiente de las acciones de `PlaybackState`; las teclas multimedia siguen funcionando (comprobado con `KEYCODE_MEDIA_NEXT`). Sin comprobar en coche o reloj. Acciones propias como `SessionCommand`, concedidas en `onConnectAsync`
 - Sesión con título, autor, capítulo y portada (notificación y pantalla de bloqueo)
 - Conexión con la interfaz (`PlaybackConnection`): un punto que expone el estado (libro, posición, capítulo, sonando, velocidad) para reproductor, minirreproductor, horizontal y widgets. `connect()` al abrir la app arranca el servicio, que carga el último libro en pausa
 - Cierre del sistema: se guarda que estaba sonando, para el aviso al abrir
@@ -337,6 +337,7 @@ Hecha 2026-10-03.
 - Pausa diferida y marcadores del libro: inactivos hasta sus funciones. Marcar guarda sin hoja hasta Marcadores
 - Menú ⋯: Tema alterna oscuro y claro a partir del que se ve
 - Velocidad: − / + en pasos de 0.05
+- Saltos con icono: el número va en el centro del círculo de la flecha, no del icono (1 dp a un lado), con cifras de ancho fijo (2026-10-05)
 - Sonido: cambios en vivo, enviados al cambiar el valor redondeado (1 dB; bandas 0.5 dB). Restablecer pone a 0 preamplificación y bandas, sin tocar el interruptor del ecualizador ni el volumen. Bandas rotuladas 100, 300, 1k, 3k, 8k
 - Libro inaccesible: "Volver a buscar" hace una búsqueda completa y, si el libro vuelve, lo abre en pausa; "Quitar" lo quita de la biblioteca como el menú del libro (Pantallas › Biblioteca › A), con "Deshacer", y cierra Escuchando (2026-10-05)
 - Minirreproductor: superpuesto abajo del todo, con fundido; las pantallas reservan su alto (62) abajo, así abrir o cerrar pantallas no desplaza nada. Muestra tramo · posición en el tramo. De lado a lado, sin márgenes ni esquinas redondeadas (la línea de progreso hace de borde superior), y fondo de superficie al 85 %: se ve pasar el contenido por debajo (2026-10-04)
@@ -429,6 +430,22 @@ Hecha 2026-10-05.
 - Ecualizador y volumen: edita el sonido global; mismos pasos que la hoja Sonido; Restablecer como en la hoja
 - Apariencia: segmentado de tema, Cambiar por hora con las horas en el selector de Android, seis círculos de acento (color del sistema solo en Android 12+; personalizado con borde discontinuo y + hasta elegirlo) e idioma Español / English / Sistema (AppCompat; la Activity se rehace y la pila se conserva)
 - Color personalizado: tono y luminosidad (0.15–0.9) con degradado, hex, vistas previas en oscuro y claro. El aviso dice "Poco contraste en el tema oscuro" (el lienzo dice "en el tema claro", pero la comprobación es sobre el fondo oscuro; el claro se deriva con contraste suficiente). "Ajustar" en acento, no en el color elegido, que puede no leerse
+
+#### B. Carpetas y explorador de carpetas
+
+Aprobado 2026-10-05.
+
+- Escaneo: solo da por perdidos los libros dentro de las carpetas de la lista. Los de una carpeta quitada no se tocan (ni inaccesibles ni candidatos a la reconciliación por duración); una SD sacada sigue en la lista y sus libros quedan inaccesibles
+- Fila "Carpetas" en Ajustes: subtítulo con el nombre si hay una, "Audiobooks · 3 carpetas" si hay varias. Abre Ajustes › Biblioteca (lienzo `Settings-Folders`)
+- Lista de carpetas: nombre (ruta desde la raíz si no es de primer nivel), "Almacenamiento principal · n libros" o "Tarjeta SD · n libros" y × para quitar
+- Quitar: aviso con "Deshacer", sin búsqueda (la Biblioteca solo muestra los libros de las carpetas de la lista). Se puede quitar la última: Biblioteca vacía
+- "+ Añadir carpeta" abre el explorador
+- "Volver a buscar libros" con "Última: [fecha] · n libros" debajo, guardado en DataStore. Sin "movidos, reconectados": el escaneo no lleva esa cuenta
+- "Mostrar portadas" repetido, como en el lienzo
+- Correcciones: con Unir y Separar, que las crean; hasta entonces no hay ninguna
+- Explorador (pantalla completa, lienzo `Folder-Picker`): selector Principal / Tarjeta SD solo con SD; flecha de subir y ruta; Atrás sube un nivel y en la raíz cierra. Filas de subcarpeta con "n archivos de audio" o "Sin audio", contados en segundo plano. Sin ocultas ni `Android/`. Una carpeta de la biblioteca, o dentro de una, atenuada con "Ya en la biblioteca" y sin abrir
+- "Usar esta carpeta": sustituye a las carpetas de la lista que contiene, lanza una búsqueda rápida visible y vuelve a la pantalla de origen
+- Se abre desde Ajustes › Biblioteca, "Añadir carpeta" de la Biblioteca vacía y "Elegir otra carpeta" del primer arranque (el resto del primer arranque sigue vacío)
 
 ### Sin portadas
 

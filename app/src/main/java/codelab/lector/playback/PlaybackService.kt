@@ -62,12 +62,12 @@ class PlaybackService : MediaLibraryService() {
         )
         session = MediaLibrarySession.Builder(this, LectorPlayer(exo, engine), Callback())
             .setSessionActivity(openApp)
-            .setMediaButtonPreferences(notificationButtons(engine.currentPrefs.notificationSkipBackSec))
+            .setMediaButtonPreferences(notificationButtons(engine.currentPrefs.appSkipBackSec, engine.currentPrefs.appSkipForwardSec))
             .build()
 
         scope.launch {
-            app.playbackSettings.settings.map { it.notificationSkipBackSec }.distinctUntilChanged().collect {
-                session?.setMediaButtonPreferences(notificationButtons(it))
+            app.playbackSettings.settings.map { it.appSkipBackSec to it.appSkipForwardSec }.distinctUntilChanged().collect { (back, forward) ->
+                session?.setMediaButtonPreferences(notificationButtons(back, forward))
             }
         }
         // Al arrancar, el último libro queda cargado y en pausa; uno quitado de la biblioteca, no.
@@ -81,19 +81,30 @@ class PlaybackService : MediaLibraryService() {
     }
 
     /**
-     * Notificación: −30, anterior, play, siguiente, marcar (design.md › Decisiones de diseño).
-     * Anterior y siguiente son los del sistema (LectorPlayer los pasa por los tramos): como botones
-     * propios, Media3 los quita de las acciones estándar que leen coches y pantallas de bloqueo.
+     * Notificación: anterior, −N, play, +N, siguiente (design.md › Reproducción). Junto a play, los
+     * saltos cortos: un toque sin querer se corrige con otro. Capítulo anterior y siguiente, como
+     * botones propios en los huecos extra (HyperOS los pone en los extremos). Las órdenes anterior y
+     * siguiente del reproductor siguen disponibles para auricular, coche y teclas multimedia.
      */
-    private fun notificationButtons(backSec: Int): ImmutableList<CommandButton> = ImmutableList.of(
+    private fun notificationButtons(backSec: Int, forwardSec: Int): ImmutableList<CommandButton> = ImmutableList.of(
         CommandButton.Builder(skipBackIcon(backSec))
             .setDisplayName(getString(R.string.action_skip_back, backSec))
             .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.SKIP_BACK, backSec)))
+            .setSlots(CommandButton.SLOT_BACK)
+            .build(),
+        CommandButton.Builder(skipForwardIcon(forwardSec))
+            .setDisplayName(getString(R.string.action_skip_forward, forwardSec))
+            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.SKIP_FORWARD, forwardSec)))
+            .setSlots(CommandButton.SLOT_FORWARD)
+            .build(),
+        CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+            .setDisplayName(getString(R.string.previous_chapter))
+            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.PREVIOUS)))
             .setSlots(CommandButton.SLOT_OVERFLOW)
             .build(),
-        CommandButton.Builder(CommandButton.ICON_BOOKMARK_UNFILLED)
-            .setDisplayName(getString(R.string.action_add_bookmark))
-            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.ADD_BOOKMARK)))
+        CommandButton.Builder(CommandButton.ICON_NEXT)
+            .setDisplayName(getString(R.string.next_chapter))
+            .setSessionCommand(LectorCommands.action(ActionCall(PlayerAction.NEXT)))
             .setSlots(CommandButton.SLOT_OVERFLOW)
             .build(),
     )
@@ -104,6 +115,14 @@ class PlaybackService : MediaLibraryService() {
         15 -> CommandButton.ICON_SKIP_BACK_15
         30 -> CommandButton.ICON_SKIP_BACK_30
         else -> CommandButton.ICON_SKIP_BACK
+    }
+
+    private fun skipForwardIcon(seconds: Int) = when (seconds) {
+        5 -> CommandButton.ICON_SKIP_FORWARD_5
+        10 -> CommandButton.ICON_SKIP_FORWARD_10
+        15 -> CommandButton.ICON_SKIP_FORWARD_15
+        30 -> CommandButton.ICON_SKIP_FORWARD_30
+        else -> CommandButton.ICON_SKIP_FORWARD
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session

@@ -5,6 +5,7 @@
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
     <string name="action_skip_back">Back %1$d s</string>
+    <string name="action_skip_forward">Forward %1$d s</string>
     <string name="action_add_bookmark">Bookmark</string>
     <string name="tab_library">Library</string>
     <string name="tab_listening">Listening</string>

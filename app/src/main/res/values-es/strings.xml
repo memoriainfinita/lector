@@ -4,6 +4,7 @@
     <string name="cancel">Cancelar</string>
     <string name="done">Listo</string>
     <string name="action_skip_back">Atrás %1$d s</string>
+    <string name="action_skip_forward">Adelante %1$d s</string>
     <string name="action_add_bookmark">Marcar</string>
     <string name="tab_library">Biblioteca</string>
     <string name="tab_listening">Escuchando</string>
