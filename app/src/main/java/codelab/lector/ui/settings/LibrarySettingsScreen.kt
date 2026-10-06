@@ -1,12 +1,14 @@
 package codelab.lector.ui.settings
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +21,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import codelab.lector.AppContainer
 import codelab.lector.R
+import codelab.lector.data.db.Correction
+import codelab.lector.data.db.CorrectionType
 import codelab.lector.data.db.LibraryFolder
 import codelab.lector.data.settings.LastScan
 import codelab.lector.library.LibraryFolderInfo
@@ -33,6 +38,7 @@ import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.components.OutlineButton
 import codelab.lector.ui.components.SectionHeader
+import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.library.StorageRoots
 import codelab.lector.ui.theme.LectorTheme
 import kotlinx.coroutines.flow.SharingStarted
@@ -71,12 +77,17 @@ class LibrarySettingsViewModel(private val app: AppContainer, storage: StorageRo
         app.scanner.start(full = true)
     }
 
+    val corrections: StateFlow<List<Correction>> =
+        app.corrections.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun undoCorrection(id: Long) = app.corrections.undo(id)
+
     fun setShowCovers(show: Boolean) {
         viewModelScope.launch { app.appearance.setShowCovers(show) }
     }
 }
 
-/** Lienzo `Settings-Folders` (design.md › Pantallas › Ajustes › B). Correcciones llegan con Unir y Separar. */
+/** Lienzo `Settings-Folders` (design.md › Pantallas › Ajustes › B; Correcciones, design.md › Biblioteca › Unir y Separar). */
 @Composable
 fun LibrarySettingsScreen(viewModel: LibrarySettingsViewModel, onBack: () -> Unit, onAddFolder: () -> Unit) {
     val context = LocalContext.current
@@ -86,6 +97,7 @@ fun LibrarySettingsScreen(viewModel: LibrarySettingsViewModel, onBack: () -> Uni
     val lastScan by viewModel.lastScan.collectAsStateWithLifecycle()
     val scan by viewModel.scan.collectAsStateWithLifecycle()
     val showCovers by viewModel.showCovers.collectAsStateWithLifecycle()
+    val corrections by viewModel.corrections.collectAsStateWithLifecycle()
     val removedText = stringResource(R.string.folder_removed)
 
     SettingsPage(stringResource(R.string.settings_library), onBack) {
@@ -117,6 +129,34 @@ fun LibrarySettingsScreen(viewModel: LibrarySettingsViewModel, onBack: () -> Uni
             Icon(painterResource(R.drawable.ic_reset), null, Modifier.size(18.dp), tint = c.textSecondary)
         }
         SwitchRow(stringResource(R.string.show_covers), showCovers, viewModel::setShowCovers)
+
+        // Solo con alguna: las crean Unir y Separar.
+        if (corrections.isNotEmpty()) {
+            SectionHeader(stringResource(R.string.corrections), Modifier.padding(top = 8.dp))
+            corrections.forEach { CorrectionRow(it) { viewModel.undoCorrection(it.id) } }
+        }
+    }
+}
+
+/** Etiqueta "separado" o "unido", nombre y "Deshacer", que la borra y vuelve a buscar. */
+@Composable
+private fun CorrectionRow(correction: Correction, onUndo: () -> Unit) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val kind = stringResource(if (correction.type == CorrectionType.SPLIT) R.string.correction_split else R.string.correction_merged)
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            kind,
+            style = t.meta.copy(fontSize = 11.sp),
+            color = c.textSecondary,
+            modifier = Modifier.border(1.dp, c.outline, RoundedCornerShape(2.dp)).padding(horizontal = 6.dp, vertical = 1.dp),
+        )
+        Text(correction.label, style = t.body, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        TextButton(stringResource(R.string.undo), onUndo, color = c.accent)
     }
 }
 

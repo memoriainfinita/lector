@@ -37,6 +37,8 @@ data class DetectedBook(
     val folderImages: List<String> = emptyList(),
     /** Falso en libros de una saga que comparten álbum: el álbum no es su título. */
     val albumIsTitle: Boolean = true,
+    /** Libro separado que comparte título con los demás trozos: "2/3", tras el título. */
+    val partLabel: String? = null,
 ) {
     val durationMs: Long get() = parts.sumOf { it.file.meta.durationMs }
     val isSingleFile: Boolean get() = parts.size == 1 && !wholeFolder

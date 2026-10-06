@@ -12,6 +12,7 @@ import codelab.lector.data.settings.LastScan
 import codelab.lector.data.settings.LibrarySettingsRepository
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.library.CoverStore
+import codelab.lector.library.LibraryCorrections
 import codelab.lector.library.LibraryScanner
 import codelab.lector.library.Media3MetadataReader
 import codelab.lector.playback.PlaybackConnection
@@ -39,6 +40,8 @@ class AppContainer(context: Context) {
     val scanner by lazy {
         LibraryScanner(database, Media3MetadataReader(context), covers, appScope) { playbackSettings.current().newBookSpeed }
     }
+    /** Unir y separar libros. */
+    val corrections by lazy { LibraryCorrections(database, scanner, appScope) }
     val playbackSettings = PlaybackSettingsRepository(context.settingsStore)
     val librarySettings = LibrarySettingsRepository(context.settingsStore)
     /** Lo publica el servicio de reproducción; lo leen pantallas y widgets. */

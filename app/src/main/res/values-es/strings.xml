@@ -362,4 +362,23 @@
     <string name="tag_deleted">Tag borrado</string>
     <string name="no_tags">Aún no hay tags. Se crean desde un marcador.</string>
     <string name="rename_tag_note">Con el nombre de otro tag, se unen los dos.</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d seleccionado</item>
+        <item quantity="other">%d seleccionados</item>
+    </plurals>
+    <string name="merge_as_one">Unir como un libro</string>
+    <string name="merge_note">Se unen por orden de nombre. Se deshace en Ajustes › Biblioteca.</string>
+    <string name="books_merged">Libros unidos</string>
+    <string name="merge_alone">No hay otros libros en esta carpeta.</string>
+    <plurals name="split_into">
+        <item quantity="one">Separar en %d libro</item>
+        <item quantity="other">Separar en %d libros</item>
+    </plurals>
+    <string name="split">Separar</string>
+    <string name="split_hint">Marca el archivo donde empieza cada libro nuevo.</string>
+    <string name="split_part">Libro %d</string>
+    <string name="split_note">La posición y los marcadores pasan al libro que contiene cada archivo. Se deshace en Ajustes › Biblioteca › Correcciones.</string>
+    <string name="corrections">Correcciones</string>
+    <string name="correction_split">separado</string>
+    <string name="correction_merged">unido</string>
 </resources>

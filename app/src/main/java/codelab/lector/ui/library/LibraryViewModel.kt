@@ -160,6 +160,9 @@ class LibraryViewModel(private val app: AppContainer, private val storageRoots: 
         }
     }
 
+    /** Separar necesita al menos dos archivos. */
+    suspend fun bookFileCount(bookId: String): Int = books.files(bookId).size
+
     /** Archivos de los libros de la carpeta, para la cabecera de la hoja de clase. */
     suspend fun fileCount(path: String): Int = app.database.books().fileCountUnder(path)
 

@@ -5,6 +5,7 @@ import codelab.lector.data.db.ChapterInfo
 import codelab.lector.data.db.ChapterList
 import codelab.lector.data.db.Correction
 import codelab.lector.data.db.CorrectionType
+import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.FileMeta
 import codelab.lector.data.db.FolderRule
 import codelab.lector.data.db.OnFinish
@@ -177,6 +178,26 @@ class DetectionTest {
         )
         assertEquals(2, split.size)
         assertTrue(split.all { it.isSingleFile })
+    }
+
+    @Test
+    fun splitPiecesSharingTheAlbumAreNumbered() {
+        val d = "$root/Vol 3"
+        val books = detectBooks(folder(d, (1..4).map { file(d, "0$it.mp3", album = "Vol 3 ") }), emptyList())
+        assertEquals(1, books.size)
+        val split = applyCorrections(
+            books,
+            listOf(Correction(type = CorrectionType.SPLIT, identityKeys = listOf(books[0].identityKey), splitStartFiles = listOf("03.mp3"), createdAt = 1)),
+        )
+        val titles = split.map { it.toBook(null, 0, { "id" }, 1f, CoverSource.NONE).title }
+        assertEquals(listOf("Vol 3 (1/2)", "Vol 3 (2/2)"), titles)
+    }
+
+    @Test
+    fun segmentStartIsTheChapterOrTheFile() {
+        val chapters = listOf(ChapterInfo(0, 1_000, "a"), ChapterInfo(1_000, 5_000, "b"))
+        assertEquals(1_000, segmentStart(chapters, 2_500))
+        assertEquals(0, segmentStart(emptyList(), 2_500))
     }
 
     @Test

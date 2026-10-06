@@ -47,6 +47,19 @@ class RegroupTest {
     }
 
     @Test
+    fun pathsOfABookMergedWithAnotherFolderAreNormalized() {
+        assertEquals("/a/Vol 2/01.mp3", normalizePath("/a/Vol 1/../Vol 2/01.mp3"))
+        assertEquals("/a/b.mp3", normalizePath("/a/./b.mp3"))
+        // Deshacer la unión: los archivos de la otra carpeta se encuentran en su libro.
+        val placements = mapOf(
+            "$folder/a.mp3" to Placement("v1", "a.mp3"),
+            "/storage/emulated/0/Audiobooks/vol2/b.mp3" to Placement("v2", "b.mp3"),
+        )
+        val moves = regroup(folder, listOf("a.mp3", "../vol2/b.mp3"), placements)
+        assertEquals(Placement("v2", "b.mp3"), moves?.get("../vol2/b.mp3"))
+    }
+
+    @Test
     fun aMissingFileLeavesTheBookInaccessible() {
         val placements = mapOf("$folder/a.mp3" to Placement("s1", "a.mp3"))
         assertNull(regroup(folder, listOf("a.mp3", "b.mp3"), placements))

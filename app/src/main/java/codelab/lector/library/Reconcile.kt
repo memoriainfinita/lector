@@ -1,6 +1,7 @@
 package codelab.lector.library
 
 import codelab.lector.data.db.Book
+import codelab.lector.data.db.ChapterInfo
 import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.Correction
 import codelab.lector.data.db.CorrectionType
@@ -51,7 +52,7 @@ private fun split(books: List<DetectedBook>, key: String?, startFiles: List<Stri
         segments.last() += part
     }
     if (segments.size < 2) return books
-    val pieces = segments.map { parts ->
+    val split = segments.map { parts ->
         book.copy(
             identityKey = sha256("split\n" + book.identityKey + "\n" + parts.first().relativePath),
             path = if (parts.size == 1) parts.first().file.path else book.folderPath,
@@ -59,6 +60,9 @@ private fun split(books: List<DetectedBook>, key: String?, startFiles: List<Stri
             wholeFolder = false,
         )
     }
+    // Con el mismo título (el álbum de todas las partes), cada uno lleva su número: "… (2/3)".
+    val pieces = if (split.map { it.detectedTitle() }.distinct().size == split.size) split
+    else split.mapIndexed { i, piece -> piece.copy(partLabel = "${i + 1}/${split.size}") }
     val index = books.indexOf(book)
     return books.toMutableList().apply { removeAt(index); addAll(index, pieces) }
 }
@@ -78,8 +82,27 @@ data class Placement(val bookId: String, val relativePath: String)
  */
 fun regroup(base: String, relativePaths: List<String>, placements: Map<String, Placement>): Map<String, Placement>? {
     if (relativePaths.isEmpty()) return null
-    return relativePaths.associateWith { placements["$base/$it"] ?: return null }
+    return relativePaths.associateWith { placements[normalizePath("$base/$it")] ?: return null }
 }
+
+/**
+ * Ruta sin "." ni "..": un libro unido con otra carpeta guarda sus archivos como "../Vol 2/01.mp3".
+ * Con "/" siempre, como las rutas del móvil (File.normalize usaría "\" en las pruebas en Windows).
+ */
+fun normalizePath(path: String): String {
+    val out = ArrayDeque<String>()
+    for (segment in path.split('/')) {
+        when (segment) {
+            "", "." -> Unit
+            ".." -> out.removeLastOrNull()
+            else -> out.addLast(segment)
+        }
+    }
+    return (if (path.startsWith("/")) "/" else "") + out.joinToString("/")
+}
+
+/** Inicio del tramo de un archivo que contiene [ms], en ms del archivo: su capítulo, o 0 sin capítulos. */
+fun segmentStart(chapters: List<ChapterInfo>, ms: Long): Long = chapters.lastOrNull { it.startMs <= ms }?.startMs ?: 0
 
 data class Match(val detected: DetectedBook, val existing: Book?)
 
@@ -117,10 +140,13 @@ private fun DetectedBook.tag(pick: (FileMeta) -> String?): String? =
  * Título: álbum; si no, título de la pista (libro de un archivo); si no, carpeta o archivo.
  * Autor: artista del álbum o artista. Narrador: compositor.
  */
-fun DetectedBook.toBook(existing: Book?, now: Long, newId: () -> String, newBookSpeed: Float, coverSource: CoverSource): Book {
-    val title = (if (albumIsTitle) tag { it.album } else null)
+fun DetectedBook.detectedTitle(): String =
+    (if (albumIsTitle) tag { it.album } else null)
         ?: (if (isSingleFile) tag { it.title } else null)
         ?: if (isSingleFile) stemOf(parts.first().file.name) else folderName
+
+fun DetectedBook.toBook(existing: Book?, now: Long, newId: () -> String, newBookSpeed: Float, coverSource: CoverSource): Book {
+    val title = detectedTitle().let { t -> partLabel?.let { "${t.trimEnd()} ($it)" } ?: t }
     val base = existing ?: Book(
         id = newId(),
         identityKey = identityKey,

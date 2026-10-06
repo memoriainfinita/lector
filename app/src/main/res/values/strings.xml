@@ -363,4 +363,23 @@
     <string name="tag_deleted">Tag deleted</string>
     <string name="no_tags">No tags yet. Create them from a bookmark.</string>
     <string name="rename_tag_note">With the name of another tag, both are merged.</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="merge_as_one">Merge as one book</string>
+    <string name="merge_note">Merged in name order. Undo in Settings › Library.</string>
+    <string name="books_merged">Books merged</string>
+    <string name="merge_alone">No other books in this folder.</string>
+    <plurals name="split_into">
+        <item quantity="one">Split into %d book</item>
+        <item quantity="other">Split into %d books</item>
+    </plurals>
+    <string name="split">Split</string>
+    <string name="split_hint">Mark the file where each new book starts.</string>
+    <string name="split_part">Book %d</string>
+    <string name="split_note">Position and bookmarks go to the book that holds each file. Undo in Settings › Library › Corrections.</string>
+    <string name="corrections">Corrections</string>
+    <string name="correction_split">split</string>
+    <string name="correction_merged">merged</string>
 </resources>

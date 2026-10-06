@@ -7,6 +7,7 @@ import codelab.lector.data.db.Chapter
 import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.FileMeta
 import codelab.lector.data.db.LectorDatabase
+import codelab.lector.data.db.SegmentPosition
 import androidx.room3.withWriteTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,6 +120,10 @@ class LibraryScanner(
             // Reagrupados (cambio de clase): marcadores y posición pasan a los libros que tienen ahora
             // sus archivos y el libro antiguo se borra. Los demás que faltan quedan inaccesibles.
             val placements = written.flatMap { (id, book) -> book.parts.map { it.file.path to Placement(id, it.relativePath) } }.toMap()
+            val chaptersAt = written.flatMap { (id, book) -> book.parts.map { Placement(id, it.relativePath) to it.file.meta.chapters.items } }.toMap()
+            // Posiciones por tramo que pasan a los libros nuevos: las del antiguo y la suya propia,
+            // para que al unir no se pierda la de cada parte y al deshacer vuelva.
+            val memories = mutableListOf<SegmentPosition>()
             val inaccessible = mutableListOf<String>()
             // Libros antiguos de los que viene cada libro, para pasarle sus ajustes.
             val sources = mutableMapOf<String, MutableList<Book>>()
@@ -140,9 +145,26 @@ class LibraryScanner(
                 if (to != null && at != null) {
                     val current = db.books().get(to.bookId)?.positionUpdatedAt
                     if (current == null || current < at) db.books().movePosition(to.bookId, to.relativePath, old.positionMs, at)
+                    memories += SegmentPosition(to.bookId, to.relativePath, segmentStart(chaptersAt[to].orEmpty(), old.positionMs), old.positionMs, at)
+                }
+                db.segmentPositions().forBook(old.id).forEach { m ->
+                    moves[m.file]?.let { memories += m.copy(bookId = it.bookId, file = it.relativePath) }
                 }
                 moves.values.map { it.bookId }.distinct().forEach { sources.getOrPut(it) { mutableListOf() } += old }
                 db.books().delete(old.id)
+            }
+            for ((id, list) in memories.groupBy { it.bookId }) {
+                val book = db.books().get(id) ?: continue
+                val newest = list.groupBy { it.file to it.startMs }.values.map { it.maxBy(SegmentPosition::updatedAt) }
+                    .filter { id in created || it.updatedAt > (db.segmentPositions().forBook(id).firstOrNull { e -> e.file == it.file && e.startMs == it.startMs }?.updatedAt ?: 0) }
+                // Un libro creado sin posición (deshacer una unión) empieza en la más reciente.
+                val start = if (id in created && book.positionFile == null) newest.maxByOrNull { it.updatedAt } else null
+                if (start != null) db.books().movePosition(id, start.file, start.positionMs, start.updatedAt)
+                val file = start?.file ?: book.positionFile
+                val ms = start?.positionMs ?: book.positionMs
+                // La del tramo donde queda la posición del libro sobra: es la misma.
+                val currentKey = file?.let { it to segmentStart(chaptersAt[Placement(id, it)].orEmpty(), ms) }
+                newest.filter { (it.file to it.startMs) != currentKey }.forEach { db.segmentPositions().save(it) }
             }
             // Solo a los libros creados en este escaneo: uno que ya existía conserva sus ajustes.
             for ((id, olds) in sources) {

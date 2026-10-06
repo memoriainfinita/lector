@@ -34,6 +34,10 @@ import codelab.lector.library.hasStorageAccess
 import codelab.lector.library.storageRoots
 import android.os.Environment
 import codelab.lector.ui.library.LibraryScreen
+import codelab.lector.ui.library.MergeBooksScreen
+import codelab.lector.ui.library.MergeBooksViewModel
+import codelab.lector.ui.library.SplitBookScreen
+import codelab.lector.ui.library.SplitBookViewModel
 import codelab.lector.ui.library.StorageRoots
 import codelab.lector.ui.library.LibraryViewModel
 import codelab.lector.playback.NowPlaying
@@ -325,8 +329,11 @@ private fun routeEntries(
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsDataRoute> { PlaceholderScreen(stringResource(R.string.settings_data), onBack = back) }
         entry<FolderPickerRoute> { FolderPicker(onClose = back) }
-        entry<MergeBooksRoute> { PlaceholderScreen(stringResource(R.string.merge_books), onBack = back) }
-        entry<SplitBookRoute> { PlaceholderScreen(stringResource(R.string.split_book), onBack = back) }
+        entry<MergeBooksRoute> { key ->
+            val context = LocalContext.current
+            MergeBooksScreen(viewModel { MergeBooksViewModel(app, key.bookId, storageRoots(context).map { it.path }) }, onClose = back)
+        }
+        entry<SplitBookRoute> { key -> SplitBookScreen(viewModel { SplitBookViewModel(app, key.bookId) }, onClose = back) }
         entry<CoverViewerRoute> { key -> CoverViewer(key.bookId, onClose = back) }
     }
 }

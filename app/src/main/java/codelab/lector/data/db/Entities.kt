@@ -177,6 +177,11 @@ data class Correction(
     /** SPLIT: archivo con el que empieza cada libro nuevo. MERGE: vacío. */
     val splitStartFiles: List<String> = emptyList(),
     val createdAt: Long,
+    /**
+     * Nombre en Ajustes › Biblioteca › Correcciones, tomado al crearla: los libros que nombra ya no
+     * existen. Versión 5 de la base de datos.
+     */
+    @ColumnInfo(defaultValue = "") val label: String = "",
 )
 
 /**

@@ -42,7 +42,7 @@ import codelab.lector.R
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.data.db.Book
 import codelab.lector.data.db.LibraryItem
-import codelab.lector.library.baseFolder
+import codelab.lector.library.bookFolders
 import codelab.lector.library.displayTitle
 import codelab.lector.library.progress
 import codelab.lector.ui.components.BookCover
@@ -83,6 +83,8 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
     val book = item.book
     // Sin archivos (inaccesible o quitado): nada que abrir, separar, unir ni borrar.
     val hasFiles = !book.inaccessible && !book.removed
+    val fileCount by produceState(0, book.id) { value = viewModel.bookFileCount(book.id) }
+    val isBookFolder = remember(book.id) { book.path in bookFolders(viewModel.state.value.items.map { it.book }) }
     val positionReset = stringResource(R.string.position_reset)
     val hiddenFromRecents = stringResource(R.string.hidden_from_recents)
     val removed = stringResource(R.string.removed_from_library)
@@ -103,10 +105,11 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
                 MenuRow(stringResource(R.string.view_cover), close { actions.onCover(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_image))
                 if (hasFiles) {
                     MenuRow(stringResource(R.string.go_to_folder), close { actions.onFolder(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_folder))
-                    MenuRow(stringResource(R.string.split_book), close { actions.onSplit(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_split))
+                    MenuRow(stringResource(R.string.split_book), close { actions.onSplit(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_split), enabled = fileCount > 1)
                     MenuRow(stringResource(R.string.merge_with_books), close { actions.onMerge(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_merge))
                     // Una carpeta que es un libro sale en Carpetas como fila de libro: su clase se cambia aquí.
-                    if (baseFolder(book) == book.path) {
+                    // No en un libro de archivos sueltos o unido, cuya ruta es la carpeta que lo contiene.
+                    if (isBookFolder) {
                         MenuRow(stringResource(R.string.folder_class), close { actions.onFolderClass(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_list))
                     }
                 }

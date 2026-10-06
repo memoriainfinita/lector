@@ -70,6 +70,10 @@ interface BookDao {
     @Query("SELECT * FROM book_file WHERE bookId = :bookId ORDER BY sortIndex")
     suspend fun files(bookId: String): List<BookFile>
 
+    /** Archivos de cualquier libro cuya ruta relativa acaba en [name] (el nombre del archivo). */
+    @Query("SELECT * FROM book_file WHERE relativePath = :name OR substr(relativePath, -length(:name) - 1) = '/' || :name")
+    suspend fun filesNamed(name: String): List<BookFile>
+
     @Insert
     suspend fun insertChapters(chapters: List<Chapter>)
 
@@ -305,6 +309,9 @@ interface CorrectionDao {
 
     @Query("SELECT * FROM correction ORDER BY createdAt")
     suspend fun all(): List<Correction>
+
+    @Query("SELECT * FROM correction ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<Correction>>
 }
 
 @Dao

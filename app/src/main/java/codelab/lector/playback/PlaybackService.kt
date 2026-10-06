@@ -43,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
@@ -97,6 +98,10 @@ class PlaybackService : MediaLibraryService() {
             app.playbackSettings.settings.map { it.remoteWhenClosed }.distinctUntilChanged().collect {
                 setMediaButtonReceiverEnabled(this@PlaybackService, it)
             }
+        }
+        // Unir, separar o cambiar la clase de carpeta pueden borrar el libro cargado: se pasa al nuevo.
+        scope.launch {
+            app.scanner.state.map { it.finishedAt }.filterNotNull().distinctUntilChanged().collect { engine.followRegroup() }
         }
         // Al arrancar, el último libro queda cargado y en pausa; uno quitado de la biblioteca, no.
         scope.launch {

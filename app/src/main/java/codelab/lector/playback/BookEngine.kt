@@ -18,6 +18,8 @@ import codelab.lector.data.db.SegmentPosition
 import codelab.lector.data.settings.PlaybackSettings
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.library.CoverStore
+import codelab.lector.library.bookWithFile
+import codelab.lector.library.normalizePath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -274,6 +276,25 @@ class BookEngine(
     fun unload(bookId: String) {
         if (book?.id != bookId) return
         drop()
+    }
+
+    /**
+     * Tras una búsqueda: si el libro cargado ya no existe (unido, separado o reagrupado por cambio de
+     * clase), pasa al libro que tiene ahora su archivo, en el mismo punto y sonando si sonaba.
+     */
+    suspend fun followRegroup() {
+        val b = book ?: return
+        if (db.books().get(b.id) != null) return
+        val dir = baseDir
+        val file = files.getOrNull(exo.currentMediaItemIndex)
+        val to = if (dir != null && file != null) bookWithFile(db, normalizePath("${dir.path}/${file.relativePath}")) else null
+        if (to == null) return drop()
+        db.books().savePosition(to.bookId, to.relativePath, exo.currentPosition, System.currentTimeMillis())
+        val play = exo.playWhenReady
+        // Sin libro, open() no guarda la posición en el antiguo, que ya no existe.
+        book = null
+        open(to.bookId, play)
+        if (book == null) drop()
     }
 
     private fun drop() {
