@@ -382,6 +382,7 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Libro quitado: fuera de la Biblioteca salvo con "No disponibles"; entonces atenuado, con "no disponible · n marcadores" (o el porcentaje) en la línea mono. Tocarlo abre la hoja de marcadores del libro. Conserva posición, marcadores, notas y tags; sus marcadores siguen en la recopilación. Si sus archivos vuelven, la búsqueda lo reconecta por firma o duración y vuelve a la Biblioteca (2026-10-05)
 - Solo se muestran los libros de las carpetas actuales; los de una carpeta quitada reaparecen al volver a añadirla
 - Columnas con el pellizco: 1, 2 o 3 en vertical (por defecto 2), el doble en horizontal. Un nivel por gesto; se guarda en DataStore
+- Tras 3 columnas, un nivel más: lista con portada de 44 a la izquierda (como en Unir) y la fila de la lista sin portadas (título, autor, línea mono, barra si está en curso, ⋮; cargado en acento). Carpetas de Episodios o Sesiones con la portada de su primer libro en lugar del icono. En horizontal, dos columnas de filas. Separar los dedos vuelve a 3 columnas. Con "Mostrar portadas" apagado, la lista sin portadas, sin pellizco (2026-10-06)
 - Sin portadas (Ajustes › Mostrar portadas): lista en vez de cuadrícula (Pantallas › Sin portadas)
 - Al abrir la app, búsqueda rápida de cambios en segundo plano
 - Buscando: bajo el selector, línea fina de progreso y "Buscando libros… n encontrados" con la carpeta actual. Los libros nuevos aparecen al terminar (el escaneo guarda en una transacción); dos tarjetas grises al final mientras dura la búsqueda. Así solo la búsqueda completa ("Volver a buscar"), el cambio de clase de carpeta y la primera búsqueda. La rápida al abrir es discreta (2026-10-05): solo la línea, superpuesta al borde inferior de la cabecera, sin texto ni tarjetas; no ocupa sitio y no desplaza la cuadrícula al terminar
@@ -397,14 +398,13 @@ Aprobado 2026-10-04. Cuatro entregas: A cuadrícula, B carpetas, C menú del lib
 - Hoja "Clase de carpeta": cabecera con nombre, ruta y número de archivos; cuatro opciones con su explicación y la nota final; se aplica al tocar. Cambiar de clase lanza una búsqueda rápida que reagrupa los libros
 - "Ir a la carpeta" (`pendingFolder` de la navegación) abre Carpetas en la carpeta donde aparece el libro. La tarjeta de Episodios o Sesiones de la cuadrícula abre su carpeta; su ⋮, la hoja de clase
 - Clase "Libros" en una subcarpeta de una carpeta con otra clase: se guarda como regla propia, para anular la heredada. Elegir la misma clase que la carpeta madre quita la regla propia
-- Reagrupar (cambio de clase): si los archivos de un libro que ya no aparece siguen existiendo y ahora son de otros libros, cada marcador pasa al libro que contiene su archivo, la posición al del archivo en curso (si es más reciente que la suya) y el libro antiguo se borra. Solo queda inaccesible si le faltan archivos. Misma regla que "Separar en libros"; Unir y Separar la usarán cuando lleguen. Pasan también velocidad y sonido (al juntar, los del libro antiguo más reciente) y terminado (al separar, si el antiguo lo estaba; al juntar, solo si lo estaban todos). No pasan el nombre propio ni "quitado de recientes". Solo a los libros que crea ese escaneo: uno que ya existía conserva sus ajustes (2026-10-05)
+- Reagrupar (cambio de clase): si los archivos de un libro que ya no aparece siguen existiendo y ahora son de otros libros, cada marcador pasa al libro que contiene su archivo, la posición al del archivo en curso (si es más reciente que la suya) y el libro antiguo se borra. Solo queda inaccesible si le faltan archivos. Misma regla para Unir y Separar (Biblioteca › E). Pasan también velocidad y sonido (al juntar, los del libro antiguo más reciente) y terminado (al separar, si el antiguo lo estaba; al juntar, solo si lo estaban todos). No pasan el nombre propio ni "quitado de recientes". Solo a los libros que crea ese escaneo: uno que ya existía conserva sus ajustes (2026-10-05)
 
 #### C. Menú del libro
 
 - Hoja con cabecera: portada 52, título, "autor · narrador · serie n" y línea mono "posición / total · % · tamaño"
 - Opciones: Marcadores [n], Ver portada, Ir a la carpeta, Separar en libros, Unir con otros libros, Marcar como terminado / no terminado, Reiniciar posición, Quitar de recientes; separador; Renombrar, Abrir con…, Borrar del móvil en coral
-- Libro que es una carpeta entera: además, "Clase de carpeta" tras Unir, que abre la hoja de clase de esa carpeta. En Carpetas sale como fila de libro y no tenía otra forma de cambiar su clase (2026-10-05)
-- Marcadores, Separar y Unir: enlazados a sus pantallas vacías hasta que se hagan; Marcadores inactivo. Hasta la hoja de marcadores, tocar un libro quitado no hace nada: se usa su ⋮
+- Libro que es una carpeta entera: además, "Clase de carpeta" tras Unir, que abre la hoja de clase de esa carpeta. En Carpetas sale como fila de libro y no tenía otra forma de cambiar su clase (2026-10-05). Solo si la carpeta es un libro, como en Carpetas: no en un libro de archivos sueltos ni en uno unido, cuya ruta es la carpeta que lo contiene (2026-10-06)
 - Reiniciar posición y Quitar de recientes: aviso con "Deshacer". Reiniciar el libro que suena lo lleva al inicio en pausa
 - Renombrar: diálogo con Cancelar y Guardar; solo cambia el nombre en LECTOR
 - Abrir con…: comparte el primer archivo del libro, o el que está en curso, por FileProvider
@@ -424,6 +424,19 @@ Sin pantalla aparte: filtra la propia Biblioteca (decidido 2026-10-05; sustituye
 - Encuentra siempre los libros quitados, atenuados, aunque "No disponibles" esté apagada
 - Desde Carpetas, buscar pasa a la vista Libros; al cerrar, vuelve a donde estaba
 - Tocar un resultado lo carga y abre Escuchando; un quitado, como en la cuadrícula
+
+#### E. Unir y Separar
+
+Hecha y probada en el móvil (2026-10-06). Código en `library/Corrections.kt` y `ui/library/CorrectionScreens.kt`.
+
+- Cada una guarda una corrección y lanza una búsqueda visible; con otra en curso, se espera y se lanza otra. El reagrupado del escaneo pasa marcadores, posición y ajustes (Carpetas › Reagrupar)
+- Unir (lienzo `Merge-Books`): pantalla completa con la carpeta donde aparece el libro, como en Carpetas, y sus libros disponibles en orden natural de ruta; el de origen, marcado. "Unir como un libro" con 2 o más. Al volver, aviso "Libros unidos" con "Deshacer". Partes en orden de nombre; título, portada y carpeta del primero
+- Unir libros de carpetas distintas guarda rutas con ".." ("../Vol 2/01.mp3"); el reagrupado las normaliza
+- Posición del libro unido: la del escuchado más recientemente. La de cada libro antiguo y sus posiciones por tramo pasan como posición por tramo al libro que tiene su archivo: la lista de capítulos las retoma y vuelven al deshacer. Un libro creado sin posición (al deshacer) empieza en la más reciente (2026-10-06)
+- Separar (lienzo `Split-Book`): archivos del libro con casilla, el primero marcado y fijo; "Libro n" sobre cada uno nuevo. Título "Separar en n libros" ("Separar en libros" sin marcas) y botón activo con 2 o más. Sin aviso: se deshace en Correcciones. En el menú, atenuado si el libro tiene un solo archivo
+- Libros separados: el título del original; si coincide en todos (el álbum), cada uno lleva su número detrás: "… (2/3)" (2026-10-06)
+- Correcciones (Ajustes › Biblioteca, lienzo `Settings-Folders`): sección solo si hay alguna, la más reciente arriba. Etiqueta "separado" o "unido", nombre tomado al crearla (los libros que nombra ya no existen) y "Deshacer", que la borra y vuelve a buscar
+- Libro cargado: al terminar cada búsqueda, si ya no existe (unido, separado o reagrupado por cambio de clase), el reproductor pasa al libro que tiene ahora su archivo, en el mismo punto y sonando si sonaba
 
 ### Ajustes
 
@@ -457,7 +470,7 @@ Aprobado 2026-10-05.
 - "+ Añadir carpeta" abre el explorador
 - "Volver a buscar libros" con "Última: [fecha] · n libros" debajo, guardado en DataStore. Sin "movidos, reconectados": el escaneo no lleva esa cuenta
 - "Mostrar portadas" repetido, como en el lienzo
-- Correcciones: con Unir y Separar, que las crean; hasta entonces no hay ninguna
+- Correcciones: solo si hay alguna (Biblioteca › E)
 - Explorador (pantalla completa, lienzo `Folder-Picker`): selector Principal / Tarjeta SD solo con SD; flecha de subir y ruta; Atrás sube un nivel y en la raíz cierra. Filas de subcarpeta con "n archivos de audio" o "Sin audio", contados en segundo plano. Sin ocultas ni `Android/`. Una carpeta de la biblioteca, o dentro de una, atenuada con "Ya en la biblioteca" y sin abrir
 - "Usar esta carpeta": sustituye a las carpetas de la lista que contiene, lanza una búsqueda rápida visible y vuelve a la pantalla de origen
 - Se abre desde Ajustes › Biblioteca, "Añadir carpeta" de la Biblioteca vacía y "Elegir otra carpeta" del primer arranque
@@ -586,7 +599,7 @@ Aprobado 2026-10-03.
 - Tag: ID y nombre. Relación muchos a muchos con marcadores; el orden por uso se calcula, no se guarda
 - Carpeta de la biblioteca: ruta raíz
 - Caché de archivo (`file_meta`): ruta, tamaño, fecha, duración, etiquetas, portada sí / no, capítulos
-- Corrección: tipo (separar o unir), libros afectados por firma de identidad, archivos donde empieza cada libro (separar), fecha. Se aplica sobre cada escaneo y se puede deshacer
+- Corrección: tipo (separar o unir), libros afectados por firma de identidad, archivos donde empieza cada libro (separar), fecha y nombre para Correcciones (base de datos en versión 5). Se aplica sobre cada escaneo y se puede deshacer
 - Regla de carpeta: carpeta y dos ajustes, qué es una obra (la carpeta, cada archivo o las reglas de detección: clase Libros guardada para anular una heredada) y qué pasa al terminar (queda terminada o vuelve al inicio). La heredan las subcarpetas; vale para lo que se añada después
 
 ### Clases de carpeta
