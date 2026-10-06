@@ -23,6 +23,10 @@
 #   - Un volcado tarda 2-3 s: los avisos con "Deshacer" (5 s) se pueden perder, y un toque por
 #     coordenada cae en lo que haya debajo. No tocar a ciegas donde haya acciones peligrosas
 #     (así se abrió "Borrar del móvil" de un libro real); localizar por texto exacto con TapText.
+#   - Tras force-stop o instalar, ningún libro está cargado: tocar su tarjeta (o "Seguir escuchando")
+#     lo carga y empieza a sonar. Antes, volumen a 0 y cargarlo en pausa:
+#     am start -n codelab.lector/.debug.PlaybackActivity --es open <id> --ez play false
+#   - Arrastrar una barra de Escuchando con input motionevent DOWN/MOVE/UP salta al soltar: copia antes.
 #   - Las posiciones cambian con la orientación y con la sesión de escucha (la fila de filtros
 #     sube cuando no está "Seguir escuchando").
 

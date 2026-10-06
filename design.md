@@ -345,6 +345,10 @@ Hecha 2026-10-03.
 - Primera pantalla, antes que la Biblioteca: solo depende del motor; la Biblioteca necesita abrir libros en el reproductor
 - Portada: marco de 358 × 411 hasta cargar la imagen; después toma la proporción de la imagen en el mismo espacio, sin recortar. Sin portada: superficie con el título. Tocarla abre el visor
 - Barra del libro con marcas al inicio de cada tramo (capítulo o archivo); sin marcas si quedan a menos de 4 dp de media. Las dos barras se arrastran, los tiempos siguen al dedo y al soltar salta con "Deshacer"
+- Barras (2026-10-06): mismo tamaño que antes (6 y 3, zona de 24, tiempos de 13) para no quitar sitio a la portada; la posición, en blanco. Al arrastrar, la barra engorda 4 y sale un círculo en el punto. Se probaron más grandes (44 de zona, 8 y 6, tiempos de 15) y no hacía falta con el tiempo grande y el arrastre fino
+- Lista de tramos (2026-10-06): sin capítulos, tocar el nombre del archivo abre la misma hoja como "Archivos", si el libro tiene más de uno, como la pestaña Archivos en horizontal
+- Tiempo grande al arrastrar (2026-10-06): sobre la portada (sin portada, en su hueco; en horizontal, arriba de la columna), tiempo de 28 mono, desplazamiento desde la posición al empezar ("+2:07:06"), capítulo en el que cae si el libro tiene capítulos y "Fino 1/2" o "Fino 1/4"
+- Arrastre fino (2026-10-06): tocar va al punto del dedo; al arrastrar, el avance va con el dedo y se divide entre 2 con el dedo a más de 64 dp por encima de la barra y entre 4 a más de 128
 - Aviso de salto: "Saltado desde [posición]" con Deshacer
 - Play / pausa según "va a sonar": no parpadea mientras carga
 - ⋯ en la fila bajo los controles, a la derecha (su menú sale por abajo). Cabecera solo con la flecha y "Escuchando". Lienzo actualizado (versión 146)
