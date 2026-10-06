@@ -115,6 +115,12 @@ data class BookmarkTag(
     val tagId: Long,
 )
 
+/** Tag con su número de marcadores (TagDao.observeByUse). */
+data class TagUse(val id: Long, val name: String, val uses: Int)
+
+/** Tag de un marcador, con su nombre (BookmarkDao.observeTagsForBook). */
+data class BookmarkTagName(val bookmarkId: String, val tagId: Long, val name: String)
+
 /** Libro con lo que la biblioteca muestra de él (BookDao.observeLibrary). */
 data class LibraryItem(
     @Embedded val book: Book,

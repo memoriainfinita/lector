@@ -113,7 +113,7 @@ fun SettingsScreen(
 
         SectionHeader(stringResource(R.string.tab_bookmarks))
         LinkRow(stringResource(R.string.settings_tags), {}, note = stringResource(R.string.manage_tags_note), enabled = false)
-        SwitchRow(stringResource(R.string.open_sheet_on_bookmark), false, {}, note = stringResource(R.string.open_sheet_on_bookmark_note), enabled = false)
+        SwitchRow(stringResource(R.string.open_sheet_on_bookmark), playback.openSheetOnMark, viewModel::setOpenSheetOnMark, note = stringResource(R.string.open_sheet_on_bookmark_note))
 
         SectionHeader(stringResource(R.string.settings_appearance))
         ValueRow(stringResource(R.string.theme), stringResource(themeLabel(appearance.mode)), onAppearance, mono = false)

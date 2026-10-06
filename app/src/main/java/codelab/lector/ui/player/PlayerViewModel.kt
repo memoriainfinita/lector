@@ -75,9 +75,12 @@ class PlayerViewModel(private val app: AppContainer) : ViewModel() {
         viewModelScope.launch { app.playbackSettings.setSleepExtend(enabled) }
     }
 
-    fun act(action: PlayerAction) = playback.act(action)
+    fun act(action: PlayerAction) = act(ActionCall(action))
 
-    fun act(call: ActionCall) = playback.act(call)
+    /** Marcar desde la app pasa por los marcadores: según el ajuste, abre la hoja del nuevo. */
+    fun act(call: ActionCall) {
+        if (call.action == PlayerAction.ADD_BOOKMARK) app.bookmarks.markHere() else playback.act(call)
+    }
 
     fun jumpTo(bookMs: Long) = playback.jumpTo(bookMs)
     fun jumpToSegment(index: Int) = playback.jumpToSegment(index)

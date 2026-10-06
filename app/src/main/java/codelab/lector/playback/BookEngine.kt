@@ -221,6 +221,17 @@ class BookEngine(
         jumpTo(entryPoint(seg, savedBookMs(index)))
     }
 
+    /**
+     * "Escuchar desde aquí" de un marcador: carga el libro si no es el actual, salta (con
+     * "Deshacer", que vuelve a donde estaba el libro) y reproduce.
+     */
+    suspend fun playFrom(bookId: String, bookMs: Long) {
+        open(bookId, play = false)
+        if (book?.id != bookId) return
+        jumpTo(bookMs)
+        play()
+    }
+
     /** Salto grande: barra, capítulo, archivo o marcador. Se puede deshacer. */
     fun jumpTo(bookMs: Long) {
         if (!loaded) return
@@ -274,12 +285,14 @@ class BookEngine(
         publish()
     }
 
-    private suspend fun addBookmark() {
-        val b = book ?: return
+    /** Marcador en la posición actual. Devuelve su id, o null sin libro cargado. */
+    suspend fun addBookmark(): String? {
+        val b = book ?: return null
         val now = System.currentTimeMillis()
+        val id = UUID.randomUUID().toString()
         db.bookmarks().upsert(
             Bookmark(
-                id = UUID.randomUUID().toString(),
+                id = id,
                 bookId = b.id,
                 file = files[exo.currentMediaItemIndex].relativePath,
                 positionMs = exo.currentPosition,
@@ -287,6 +300,7 @@ class BookEngine(
                 updatedAt = now,
             ),
         )
+        return id
     }
 
     /** Pausa diferida: marcador de pausa en la posición, solo el último por libro. */

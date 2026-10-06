@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import codelab.lector.R
+import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.data.db.Book
 import codelab.lector.data.db.LibraryItem
 import codelab.lector.library.baseFolder
@@ -78,6 +79,7 @@ class BookMenuActions(
 @Composable
 fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel, actions: BookMenuActions, onDismiss: () -> Unit, showCover: Boolean = true) {
     val undo = LocalUndoState.current
+    val bookmarkSheets = LocalBookmarkSheets.current
     val book = item.book
     // Sin archivos (inaccesible o quitado): nada que abrir, separar, unir ni borrar.
     val hasFiles = !book.inaccessible && !book.removed
@@ -97,8 +99,7 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
             MenuHeader(item, cover, showCover, viewModel)
             SheetDivider()
             Column(Modifier.padding(top = 6.dp)) {
-                // Marcadores: inactivo hasta su función.
-                MenuRow(stringResource(R.string.tab_bookmarks), {}, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_bookmark), trailing = item.bookmarkCount.toString(), enabled = false)
+                MenuRow(stringResource(R.string.tab_bookmarks), close { bookmarkSheets.showBook(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_bookmark), trailing = item.bookmarkCount.toString())
                 MenuRow(stringResource(R.string.view_cover), close { actions.onCover(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_image))
                 if (hasFiles) {
                     MenuRow(stringResource(R.string.go_to_folder), close { actions.onFolder(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_folder))

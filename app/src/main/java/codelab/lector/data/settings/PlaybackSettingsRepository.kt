@@ -52,6 +52,8 @@ data class PlaybackSettings(
     /** Al pausar: marcador de pausa (solo el último por libro) y seguir si se mueve el móvil. */
     val sleepMarkPause: Boolean = true,
     val sleepMotionResume: Boolean = true,
+    /** Ajustes › Marcadores › Abrir la hoja al marcar: desde la app; auricular y notificación solo guardan. */
+    val openSheetOnMark: Boolean = true,
 ) {
     /** Segundos de los saltos sin hueco propio (minirreproductor sin salto, coche): los del reproductor. */
     val appSkipBackSec: Int get() = playerButtons.firstOrNull { it.action == PlayerAction.SKIP_BACK }?.seconds ?: DEFAULT_SKIP_SEC
@@ -118,6 +120,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             sleepTo = p[SLEEP_TO]?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: d.sleepTo,
             sleepMarkPause = p[SLEEP_MARK] ?: d.sleepMarkPause,
             sleepMotionResume = p[SLEEP_MOTION] ?: d.sleepMotionResume,
+            openSheetOnMark = p[OPEN_SHEET_ON_MARK] ?: d.openSheetOnMark,
         )
     }
 
@@ -176,6 +179,8 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setSleepMotionResume(enabled: Boolean) = store.edit { it[SLEEP_MOTION] = enabled }
 
+    suspend fun setOpenSheetOnMark(enabled: Boolean) = store.edit { it[OPEN_SHEET_ON_MARK] = enabled }
+
     suspend fun setAutoNextBook(enabled: Boolean) = store.edit { it[AUTO_NEXT] = enabled }
 
     suspend fun setRewindOnResumeMs(ms: Int) = store.edit { it[REWIND_MS] = ms.coerceAtLeast(0) }
@@ -228,6 +233,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val SLEEP_TO = intPreferencesKey("sleep_to")
         val SLEEP_MARK = booleanPreferencesKey("sleep_mark_pause")
         val SLEEP_MOTION = booleanPreferencesKey("sleep_motion_resume")
+        val OPEN_SHEET_ON_MARK = booleanPreferencesKey("open_sheet_on_mark")
         val PREAMP = floatPreferencesKey("sound_preamp_db")
         val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
         val EQ_BANDS = stringPreferencesKey("sound_eq_bands")

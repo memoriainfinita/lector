@@ -49,6 +49,9 @@ import codelab.lector.ui.player.PlayerScreen
 import codelab.lector.ui.player.PlayerViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import codelab.lector.ui.components.LocalUndoState
+import codelab.lector.ui.bookmarks.BookmarkSheetsHost
+import codelab.lector.ui.bookmarks.LocalBookmarkSheets
+import codelab.lector.ui.bookmarks.rememberBookmarkSheetsState
 import codelab.lector.ui.components.UndoBar
 import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
@@ -100,7 +103,8 @@ fun AppRoot(openPlayer: Flow<Unit>, onReady: () -> Unit = {}) {
     // Primer arranque: sus pantallas no esperan datos.
     LaunchedEffect(mode) { if (mode == StartMode.ONBOARDING_PERMISSION || mode == StartMode.ONBOARDING_FOLDERS) onReady() }
     val undo = rememberUndoState()
-    CompositionLocalProvider(LocalUndoState provides undo) {
+    val bookmarkSheets = rememberBookmarkSheetsState()
+    CompositionLocalProvider(LocalUndoState provides undo, LocalBookmarkSheets provides bookmarkSheets) {
         Box(Modifier.fillMaxSize().background(LectorTheme.colors.background).systemBarsPadding()) {
             when (mode) {
                 StartMode.LOADING -> Unit
@@ -211,6 +215,11 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
                 )
             }
         }
+        BookmarkSheetsHost(
+            LocalBookmarkSheets.current,
+            onSeeAll = navigator::showAllBookmarks,
+            onManageTags = { navigator.open(SettingsTagsRoute) },
+        )
         UndoBar(
             LocalUndoState.current,
             Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp + if (showMini) MiniPlayerHeight else 0.dp),

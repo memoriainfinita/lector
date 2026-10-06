@@ -44,6 +44,7 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     }
 
     // Reproducción
+    fun setOpenSheetOnMark(enabled: Boolean) = save { app.playbackSettings.setOpenSheetOnMark(enabled) }
     fun setAutoNextBook(enabled: Boolean) = save { app.playbackSettings.setAutoNextBook(enabled) }
     fun setRewindOnResume(seconds: Int) = save { app.playbackSettings.setRewindOnResumeMs(seconds * 1_000) }
     fun setPlayOnOpen(enabled: Boolean) = save { app.playbackSettings.setPlayOnOpen(enabled) }

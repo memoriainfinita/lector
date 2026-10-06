@@ -99,6 +99,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import codelab.lector.R
+import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.data.db.LibraryItem
 import codelab.lector.library.FolderKind
 import codelab.lector.library.LibraryEntry
@@ -445,6 +446,7 @@ private fun BookGrid(
     top: (@Composable () -> Unit)?,
 ) {
     val full: LazyGridItemSpanScope.() -> GridItemSpan = { GridItemSpan(maxLineSpan) }
+    val bookmarkSheets = LocalBookmarkSheets.current
     // Con el teclado abierto (buscando), las últimas tarjetas tienen que poder subir por encima de él.
     // La raíz ya deja la barra de navegación; el teclado la tapa, así que solo cuenta lo que sobresale.
     // El minirreproductor queda bajo el teclado: se toma el mayor de los dos huecos, no la suma.
@@ -505,7 +507,9 @@ private fun BookGrid(
                         is LibraryEntry.BookEntry -> BookListRow(
                             entry.item,
                             loaded = entry.item.book.id == state.loadedBookId,
-                            onOpen = if (entry.item.book.removed) null else {
+                            onOpen = if (entry.item.book.removed) {
+                                { bookmarkSheets.showBook(entry.item.book.id) }
+                            } else {
                                 {
                                     viewModel.open(entry.item.book.id)
                                     onOpenPlayer()
@@ -529,8 +533,10 @@ private fun BookGrid(
                     entry.item,
                     cover = state.covers[entry.item.book.id].takeIf { state.showCovers },
                     loaded = entry.item.book.id == state.loadedBookId,
-                    // Quitado: nada que reproducir. Abrirá sus marcadores cuando existan; hasta entonces, su ⋮.
-                    onOpen = if (entry.item.book.removed) null else {
+                    // Quitado: nada que reproducir; abre sus marcadores.
+                    onOpen = if (entry.item.book.removed) {
+                        { bookmarkSheets.showBook(entry.item.book.id) }
+                    } else {
                         {
                             viewModel.open(entry.item.book.id)
                             onOpenPlayer()

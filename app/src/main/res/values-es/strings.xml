@@ -306,4 +306,32 @@
     <string name="sleep_motion">Seguir si muevo el móvil</string>
     <string name="sleep_motion_note">En los 30 s tras la pausa</string>
     <string name="sleep_auto_summary">%1$d min · automática de %2$s a %3$s</string>
+
+    <!-- Marcadores (design.md › Pantallas › Marcadores) -->
+    <string name="bookmark">Marcador</string>
+    <string name="bookmark_saved">Marcador guardado</string>
+    <string name="bookmark_title">Título</string>
+    <string name="bookmark_untitled">Sin título</string>
+    <string name="bookmark_note">Nota</string>
+    <string name="bookmark_note_hint">Escribe o dicta con el teclado</string>
+    <string name="tags_most_used">Tags · más usados</string>
+    <string name="all_tags">Todos los tags</string>
+    <string name="add_tag">+ tag</string>
+    <string name="mark_here">Marcar aquí</string>
+    <string name="you_are_here">%1$s · estás aquí</string>
+    <string name="pause_marker">Pausa diferida · %1$s</string>
+    <string name="ago_minutes">hace %1$d min</string>
+    <string name="ago_hours">hace %1$d h</string>
+    <string name="ago_days">hace %1$d d</string>
+    <string name="export">Exportar</string>
+    <string name="listen_from_here">Escuchar desde aquí</string>
+    <string name="no_bookmarks_in_book">Aún no hay marcadores en este libro</string>
+    <string name="tags">Tags</string>
+    <string name="manage">Gestionar</string>
+    <string name="tags_by_use">Más usados primero</string>
+    <string name="tags_a_z">A–Z</string>
+    <string name="search_tags">Buscar tags</string>
+    <string name="create_tag">Crear «%1$s»</string>
+    <string name="no_tags_yet">Aún no hay tags. Escribe uno para crearlo.</string>
+    <string name="file_missing">Archivo fuera del libro</string>
 </resources>

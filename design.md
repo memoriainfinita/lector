@@ -512,6 +512,43 @@ Hecho 2026-10-05 (lienzo `Onboarding-Permission`, `Onboarding-Folder`).
 - "Elegir otra carpeta" abre el explorador; la elegida aparece al final de la lista, marcada
 - "Empezar", activo con alguna marcada: las carpetas de la biblioteca pasan a ser las marcadas (las contenidas en otra marcada salen) y la Biblioteca abre con la búsqueda visible
 
+### Marcadores
+
+Aprobado 2026-10-06. Cuatro entregas. Sin cambios en el esquema (tablas `bookmark`, `tag`, `bookmark_tag` desde la versión 4).
+
+#### A. Hoja de marcador y marcadores del libro
+
+Hecha 2026-10-06.
+
+- Hoja de marcador (lienzo `Bookmark-Sheet`): "Marcador guardado" con posición y Deshacer, título, nota, tags más usados (6, más los que ya lleva), "+ tag" y Listo. La misma hoja crea y edita; al editar, "Marcador" sin Deshacer. Título y nota se guardan al cerrar la hoja por cualquier camino; los tags, al tocarlos. Línea de posición: libro · tramo · posición en el tramo, hasta dos líneas
+- Ajustes › Marcadores › "Abrir la hoja al marcar", activado por defecto. Desde la app (fila bajo los controles, huecos de Ajustes › Botones, minirreproductor, "Marcar aquí") abre la hoja; desde auricular y notificación solo guarda
+- Hoja de marcadores del libro (lienzo `Book-Bookmarks`): desde Escuchando, "Marcadores [n]" del menú del libro y tocar un libro quitado. "Marcar aquí" y "estás aquí" solo con el libro cargado; play en cada fila si el libro tiene sus archivos. Tocar la fila edita, salvo el marcador de pausa (se sustituye en cada pausa: un título se perdería). El play carga el libro si hace falta, salta con "Deshacer", reproduce y cierra la hoja. "Ver todos los marcadores" y "Exportar" (inactivo hasta C)
+- Lista de tags adelantada de B (sin ella "+ tag" no sirve): búsqueda, orden por uso o A–Z, "Crear «x»" (también con Intro), "Gestionar" (Ajustes › Gestionar tags) y Listo. B la usa para filtrar
+- Pestaña Marcadores del panel derecho en horizontal: las filas de la hoja del libro, con "estás aquí"
+- Las hojas se apilan (libro → marcador → tags): Atrás o tocar fuera vuelve a la anterior. Se conservan al girar
+
+#### B. Recopilación
+
+- Pantalla Marcadores agrupada por libro (lienzo `Bookmarks-All`, `Bookmarks-Empty`, `Bookmarks-Filtered`, `Bookmark-Item-Menu`), con estado vacío
+- Filtros: todos, tags, sin tag, pausa; varios tags, cualquiera de ellos. Con filtro, "n marcadores con [tag]" y "Quitar filtro"
+- ⋮: Copiar texto y Borrar con "Deshacer". "Escuchar desde aquí" salta y se queda en Marcadores
+- Lista de tags como filtro (lienzo `Tag-Picker`), con "sin tag", Limpiar y Aplicar
+
+#### C. Búsqueda y Exportar
+
+- Búsqueda en título, nota y tag, con lo encontrado resaltado (lienzo `Bookmarks-Search`)
+- Hoja Exportar con vista previa: Copiar, Guardar como archivo (.txt), Compartir con otra app; respeta el filtro activo (lienzo `Export-Sheet`)
+
+#### D. Gestionar tags
+
+- Ajustes › Gestionar tags: renombrar, unir con otro tag, borrar con "Deshacer" (lienzo `Settings-Tags`, `Merge-Tag`)
+
+#### Huecos resueltos (2026-10-06)
+
+- Recopilación: libros por última escucha, el más reciente arriba; dentro de cada libro, marcadores por posición
+- "+ tag" en la hoja de marcador abre la lista completa de tags con la búsqueda activa; si lo escrito no existe, "Crear «x»"
+- Posición mostrada: tiempo del libro entero, con capítulo o archivo debajo
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.

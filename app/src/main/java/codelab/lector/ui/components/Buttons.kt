@@ -23,7 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
@@ -225,7 +231,14 @@ fun OptionChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
 
 /** Etiqueta o filtro: 28 / radio 2 / 12 mono. Discontinua para filtros de sistema (sin tag, pausa). */
 @Composable
-fun TagChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, leading: Painter? = null) {
+fun TagChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leading: Painter? = null,
+    dashed: Boolean = false,
+) {
     val c = LectorTheme.colors
     val shape = RoundedCornerShape(2.dp)
     Box(modifier = modifier.minimumInteractiveComponentSize(), contentAlignment = Alignment.Center) {
@@ -234,16 +247,39 @@ fun TagChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modi
                 .height(28.dp)
                 .clip(shape)
                 .background(if (selected) c.accent else Color.Transparent)
-                .let { if (selected) it else it.border(1.dp, c.outline, shape) }
+                .let {
+                    when {
+                        selected -> it
+                        dashed -> it.dashedBorder(c.outline, 2.dp)
+                        else -> it.border(1.dp, c.outline, shape)
+                    }
+                }
                 .selectable(selected, role = Role.Checkbox, onClick = onClick)
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            val tone = when {
+                selected -> c.onAccent
+                dashed -> c.textSecondary
+                else -> c.text
+            }
             if (leading != null) Icon(leading, null, Modifier.size(14.dp), tint = if (selected) c.onAccent else c.textSecondary)
-            Text(text, style = LectorTheme.type.meta, color = if (selected) c.onAccent else c.text)
+            Text(text, style = LectorTheme.type.meta, color = tone)
         }
     }
+}
+
+/** Borde discontinuo de 1 dp, para filtros de sistema y "+ tag". */
+fun Modifier.dashedBorder(color: Color, radius: Dp): Modifier = drawBehind {
+    val stroke = 1.dp.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(stroke / 2, stroke / 2),
+        size = Size(size.width - stroke, size.height - stroke),
+        cornerRadius = CornerRadius(radius.toPx()),
+        style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))),
+    )
 }
 
 /** Fila de menú: 44 / 14–15, icono 20. */

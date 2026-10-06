@@ -307,4 +307,32 @@
     <string name="sleep_motion">Keep playing if I move the phone</string>
     <string name="sleep_motion_note">Within 30 s after the pause</string>
     <string name="sleep_auto_summary">%1$d min · automatic from %2$s to %3$s</string>
+
+    <!-- Marcadores (design.md › Pantallas › Marcadores) -->
+    <string name="bookmark">Bookmark</string>
+    <string name="bookmark_saved">Bookmark saved</string>
+    <string name="bookmark_title">Title</string>
+    <string name="bookmark_untitled">Untitled</string>
+    <string name="bookmark_note">Note</string>
+    <string name="bookmark_note_hint">Type or dictate with the keyboard</string>
+    <string name="tags_most_used">Tags · most used</string>
+    <string name="all_tags">All tags</string>
+    <string name="add_tag">+ tag</string>
+    <string name="mark_here">Bookmark here</string>
+    <string name="you_are_here">%1$s · you are here</string>
+    <string name="pause_marker">Sleep timer · %1$s</string>
+    <string name="ago_minutes">%1$d min ago</string>
+    <string name="ago_hours">%1$d h ago</string>
+    <string name="ago_days">%1$d d ago</string>
+    <string name="export">Export</string>
+    <string name="listen_from_here">Listen from here</string>
+    <string name="no_bookmarks_in_book">No bookmarks in this book yet</string>
+    <string name="tags">Tags</string>
+    <string name="manage">Manage</string>
+    <string name="tags_by_use">Most used first</string>
+    <string name="tags_a_z">A–Z</string>
+    <string name="search_tags">Search tags</string>
+    <string name="create_tag">Create “%1$s”</string>
+    <string name="no_tags_yet">No tags yet. Type one to create it.</string>
+    <string name="file_missing">File not in the book</string>
 </resources>

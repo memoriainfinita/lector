@@ -2,6 +2,7 @@ package codelab.lector.data.db
 
 import androidx.room3.Dao
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Upsert
@@ -158,8 +159,40 @@ interface BookmarkDao {
         upsert(bookmark.copy(kind = BookmarkKind.PAUSE))
     }
 
+    @Query("SELECT * FROM bookmark WHERE id = :id")
+    suspend fun get(id: String): Bookmark?
+
+    @Query("SELECT * FROM bookmark WHERE id = :id")
+    fun observe(id: String): Flow<Bookmark?>
+
+    @Query("UPDATE bookmark SET title = :title, note = :note, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun setText(id: String, title: String?, note: String?, updatedAt: Long)
+
     @Insert
     suspend fun addTag(link: BookmarkTag)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addTags(links: List<BookmarkTag>)
+
+    @Query("DELETE FROM bookmark_tag WHERE bookmarkId = :bookmarkId AND tagId = :tagId")
+    suspend fun removeTag(bookmarkId: String, tagId: Long)
+
+    @Query("SELECT * FROM bookmark_tag WHERE bookmarkId = :bookmarkId")
+    suspend fun tagLinks(bookmarkId: String): List<BookmarkTag>
+
+    /** Tags de los marcadores de un libro, para sus filas. */
+    @Query(
+        "SELECT bookmark_tag.bookmarkId, tag.id AS tagId, tag.name FROM bookmark_tag " +
+            "JOIN tag ON tag.id = bookmark_tag.tagId JOIN bookmark ON bookmark.id = bookmark_tag.bookmarkId " +
+            "WHERE bookmark.bookId = :bookId ORDER BY tag.name"
+    )
+    fun observeTagsForBook(bookId: String): Flow<List<BookmarkTagName>>
+
+    @Query(
+        "SELECT bookmark_tag.bookmarkId, tag.id AS tagId, tag.name FROM bookmark_tag " +
+            "JOIN tag ON tag.id = bookmark_tag.tagId WHERE bookmark_tag.bookmarkId = :bookmarkId ORDER BY tag.name"
+    )
+    fun observeTags(bookmarkId: String): Flow<List<BookmarkTagName>>
 
     @Query(
         "SELECT bookmark.* FROM bookmark JOIN bookmark_tag ON bookmark.id = bookmark_tag.bookmarkId " +
@@ -176,17 +209,22 @@ interface TagDao {
     @Insert
     suspend fun insert(tag: Tag): Long
 
+    @Query("SELECT * FROM tag WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun byName(name: String): Tag?
+
     @Query("UPDATE tag SET name = :name WHERE id = :id")
     suspend fun rename(id: Long, name: String)
 
     @Query("DELETE FROM tag WHERE id = :id")
     suspend fun delete(id: Long)
 
+    /** Tags con su número de marcadores, el más usado primero. */
     @Query(
-        "SELECT tag.* FROM tag LEFT JOIN bookmark_tag ON tag.id = bookmark_tag.tagId " +
-            "GROUP BY tag.id ORDER BY count(bookmark_tag.bookmarkId) DESC, tag.name"
+        "SELECT tag.id, tag.name, count(bookmark_tag.bookmarkId) AS uses FROM tag " +
+            "LEFT JOIN bookmark_tag ON tag.id = bookmark_tag.tagId " +
+            "GROUP BY tag.id ORDER BY uses DESC, tag.name COLLATE NOCASE"
     )
-    fun observeByUse(): Flow<List<Tag>>
+    fun observeByUse(): Flow<List<TagUse>>
 }
 
 @Dao

@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -65,6 +67,8 @@ import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.iconRes
 import codelab.lector.playback.nameRes
 import codelab.lector.playback.PlayerAction
+import codelab.lector.ui.bookmarks.BookBookmarksPanel
+import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.IconAction
 import codelab.lector.ui.components.LocalUndoState
@@ -101,6 +105,7 @@ fun PlayerScreen(
     val showCover = appearance.showCovers
     var sheet by remember { mutableStateOf<PlayerSheet?>(null) }
     val undo = LocalUndoState.current
+    val bookmarkSheets = LocalBookmarkSheets.current
     val removedText = stringResource(R.string.removed_from_library)
 
     // Horizontal (más ancha que alta): doble panel, sin cabecera.
@@ -142,6 +147,7 @@ fun PlayerScreen(
                         buttons = settings.playerButtons,
                         onCall = viewModel::act,
                         bookmarks = bookmarks,
+                        onBookmarks = { bookmarkSheets.showBook(np.bookId) },
                         onAct = viewModel::act,
                         onJump = viewModel::jumpTo,
                         onCover = { onOpenCover(np.bookId) },
@@ -229,6 +235,7 @@ private fun ColumnScope.Player(
     buttons: List<ActionCall>,
     onCall: (ActionCall) -> Unit,
     bookmarks: Int,
+    onBookmarks: () -> Unit,
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
     onCover: () -> Unit,
@@ -263,7 +270,7 @@ private fun ColumnScope.Player(
         SlotButton(buttons[3], np, compact = false, onCall)
     }
 
-    ActionRow(np, bookmarks, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
+    ActionRow(np, bookmarks, onBookmarks, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
 }
 
 /** Separación entre la portada y la columna central en horizontal. */
@@ -320,7 +327,7 @@ private fun LandscapePlayer(
                         SlotButton(buttons[3], np, compact = true, onCall)
                     }
                     // Sin marcadores del libro: el panel de la derecha los tiene.
-                    ActionRow(np, null, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
+                    ActionRow(np, null, {}, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
                 }
             }
         }
@@ -330,20 +337,28 @@ private fun LandscapePlayer(
 }
 
 /**
- * Panel derecho en horizontal: pestañas Capítulos (o Archivos) y Marcadores, esta inactiva hasta
- * su función. Los tramos con las filas de la hoja de capítulos; sigue al tramo en curso.
+ * Panel derecho en horizontal: pestañas Capítulos (o Archivos) y Marcadores. Los tramos con las
+ * filas de la hoja de capítulos; sigue al tramo en curso. Marcadores, como la hoja del libro.
  */
 @Composable
 private fun SidePanel(np: NowPlaying, onSegment: (Int) -> Unit, modifier: Modifier) {
-    val c = LectorTheme.colors
+    var tab by rememberSaveable { mutableIntStateOf(0) }
     Column(modifier.padding(top = 16.dp)) {
         SegmentedControl(
             listOf(stringResource(if (np.hasChapters) R.string.chapters else R.string.files), stringResource(R.string.tab_bookmarks)),
-            selected = 0,
-            onSelect = {},
+            selected = tab,
+            onSelect = { tab = it },
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
-            disabled = setOf(1),
         )
+        if (tab == 0) SegmentsPanel(np, onSegment, Modifier.weight(1f))
+        else BookBookmarksPanel(np.bookId, np.positionMs, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun SegmentsPanel(np: NowPlaying, onSegment: (Int) -> Unit, modifier: Modifier) {
+    val c = LectorTheme.colors
+    run {
         val list = rememberLazyListState(initialFirstVisibleItemIndex = (np.segmentIndex - 2).coerceAtLeast(0))
         // Al cambiar de tramo, si el nuevo no se ve, se desplaza hasta él.
         LaunchedEffect(np.bookId, np.segmentIndex) {
@@ -351,7 +366,7 @@ private fun SidePanel(np: NowPlaying, onSegment: (Int) -> Unit, modifier: Modifi
                 list.animateScrollToItem((np.segmentIndex - 2).coerceAtLeast(0))
             }
         }
-        LazyColumn(Modifier.weight(1f), state = list) {
+        LazyColumn(modifier, state = list) {
             itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onSegment, base = c.background, highlight = c.surface) }
         }
     }
@@ -537,6 +552,7 @@ private fun PlayButton(np: NowPlaying, size: Dp, iconSize: Dp, onAct: (PlayerAct
 private fun ActionRow(
     np: NowPlaying,
     bookmarks: Int?,
+    onBookmarks: () -> Unit,
     sleepActive: Boolean,
     onSleep: () -> Unit,
     onAct: (PlayerAction) -> Unit,
@@ -550,7 +566,7 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // La luna, en acento mientras la pausa diferida está activa. Marcadores del libro: llegan con su función.
+        // La luna, en acento mientras la pausa diferida está activa.
         SmallAction(R.drawable.ic_sleep, null, stringResource(R.string.settings_sleep), if (sleepActive) c.accent else c.iconSoft, onClick = onSleep)
         RoundIcon(R.drawable.ic_bookmark, stringResource(R.string.add_bookmark), 44.dp, 20.dp, tint = c.accent) {
             onAct(PlayerAction.ADD_BOOKMARK)
@@ -558,9 +574,7 @@ private fun ActionRow(
         val speed = formatSpeed(np.speed)
         SmallAction(null, speed, stringResource(R.string.speed_value, speed), c.iconSoft, onClick = onSpeed)
         if (bookmarks != null) {
-            SmallAction(
-                R.drawable.ic_list, "$bookmarks", stringResource(R.string.book_bookmarks_count, bookmarks), c.inactive, enabled = false,
-            ) {}
+            SmallAction(R.drawable.ic_list, "$bookmarks", stringResource(R.string.book_bookmarks_count, bookmarks), c.iconSoft, onClick = onBookmarks)
         }
         SmallAction(R.drawable.ic_more, null, stringResource(R.string.more_options), c.iconSoft, onClick = onMenu)
     }

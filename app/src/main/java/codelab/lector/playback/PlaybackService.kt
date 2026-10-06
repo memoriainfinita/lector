@@ -253,6 +253,13 @@ class PlaybackService : MediaLibraryService() {
                 LectorCommands.RESET_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let(engine::reset)
                 LectorCommands.REFRESH_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.refresh(it) }
                 LectorCommands.UNLOAD_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.unload(it) }
+                LectorCommands.ADD_BOOKMARK -> {
+                    val id = engine.addBookmark() ?: return@future SessionResult(SessionResult.RESULT_ERROR_INVALID_STATE)
+                    return@future SessionResult(SessionResult.RESULT_SUCCESS, Bundle().apply { putString(LectorCommands.ARG_BOOKMARK_ID, id) })
+                }
+                LectorCommands.PLAY_FROM -> args.getString(LectorCommands.ARG_BOOK_ID)?.let {
+                    engine.playFrom(it, args.getLong(LectorCommands.ARG_BOOK_MS))
+                }
                 LectorCommands.SET_SLEEP -> when (val minutes = args.getInt(LectorCommands.ARG_MINUTES)) {
                     LectorCommands.SLEEP_CHAPTER_END -> sleep.setChapterEnd()
                     0 -> sleep.cancel()

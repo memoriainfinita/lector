@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Conexión de las pantallas con el servicio: órdenes por la sesión (MediaController) y estado
@@ -58,6 +59,21 @@ class PlaybackConnection(
 
     /** Salto grande a una posición del libro (barra, capítulo, marcador). */
     fun jumpTo(bookMs: Long) = send(LectorCommands.JUMP_TO, Bundle().apply { putLong(LectorCommands.ARG_BOOK_MS, bookMs) })
+
+    /** Marcador en la posición actual. Devuelve su id, o null sin libro cargado. */
+    suspend fun addBookmark(): String? = withContext(Dispatchers.Main.immediate) {
+        val result = controller().sendCustomCommand(SessionCommand(LectorCommands.ADD_BOOKMARK, Bundle.EMPTY), Bundle.EMPTY).await()
+        result.extras.getString(LectorCommands.ARG_BOOKMARK_ID)
+    }
+
+    /** "Escuchar desde aquí": carga el libro si hace falta, salta con "Deshacer" y reproduce. */
+    fun playFrom(bookId: String, bookMs: Long) = send(
+        LectorCommands.PLAY_FROM,
+        Bundle().apply {
+            putString(LectorCommands.ARG_BOOK_ID, bookId)
+            putLong(LectorCommands.ARG_BOOK_MS, bookMs)
+        },
+    )
 
     /** Ir a un tramo de la lista de capítulos: retoma su posición guardada. */
     fun jumpToSegment(index: Int) = send(LectorCommands.JUMP_TO_SEGMENT, Bundle().apply { putInt(LectorCommands.ARG_SEGMENT, index) })
