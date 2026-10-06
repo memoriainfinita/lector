@@ -44,8 +44,13 @@ data class BackupBook(
     val customName: String? = null,
     val author: String? = null,
     val durationMs: Long,
-    /** Rutas relativas de sus archivos, en orden. */
-    val files: List<String>,
+    /**
+     * Ruta en el móvil de origen. No identifica: coloca al libro no encontrado en Carpetas y deja que
+     * el escaneo lo reconecte por duración.
+     */
+    val path: String,
+    /** Sus archivos, en orden. */
+    val files: List<BackupFile>,
     val positionFile: String? = null,
     val positionMs: Long = 0,
     val positionUpdatedAt: Long? = null,
@@ -61,6 +66,10 @@ data class BackupBook(
     val segments: List<BackupSegment> = emptyList(),
     val bookmarks: List<BackupBookmark> = emptyList(),
 )
+
+/** Archivo de un libro: ruta relativa al libro y duración, para situar los marcadores sin sus archivos. */
+@Serializable
+data class BackupFile(val path: String, val durationMs: Long)
 
 @Serializable
 data class BackupSegment(val file: String, val startMs: Long, val positionMs: Long, val updatedAt: Long)
@@ -110,7 +119,7 @@ class BackupExporter(private val db: LectorDatabase, private val settings: DataS
         val bookmarks = db.bookmarks().observeAll().first().groupBy { it.bookId }
         val books = db.books().all().sortedBy { it.title.lowercase() }.map { book ->
             book.toBackup(
-                files = files[book.id].orEmpty().map { it.relativePath },
+                files = files[book.id].orEmpty().map { BackupFile(it.relativePath, it.durationMs) },
                 segments = segments[book.id].orEmpty().map { BackupSegment(it.file, it.startMs, it.positionMs, it.updatedAt) },
                 bookmarks = bookmarks[book.id].orEmpty().sortedBy { it.createdAt }.map { b ->
                     BackupBookmark(b.id, b.file, b.positionMs, b.title, b.note, b.kind, b.createdAt, b.updatedAt, tags[b.id].orEmpty().sorted())
@@ -129,12 +138,13 @@ class BackupExporter(private val db: LectorDatabase, private val settings: DataS
     }
 }
 
-private fun Book.toBackup(files: List<String>, segments: List<BackupSegment>, bookmarks: List<BackupBookmark>) = BackupBook(
+private fun Book.toBackup(files: List<BackupFile>, segments: List<BackupSegment>, bookmarks: List<BackupBookmark>) = BackupBook(
     identityKey = identityKey,
     title = title,
     customName = customName,
     author = author,
     durationMs = totalDurationMs,
+    path = path,
     files = files,
     positionFile = positionFile,
     positionMs = positionMs,

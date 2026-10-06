@@ -226,6 +226,17 @@
     <string name="backup_file_name">%1$s – copia %2$s</string>
     <string name="backup_saved">Copia guardada</string>
     <string name="backup_failed">No se pudo guardar la copia</string>
+    <string name="backup_new_bookmarks">Marcadores nuevos</string>
+    <string name="backup_existing_bookmarks">Ya existentes, se omiten</string>
+    <string name="backup_newer_positions">Posiciones más recientes</string>
+    <string name="backup_not_found">Libros no encontrados aquí</string>
+    <string name="import_settings_too">Importar también los ajustes</string>
+    <string name="merge_backup">Combinar</string>
+    <string name="backup_unreadable">No se pudo leer el archivo</string>
+    <string name="backup_not_valid">No es una copia de LECTOR</string>
+    <string name="backup_newer">De una versión más nueva de LECTOR</string>
+    <string name="backup_merged">Copia combinada</string>
+    <string name="backup_merge_failed">No se pudo combinar la copia</string>
     <string name="settings_system">Sistema</string>
     <string name="keep_screen_off">Seguir con la pantalla apagada</string>
     <string name="keep_screen_off_note">Abre el ajuste de batería de Android</string>
