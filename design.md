@@ -558,6 +558,21 @@ Hecho 2026-10-05 (lienzo `Onboarding-Permission`, `Onboarding-Folder`).
 - "Elegir otra carpeta" abre el explorador; la elegida aparece al final de la lista, marcada
 - "Empezar", activo con alguna marcada: las carpetas de la biblioteca pasan a ser las marcadas (las contenidas en otra marcada salen) y la Biblioteca abre con la búsqueda visible
 
+### Widget
+
+Hecho 2026-10-07 (lienzo `Widget`).
+
+- Un solo widget que se adapta a su tamaño (Jetpack Glance 1.2.0). Al ponerlo, 4×1
+- Bajo (menos de 116 dp): una fila con portada, título y barra del libro, y botones
+- Más alto que ancho (1,2 veces) o estrecho (menos de 200 dp): portada arriba ajustada al hueco, título, tramo, barra y tiempos del tramo, y botones abajo a todo lo ancho
+- Ancho: portada a la izquierda con los textos, y botones debajo a todo lo ancho
+- Textos según la altura: título siempre; tramo, barra y tiempos si caben
+- Botones según el ancho, por prioridad: play; los dos huecos del widget (Ajustes › Botones › Saltos en el widget, −10 y +10 por defecto); los huecos de los extremos del reproductor (anterior y siguiente por defecto); marcar. Sin repetir acciones ni "Nada"
+- 16 tamaños de referencia (anchos 100, 164, 260, 308; altos 40, 116, 220, 400); Android muestra el mayor que cabe. Android admite 16 como mucho, y una fila de Glance 10 elementos. No `SizeMode.Exact`: da una versión vertical y otra horizontal que Android elige por la orientación del móvil, y con el móvil de lado y el launcher en vertical salía la horizontal
+- Botones: la acción va al servicio por la sesión; con el servicio parado lo arranca, carga el último libro y la aplica. Portada y textos abren Escuchando; sin libro, logo y "Elige un libro" abren la Biblioteca
+- Datos: el estado del servicio; sin servicio, el último libro de la base de datos, en pausa. Tema, acento y "Mostrar portadas" de la app; portada reducida a 640 px y con las esquinas redondeadas en la imagen; sin portada, la tipográfica
+- Se redibuja al cambiar libro, tramo, play / pausa, tema, acento o huecos; en pausa, al cambiar la posición; sonando, al saltar y una vez por minuto
+
 ### Marcadores
 
 Aprobado y hecho 2026-10-06. Cuatro entregas. Sin cambios en el esquema (tablas `bookmark`, `tag`, `bookmark_tag` desde la versión 4).

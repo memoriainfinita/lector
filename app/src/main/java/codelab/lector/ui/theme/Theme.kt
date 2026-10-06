@@ -1,5 +1,6 @@
 package codelab.lector.ui.theme
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -60,11 +61,13 @@ fun LectorTheme(dark: Boolean, accent: Color, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun resolveAccent(choice: AccentChoice, dark: Boolean): Color = when (choice) {
+fun resolveAccent(choice: AccentChoice, dark: Boolean): Color = accentColor(choice, dark, LocalContext.current)
+
+/** Acento fuera de Compose (widget). */
+fun accentColor(choice: AccentChoice, dark: Boolean, context: Context): Color = when (choice) {
     is AccentChoice.Preset -> if (dark) choice.preset.dark else choice.preset.light
     is AccentChoice.Custom -> if (dark) choice.dark else lightVariant(choice.dark)
     AccentChoice.System -> {
-        val context = LocalContext.current
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (dark) dynamicDarkColorScheme(context).primary else dynamicLightColorScheme(context).primary
         } else {

@@ -296,6 +296,10 @@
     <string name="skip_divided_by_speed_note">A 2x, +10 s salta 5 s de libro: 10 s de escucha</string>
     <string name="button_of_player">Botón %1$d del reproductor</string>
     <string name="button_of_notification">Botón %1$d de la notificación</string>
+    <string name="button_of_widget_left">Botón izquierdo del widget</string>
+    <string name="button_of_widget_right">Botón derecho del widget</string>
+    <string name="widget_description">Libro en curso con play y saltos</string>
+    <string name="widget_empty">Elige un libro</string>
     <string name="button_actions_note">Las mismas acciones sirven para la notificación, el widget, el auricular y las teclas multimedia</string>
     <string name="remote_headset">Botón del auricular</string>
     <string name="remote_press_1">Una pulsación</string>

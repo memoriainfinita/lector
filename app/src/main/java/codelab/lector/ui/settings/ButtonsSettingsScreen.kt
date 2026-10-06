@@ -49,36 +49,49 @@ import kotlinx.coroutines.delay
 
 private val SkipPresets = listOf(5f, 10f, 15f, 30f, 60f)
 
-/** Hueco que se está cambiando: del reproductor o de la notificación, y su posición (0–3). */
-private data class SlotRef(val notification: Boolean, val index: Int)
+private enum class SlotGroup { PLAYER, NOTIFICATION, WIDGET }
+
+/** Hueco que se está cambiando: su grupo y su posición (0–3; en el widget, 0–1). */
+private data class SlotRef(val group: SlotGroup, val index: Int)
 
 /**
  * Ajustes › Botones (design.md › Pantallas › Ajustes › C; lienzo `Settings-Buttons` y
- * `Action-Picker`): los 4 huecos del reproductor y de la notificación, los del widget (atenuados
- * hasta que haya widgets) y dividir el salto por la velocidad. Tocar un hueco abre la hoja de
- * acciones; un salto pide después sus segundos.
+ * `Action-Picker`): los 4 huecos del reproductor y de la notificación, los 2 del widget y dividir el
+ * salto por la velocidad. Tocar un hueco abre la hoja de acciones; un salto pide después sus segundos.
  */
 @Composable
 fun ButtonsSettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
     val playback by viewModel.playback.collectAsStateWithLifecycle()
     var choosing by remember { mutableStateOf<SlotRef?>(null) }
     var seconds by remember { mutableStateOf<Pair<SlotRef, ActionCall>?>(null) }
-    fun current(ref: SlotRef) = (if (ref.notification) playback.notificationButtons else playback.playerButtons)[ref.index]
-    fun save(ref: SlotRef, call: ActionCall) =
-        if (ref.notification) viewModel.setNotificationButton(ref.index, call) else viewModel.setPlayerButton(ref.index, call)
+    fun current(ref: SlotRef) = when (ref.group) {
+        SlotGroup.PLAYER -> playback.playerButtons
+        SlotGroup.NOTIFICATION -> playback.notificationButtons
+        SlotGroup.WIDGET -> playback.widgetButtons
+    }[ref.index]
+    fun save(ref: SlotRef, call: ActionCall) = when (ref.group) {
+        SlotGroup.PLAYER -> viewModel.setPlayerButton(ref.index, call)
+        SlotGroup.NOTIFICATION -> viewModel.setNotificationButton(ref.index, call)
+        SlotGroup.WIDGET -> viewModel.setWidgetButton(ref.index, call)
+    }
+
+    @Composable
+    fun slotTitle(ref: SlotRef) = when (ref.group) {
+        SlotGroup.PLAYER -> stringResource(R.string.button_of_player, ref.index + 1)
+        SlotGroup.NOTIFICATION -> stringResource(R.string.button_of_notification, ref.index + 1)
+        SlotGroup.WIDGET -> stringResource(if (ref.index == 0) R.string.button_of_widget_left else R.string.button_of_widget_right)
+    }
 
     SettingsPage(stringResource(R.string.settings_buttons), onBack) {
         SectionHeader(stringResource(R.string.buttons_player))
-        SlotGrid(playback.playerButtons) { choosing = SlotRef(notification = false, it) }
+        SlotGrid(playback.playerButtons) { choosing = SlotRef(SlotGroup.PLAYER, it) }
         SectionHeader(stringResource(R.string.buttons_notification))
-        SlotGrid(playback.notificationButtons) { choosing = SlotRef(notification = true, it) }
+        SlotGrid(playback.notificationButtons) { choosing = SlotRef(SlotGroup.NOTIFICATION, it) }
         SectionHeader(stringResource(R.string.buttons_widget))
-        // Llegan con los widgets.
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val back = ActionCall(PlayerAction.SKIP_BACK, DEFAULT_SKIP_SEC)
-            val forward = ActionCall(PlayerAction.SKIP_FORWARD, DEFAULT_SKIP_SEC)
-            SlotTile(stringResource(R.string.widget_left), back, Modifier.weight(1f), enabled = false) {}
-            SlotTile(stringResource(R.string.widget_right), forward, Modifier.weight(1f), enabled = false) {}
+            listOf(R.string.widget_left, R.string.widget_right).forEachIndexed { i, label ->
+                SlotTile(stringResource(label), playback.widgetButtons[i], Modifier.weight(1f)) { choosing = SlotRef(SlotGroup.WIDGET, i) }
+            }
         }
         SwitchRow(
             stringResource(R.string.skip_divided_by_speed),
@@ -90,7 +103,7 @@ fun ButtonsSettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
 
     choosing?.let { ref ->
         ActionPickerSheet(
-            title = stringResource(if (ref.notification) R.string.button_of_notification else R.string.button_of_player, ref.index + 1),
+            title = slotTitle(ref),
             selected = current(ref).action,
             onPick = { action ->
                 choosing = null
@@ -108,7 +121,7 @@ fun ButtonsSettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
         val context = LocalContext.current
         ValuePickerSheet(
             title = stringResource(call.action.nameRes()),
-            subtitle = stringResource(if (ref.notification) R.string.button_of_notification else R.string.button_of_player, ref.index + 1),
+            subtitle = slotTitle(ref),
             initial = call.seconds.toFloat(),
             step = 1f,
             range = 1f..120f,

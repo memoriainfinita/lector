@@ -57,6 +57,13 @@ class PlaybackConnection(
 
     fun act(action: PlayerAction) = act(ActionCall(action))
 
+    /** Como [act], pero espera a que el servicio la reciba: el widget la manda desde un receptor que acaba. */
+    suspend fun actAndWait(call: ActionCall) {
+        withContext(Dispatchers.Main.immediate) {
+            controller().sendCustomCommand(SessionCommand(LectorCommands.ACTION, Bundle.EMPTY), LectorCommands.action(call).customExtras).await()
+        }
+    }
+
     /** Salto grande a una posición del libro (barra, capítulo, marcador). */
     fun jumpTo(bookMs: Long) = send(LectorCommands.JUMP_TO, Bundle().apply { putLong(LectorCommands.ARG_BOOK_MS, bookMs) })
 

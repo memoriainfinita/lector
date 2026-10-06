@@ -54,6 +54,7 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     fun setSkipDividedBySpeed(enabled: Boolean) = save { app.playbackSettings.setSkipDividedBySpeed(enabled) }
     fun setPlayerButton(index: Int, call: ActionCall) = save { app.playbackSettings.setPlayerButton(index, call) }
     fun setNotificationButton(index: Int, call: ActionCall) = save { app.playbackSettings.setNotificationButton(index, call) }
+    fun setWidgetButton(index: Int, call: ActionCall) = save { app.playbackSettings.setWidgetButton(index, call) }
 
     // Pausa diferida
     val sleep = app.sleep.state

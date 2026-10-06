@@ -25,6 +25,8 @@ data class PlaybackSettings(
     val playerButtons: List<ActionCall> = DefaultButtons,
     /** Ajustes › Botones: los 4 huecos de la notificación (dos en los extremos y dos junto a play). */
     val notificationButtons: List<ActionCall> = DefaultButtons,
+    /** Ajustes › Botones: los 2 huecos del widget, a los lados de play. */
+    val widgetButtons: List<ActionCall> = DefaultWidgetButtons,
     /** Velocidad con la que empiezan los libros nuevos. */
     val newBookSpeed: Float = 1f,
     /** Ajustes › Reproducir al abrir la app. */
@@ -70,6 +72,12 @@ val DefaultButtons = listOf(
     ActionCall(PlayerAction.NEXT),
 )
 
+/** −10 y +10 a los lados de play, iguales en 4×1 y 4×2 (design.md › Decisiones de diseño). */
+val DefaultWidgetButtons = listOf(
+    ActionCall(PlayerAction.SKIP_BACK, DEFAULT_SKIP_SEC),
+    ActionCall(PlayerAction.SKIP_FORWARD, DEFAULT_SKIP_SEC),
+)
+
 /** Auricular x1 play / pausa, x2 marcador, x3 nada; anterior −10, siguiente +10, play play / pausa. */
 val DefaultRemoteButtons = listOf(
     ActionCall(PlayerAction.PLAY_PAUSE),
@@ -104,6 +112,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             autoNextBook = p[AUTO_NEXT] ?: d.autoNextBook,
             playerButtons = decodeButtons(p[PLAYER_BUTTONS]),
             notificationButtons = decodeButtons(p[NOTIFICATION_BUTTONS]),
+            widgetButtons = decodeButtons(p[WIDGET_BUTTONS], DefaultWidgetButtons),
             newBookSpeed = p[NEW_BOOK_SPEED] ?: d.newBookSpeed,
             playOnOpen = p[PLAY_ON_OPEN] ?: d.playOnOpen,
             coverOutside = p[COVER_OUTSIDE] ?: d.coverOutside,
@@ -150,6 +159,10 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setNotificationButton(index: Int, call: ActionCall) = store.edit {
         it[NOTIFICATION_BUTTONS] = encodeButtons(decodeButtons(it[NOTIFICATION_BUTTONS]).toMutableList().also { list -> list[index] = call })
+    }
+
+    suspend fun setWidgetButton(index: Int, call: ActionCall) = store.edit {
+        it[WIDGET_BUTTONS] = encodeButtons(decodeButtons(it[WIDGET_BUTTONS], DefaultWidgetButtons).toMutableList().also { list -> list[index] = call })
     }
 
     suspend fun setRemoteButton(index: Int, call: ActionCall) = store.edit {
@@ -215,6 +228,7 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val AUTO_NEXT = booleanPreferencesKey("auto_next_book")
         val PLAYER_BUTTONS = stringPreferencesKey("player_buttons")
         val NOTIFICATION_BUTTONS = stringPreferencesKey("notification_buttons")
+        val WIDGET_BUTTONS = stringPreferencesKey("widget_buttons")
         val LAST_BOOK = stringPreferencesKey("last_book_id")
         val PLAYING_BOOK = stringPreferencesKey("playing_book_id")
         val NEW_BOOK_SPEED = floatPreferencesKey("new_book_speed")

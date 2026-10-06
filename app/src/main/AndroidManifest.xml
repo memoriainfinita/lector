@@ -53,6 +53,19 @@
             </intent-filter>
         </receiver>
 
+        <!-- Widget del libro en curso (LectorWidget). -->
+        <receiver
+            android:name=".widget.LectorWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lector_widget_info" />
+        </receiver>
+
         <!-- "Abrir con…" del menú del libro: comparte un archivo de audio con otra app. -->
         <provider
             android:name="androidx.core.content.FileProvider"

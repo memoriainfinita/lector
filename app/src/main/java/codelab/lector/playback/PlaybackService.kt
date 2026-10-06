@@ -244,6 +244,8 @@ class PlaybackService : MediaLibraryService() {
         ): ListenableFuture<SessionResult> = scope.future {
             when (customCommand.customAction) {
                 LectorCommands.ACTION -> {
+                    // Desde el widget con el servicio parado: primero el último libro.
+                    restored.await()
                     val call = LectorCommands.readAction(args) ?: LectorCommands.readAction(customCommand.customExtras)
                     call?.let { engine.perform(it) }
                 }

@@ -22,6 +22,7 @@ import codelab.lector.playback.PlaybackStateHolder
 import codelab.lector.playback.RemoteKeyMonitor
 import codelab.lector.playback.SleepStateHolder
 import codelab.lector.playback.VolumeControl
+import codelab.lector.widget.WidgetUpdates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,6 +59,8 @@ class AppContainer(context: Context) {
     /** Ajustes › Datos. */
     val backup by lazy { BackupExporter(database, context.settingsStore) }
     val importer by lazy { BackupImporter(database, context.settingsStore) }
+    /** Widget del libro en curso: lo que dibuja y cuándo se redibuja. */
+    val widgets = WidgetUpdates(context, this)
 
     init {
         // Cada búsqueda terminada queda como la última (Ajustes › Biblioteca). Sin errores: un
@@ -67,6 +70,7 @@ class AppContainer(context: Context) {
                 .distinctUntilChanged()
                 .collect { librarySettings.setLastScan(it) }
         }
+        appScope.launch { widgets.run() }
     }
 }
 

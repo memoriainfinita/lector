@@ -9,10 +9,9 @@ import codelab.lector.data.db.Tag
 import codelab.lector.data.db.TagUse
 import codelab.lector.data.settings.PlaybackSettingsRepository
 import codelab.lector.playback.BookTimeline
-import codelab.lector.playback.FileChapter
+import codelab.lector.playback.bookTimeline
 import codelab.lector.playback.FilePosition
 import codelab.lector.playback.PlaybackConnection
-import codelab.lector.playback.TimelineFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -197,14 +196,7 @@ class BookmarkStore(
         row.bookMs?.let { playback.playFrom(row.bookmark.bookId, it) }
     }
 
-    private suspend fun timeline(bookId: String): BookTimeline {
-        val chapters = db.books().chapters(bookId).groupBy { it.fileId }
-        return BookTimeline(
-            db.books().files(bookId).map { f ->
-                TimelineFile(f.relativePath, f.durationMs, chapters[f.id].orEmpty().map { FileChapter(it.title, it.startMs, it.endMs) })
-            },
-        )
-    }
+    private suspend fun timeline(bookId: String): BookTimeline = db.bookTimeline(bookId)
 
     private fun row(mark: Bookmark, tags: List<BookmarkTagName>, timeline: BookTimeline): BookmarkRow {
         val index = timeline.indexOfFile(mark.file)

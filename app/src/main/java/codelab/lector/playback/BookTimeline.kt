@@ -1,6 +1,17 @@
 package codelab.lector.playback
 
+import codelab.lector.data.db.LectorDatabase
 import codelab.lector.library.stemOf
+
+/** Línea de tiempo de un libro guardado, sin cargarlo en el reproductor (marcadores, widget). */
+suspend fun LectorDatabase.bookTimeline(bookId: String): BookTimeline {
+    val chapters = books().chapters(bookId).groupBy { it.fileId }
+    return BookTimeline(
+        books().files(bookId).map { f ->
+            TimelineFile(f.relativePath, f.durationMs, chapters[f.id].orEmpty().map { FileChapter(it.title, it.startMs, it.endMs) })
+        },
+    )
+}
 
 /** Capítulo dentro de un archivo, en ms relativos al archivo. */
 data class FileChapter(val title: String, val startMs: Long, val endMs: Long)

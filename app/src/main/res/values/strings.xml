@@ -297,6 +297,10 @@
     <string name="skip_divided_by_speed_note">At 2x, +10 s moves 5 s of the book: 10 s of listening</string>
     <string name="button_of_player">Player button %1$d</string>
     <string name="button_of_notification">Notification button %1$d</string>
+    <string name="button_of_widget_left">Left widget button</string>
+    <string name="button_of_widget_right">Right widget button</string>
+    <string name="widget_description">Book in progress with play and skips</string>
+    <string name="widget_empty">Choose a book</string>
     <string name="button_actions_note">The same actions work for the notification, the widget, the headset and the media keys</string>
     <string name="remote_headset">Headset button</string>
     <string name="remote_press_1">One press</string>
