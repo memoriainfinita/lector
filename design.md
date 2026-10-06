@@ -158,7 +158,7 @@ Lienzo: https://claude.ai/artifact/NnT6pjF1vGhypwmLuweFSC
   - Ajustes › Marcadores: "Abrir la hoja al marcar". Desde la app abre la hoja; desde auricular y notificación solo se guarda
   - Ajustes › Sistema: "Seguir con la pantalla apagada" abre el ajuste de batería de Android
   - Datos: exportar copia completa (JSON) o marcadores como texto; importar y combinar con resumen previo (marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados) e "Importar también los ajustes" opcional. Los libros no encontrados entran como quitados, con sus marcadores; la copia debe llevar los datos del libro (título, autor, firma) (2026-10-05)
-  - Primer arranque: pantalla de permiso ("No sube nada a internet", con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
+  - Primer arranque: pantalla de permiso ("Reproductor de audiolibros" / "Lee los audiolibros de tus carpetas. Necesita acceso a los archivos. No usa internet." desde el 2026-10-06; la app no declara el permiso INTERNET), con "Importar una copia de otro móvil") y pantalla de carpetas con audio encontradas, "Elegir otra carpeta" y "Empezar"
   - Tema Oscuro / Claro / Sistema; idioma Español / English / Sistema
 - Escaneo en curso (2026-10-03): línea fina de progreso bajo el selector Libros / Carpetas con "Buscando libros… [n] encontrados" y la carpeta actual. Artboard "Biblioteca: buscando". En la app los libros nuevos aparecen al terminar la búsqueda (Pantallas › Biblioteca › A)
 - Iconos en uso (versión 148): artboard con el logo definitivo y los iconos de la app, generado desde res/drawable. Las demás propuestas de icono, archivadas

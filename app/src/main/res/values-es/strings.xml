@@ -24,10 +24,10 @@
     <string name="merge_books">Unir libros</string>
     <string name="split_book">Separar en libros</string>
     <string name="cover_viewer">Portada</string>
-    <string name="onboarding_welcome">Tus audiolibros, desde tus carpetas</string>
+    <string name="onboarding_welcome">Reproductor de audiolibros</string>
     <string name="onboarding_folders">¿Dónde están tus libros?</string>
     <string name="onboarding_start">Empezar</string>
-    <string name="onboarding_permission_body">Necesita permiso para leer el audio del móvil. No sube nada a internet.</string>
+    <string name="onboarding_permission_body">Lee los audiolibros de tus carpetas. Necesita acceso a los archivos. No usa internet.</string>
     <string name="onboarding_import">Importar una copia de otro móvil</string>
     <string name="onboarding_grant">Dar permiso</string>
     <string name="onboarding_searching">Buscando carpetas con audio…</string>

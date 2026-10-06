@@ -25,10 +25,10 @@
     <string name="merge_books">Merge books</string>
     <string name="split_book">Split into books</string>
     <string name="cover_viewer">Cover</string>
-    <string name="onboarding_welcome">Your audiobooks, from your folders</string>
+    <string name="onboarding_welcome">Audiobook player</string>
     <string name="onboarding_folders">Where are your books?</string>
     <string name="onboarding_start">Start</string>
-    <string name="onboarding_permission_body">It needs permission to read the audio on your phone. Nothing is uploaded to the internet.</string>
+    <string name="onboarding_permission_body">Reads the audiobooks in your folders. It needs access to your files. It does not use the internet.</string>
     <string name="onboarding_grant">Grant permission</string>
     <string name="onboarding_import">Import a backup from another phone</string>
     <string name="onboarding_searching">Looking for folders with audio…</string>
