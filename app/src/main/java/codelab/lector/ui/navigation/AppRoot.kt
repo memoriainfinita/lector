@@ -47,6 +47,15 @@ import codelab.lector.ui.player.CoverViewer
 import codelab.lector.ui.player.MiniPlayer
 import codelab.lector.ui.player.MiniPlayerHeight
 import codelab.lector.ui.components.LocalBottomInset
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.onSizeChanged
+import codelab.lector.ui.player.PlayerSlide
+import codelab.lector.ui.player.rememberPlayerSlide
+import codelab.lector.ui.player.slideUpFromMini
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import codelab.lector.ui.player.PlayerScreen
@@ -163,6 +172,9 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
     val app = LocalContext.current.container
     val state = rememberNavigationState()
     val navigator = remember(state) { Navigator(state) }
+    // Movimiento de Escuchando, compartido con el minirreproductor. Al terminar de bajar, sale de la pila.
+    val slide = rememberPlayerSlide(onClosed = { if (state.top == ListeningRoute) navigator.goBack() })
+    navigator.beforeOpenPlayer = slide::prepareOpen
     // Arriba otra pantalla (Escuchando desde la notificación): no hay que esperar a la Biblioteca.
     LaunchedEffect(state.top) { if (state.top != LibraryRoute) onReady() }
     // Del ámbito de la Activity: minirreproductor y aviso de salto, fuera de las pantallas.
@@ -197,31 +209,71 @@ private fun MainScreen(openPlayer: Flow<Unit>, onReady: () -> Unit) {
     // Sesión de escucha: empieza cuando algo suena o se abre Escuchando. Antes, al abrir la app,
     // el libro cargado en pausa solo se ve en "Seguir escuchando"; después, en el minirreproductor.
     var session by rememberSaveable { mutableStateOf(false) }
-    val starts = playing?.playWhenReady == true || state.top == ListeningRoute
+    // Con Escuchando arriba, cuando ya ha subido: la Biblioteca de debajo no cambia mientras se ve.
+    var playerShown by remember { mutableStateOf(false) }
+    LaunchedEffect(state.top) { if (state.top != ListeningRoute) playerShown = false }
+    val starts = playerShown || (playing?.playWhenReady == true && state.top != ListeningRoute)
     LaunchedEffect(starts) { if (starts) session = true }
     // Abajo del todo, con un libro cargado; no en Escuchando ni en las pantallas completas.
     val showMini = session && playing != null && state.top != ListeningRoute && !state.showsFullScreen
     // El minirreproductor va superpuesto: el área de las pantallas no cambia de tamaño al
-    // aparecer, así abrir o cerrar pantallas no desplaza nada. Las pantallas reservan su hueco.
-    Box(Modifier.fillMaxSize()) {
-        CompositionLocalProvider(LocalBottomInset provides if (showMini) MiniPlayerHeight else 0.dp) {
+    // aparecer, así abrir o cerrar pantallas no desplaza nada. Las pantallas reservan su hueco,
+    // también debajo de Escuchando: al bajarla, la pantalla que se ve ya lo tiene.
+    val miniSpace = session && playing != null && !state.showsFullScreen
+    val sceneStrategies = remember { listOf(ListeningSceneStrategy()) }
+    val mini: @Composable () -> Unit = {
+        playing?.let { np ->
+            MiniPlayer(
+                np,
+                left = settings.playerButtons[1],
+                right = settings.playerButtons[2],
+                onAct = player::act,
+                onCall = player::act,
+                onOpen = navigator::openPlayer,
+                showCover = appearance.showCovers,
+            )
+        }
+    }
+    // El de debajo de Escuchando ya está en pantalla: hasta entonces, el de arriba no se oculta.
+    var underlayShown by remember { mutableStateOf(false) }
+    // Al cerrar Escuchando, el minirreproductor ya se veía debajo de ella: entra sin fundido.
+    var previousTop by remember { mutableStateOf<NavKey?>(null) }
+    val fromPlayer = previousTop == ListeningRoute
+    SideEffect { previousTop = state.top }
+    Box(Modifier.fillMaxSize().onSizeChanged { slide.height = it.height.toFloat() }) {
+        CompositionLocalProvider(
+            LocalBottomInset provides if (miniSpace) MiniPlayerHeight else 0.dp,
+            LocalListeningUnderlay provides {
+                if (session) {
+                    mini()
+                    DisposableEffect(Unit) {
+                        underlayShown = true
+                        onDispose { underlayShown = false }
+                    }
+                }
+            },
+        ) {
             NavDisplay(
-                entries = state.toDecoratedEntries(routeEntries(state, navigator, session, onReady)),
+                entries = state.toDecoratedEntries(routeEntries(state, navigator, slide, session, onReady, onPlayerShown = { playerShown = true })),
+                sceneStrategies = sceneStrategies,
                 onBack = navigator::goBack,
             )
         }
-        androidx.compose.animation.AnimatedVisibility(showMini, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) {
-            playing?.let { np ->
-                MiniPlayer(
-                    np,
-                    left = settings.playerButtons[1],
-                    right = settings.playerButtons[2],
-                    onAct = player::act,
-                    onCall = player::act,
-                    onOpen = navigator::openPlayer,
-                    showCover = appearance.showCovers,
-                )
-            }
+        // Mientras se arrastra hacia arriba sigue aquí, invisible, para no cortar el gesto: el que
+        // se ve es el de debajo de Escuchando.
+        // Al abrir Escuchando, se queda hasta que está el de debajo y se va sin fundido.
+        val toPlayer = state.top == ListeningRoute
+        androidx.compose.animation.AnimatedVisibility(
+            showMini || slide.fromMini || (toPlayer && session && !underlayShown),
+            Modifier.align(Alignment.BottomCenter),
+            enter = if (fromPlayer) EnterTransition.None else fadeIn(),
+            exit = if (toPlayer) ExitTransition.None else fadeOut(),
+        ) {
+            Box(
+                Modifier
+                    .alpha(if (state.top == ListeningRoute && underlayShown) 0f else 1f)
+                    .slideUpFromMini(slide, navigator::openPlayer),
+            ) { mini() }
         }
         BookmarkSheetsHost(
             LocalBookmarkSheets.current,
@@ -253,8 +305,10 @@ private fun JumpUndo(playing: NowPlaying?, onUndo: () -> Unit) {
 private fun routeEntries(
     state: NavigationState,
     navigator: Navigator,
+    slide: PlayerSlide,
     session: Boolean,
     onReady: () -> Unit,
+    onPlayerShown: () -> Unit,
 ): (NavKey) -> NavEntry<NavKey> {
     val app = LocalContext.current.container
     val back = navigator::goBack
@@ -281,14 +335,15 @@ private fun routeEntries(
                 storage = remember { storageRootsOf(context) },
             )
         }
-        entry<ListeningRoute> {
+        entry<ListeningRoute>(metadata = ListeningScene.metadata) {
             PlayerScreen(
                 viewModel = viewModel { PlayerViewModel(app) },
-                onMinimize = navigator::goBack,
+                slide = slide,
                 onOpenSettings = { navigator.open(SettingsRoute) },
                 onOpenSleepSettings = { navigator.open(SettingsSleepRoute) },
                 onOpenCover = { navigator.open(CoverViewerRoute(it)) },
                 onShowFolder = navigator::showFolder,
+                onShown = onPlayerShown,
             )
         }
         entry<BookmarksRoute> {

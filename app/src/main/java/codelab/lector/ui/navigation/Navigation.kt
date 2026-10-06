@@ -48,6 +48,9 @@ class NavigationState internal constructor(val stack: NavBackStack<NavKey>) {
 /** Órdenes de navegación de las pantallas. Todo Atrás pasa por [goBack]. */
 class Navigator(private val state: NavigationState) {
 
+    /** Escuchando va a aparecer arriba: empieza abajo para subir. */
+    var beforeOpenPlayer: () -> Unit = {}
+
     /** Abre encima. Si ya está en la pila, la sube arriba en vez de duplicarla. */
     fun open(route: Route) {
         val stack = state.stack
@@ -56,7 +59,10 @@ class Navigator(private val state: NavigationState) {
         stack.add(route)
     }
 
-    fun openPlayer() = open(ListeningRoute)
+    fun openPlayer() {
+        if (state.top != ListeningRoute) beforeOpenPlayer()
+        open(ListeningRoute)
+    }
 
     /**
      * Punto único de Atrás. En la raíz no hace nada: NavDisplay deja que el sistema salga de la app.

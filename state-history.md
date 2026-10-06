@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-06 — Escuchando: la portada ya se mueve
+
+**Qué cambió:** deslizar la portada hacia abajo actuaba al soltar y la portada no se movía (2026-10-04); ahora la pantalla entera sigue al dedo y Escuchando sube y baja como las hojas, también desde el minirreproductor.
+**Por qué:** el usuario quería la app más pulida. No se hizo con ModalBottomSheet como las hojas: abre su propia ventana, que tapaba el aviso "Deshacer" y dejaba Ajustes debajo. Tampoco con el Atrás predictivo de NavDisplay: al soltar acaba siempre con un tween fijo, sin rebote ni velocidad.
+
 ### 2026-10-06 — Barras de Escuchando: el tamaño vuelve
 
 **Qué cambió:** las barras crecieron (zona táctil de 44, barras de 8 y 6, tiempos de 15) junto con el tiempo grande y el arrastre fino; después volvieron a su tamaño (24, 6 y 3, tiempos de 13) y se quedaron solo el tiempo grande, el arrastre fino y la barra que engorda al arrastrar.

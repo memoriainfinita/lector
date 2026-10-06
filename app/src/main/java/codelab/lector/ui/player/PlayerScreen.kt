@@ -1,15 +1,24 @@
 package codelab.lector.ui.player
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -91,11 +100,12 @@ private const val CoverRatio = 358f / 411f
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
-    onMinimize: () -> Unit,
+    slide: PlayerSlide,
     onOpenSettings: () -> Unit,
     onOpenSleepSettings: () -> Unit,
     onOpenCover: (String) -> Unit,
     onShowFolder: (String) -> Unit,
+    onShown: () -> Unit = {},
 ) {
     val playing by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val inaccessible by viewModel.inaccessibleBook.collectAsStateWithLifecycle()
@@ -109,15 +119,29 @@ fun PlayerScreen(
     val bookmarkSheets = LocalBookmarkSheets.current
     val removedText = stringResource(R.string.removed_from_library)
 
-    // Horizontal (más ancha que alta): doble panel, sin cabecera.
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    // Sube solo si se acaba de abrir: no al volver de Ajustes ni al girar la pantalla.
+    // [onShown] cuando ya está arriba del todo.
+    LaunchedEffect(slide) {
+        slide.onShown()
+        snapshotFlow { slide.isOpen }.first { it }
+        onShown()
+    }
+    BackHandler { slide.close() }
+
+    // Horizontal (más ancha que alta): doble panel, sin cabecera. Recortada a su área: al bajar
+    // no asoma por detrás de la barra de navegación del sistema.
+    BoxWithConstraints(Modifier.fillMaxSize().clipToBounds()) {
+        val close: () -> Unit = slide::close
         val landscape = maxWidth > maxHeight
         val np = playing
         val lost = inaccessible
         val removeLost = { book: Book ->
             undo.show(removedText, viewModel.removeInaccessible(book.id))
-            onMinimize()
+            close()
         }
+        // Opaca: debajo está la pantalla anterior, que se ve al bajarla.
+        CompositionLocalProvider(LocalPlayerSlide provides slide) {
+        Box(Modifier.fillMaxSize().graphicsLayer { translationY = slide.offset }.background(LectorTheme.colors.background)) {
         if (landscape) {
             when {
                 np != null -> LandscapePlayer(
@@ -129,19 +153,18 @@ fun PlayerScreen(
                     onJump = viewModel::jumpTo,
                     onSegment = viewModel::jumpToSegment,
                     onCover = { onOpenCover(np.bookId) },
-                    onMinimize = onMinimize,
                     onChapters = { sheet = PlayerSheet.CHAPTERS },
                     onSpeed = { sheet = PlayerSheet.SPEED },
                     onMenu = { sheet = PlayerSheet.MENU },
                     sleepActive = sleep.active,
                     onSleep = { sheet = PlayerSheet.SLEEP },
                 )
-                lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
+                lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) })
             }
         } else {
             Column(Modifier.fillMaxSize()) {
                 // Con portada, una raya como la de las hojas en lugar de la cabecera: más alto para la imagen.
-                if (np == null || !showCover) Header(onMinimize) else MinimizeHandle(onMinimize)
+                if (np == null || !showCover) Header(close) else MinimizeHandle(close)
                 when {
                     np != null -> Player(
                         np = np,
@@ -153,16 +176,17 @@ fun PlayerScreen(
                         onAct = viewModel::act,
                         onJump = viewModel::jumpTo,
                         onCover = { onOpenCover(np.bookId) },
-                        onMinimize = onMinimize,
                         onChapters = { sheet = PlayerSheet.CHAPTERS },
                         onSpeed = { sheet = PlayerSheet.SPEED },
                         onMenu = { sheet = PlayerSheet.MENU },
                         sleepActive = sleep.active,
                         onSleep = { sheet = PlayerSheet.SLEEP },
                     )
-                    lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
+                    lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) })
                 }
             }
+        }
+        }
         }
     }
 
@@ -241,7 +265,6 @@ private fun ColumnScope.Player(
     onAct: (PlayerAction) -> Unit,
     onJump: (Long) -> Unit,
     onCover: () -> Unit,
-    onMinimize: () -> Unit,
     onChapters: () -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
@@ -251,14 +274,14 @@ private fun ColumnScope.Player(
     var scrub by remember { mutableStateOf<Scrub?>(null) }
     if (showCover) {
         CoverArea(Modifier.weight(1f), horizontal = 8.dp) {
-            PlayerCover(np, onCover, onMinimize)
+            PlayerCover(np, onCover)
             scrub?.let { ScrubLabel(np, it) }
         }
         TitleBlock(np, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
     } else {
         // Lienzo "Reproductor sin portadas": el hueco queda en medio; deslizarlo hacia abajo hace Atrás.
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(Modifier.fillMaxSize().swipeDown(onMinimize)) {
+            Column(Modifier.fillMaxSize().slideDown()) {
                 NoCoverTitle(np, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
             }
             scrub?.let { ScrubLabel(np, it) }
@@ -303,7 +326,6 @@ private fun LandscapePlayer(
     onJump: (Long) -> Unit,
     onSegment: (Int) -> Unit,
     onCover: () -> Unit,
-    onMinimize: () -> Unit,
     onChapters: () -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
@@ -318,7 +340,7 @@ private fun LandscapePlayer(
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(LandscapeGap)) {
                 if (withCover) {
                     Box(Modifier.fillMaxHeight().widthIn(max = coverMax), contentAlignment = Alignment.Center) {
-                        PlayerCover(np, onCover, onMinimize)
+                        PlayerCover(np, onCover)
                         scrub?.let { ScrubLabel(np, it) }
                     }
                 }
@@ -390,7 +412,7 @@ private fun SegmentsPanel(np: NowPlaying, onSegment: (Int) -> Unit, modifier: Mo
 
 /** Portada: marco de 358 × 411 hasta conocer la imagen; después, su proporción, sin recortar. */
 @Composable
-private fun PlayerCover(np: NowPlaying, onCover: () -> Unit, onMinimize: () -> Unit) {
+private fun PlayerCover(np: NowPlaying, onCover: () -> Unit) {
     var ratio by remember(np.coverPath) { mutableStateOf(CoverRatio) }
     BookCover(
         np.coverPath,
@@ -398,7 +420,7 @@ private fun PlayerCover(np: NowPlaying, onCover: () -> Unit, onMinimize: () -> U
         author = np.author,
         modifier = Modifier
             .aspectRatio(ratio, matchHeightConstraintsFirst = true)
-            .swipeDown(onMinimize)
+            .slideDown()
             .clickable(onClickLabel = stringResource(R.string.view_cover), role = Role.Image, onClick = onCover),
         titleStyle = LectorTheme.type.headline,
         onAspectRatio = { ratio = it },
@@ -412,7 +434,7 @@ private fun MinimizeHandle(onMinimize: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .height(24.dp)
-            .swipeDown(onMinimize)
+            .slideDown()
             .clickable(onClickLabel = stringResource(R.string.minimize_player), role = Role.Button, onClick = onMinimize),
         contentAlignment = Alignment.Center,
     ) {
@@ -443,20 +465,15 @@ private fun NoCoverTitle(np: NowPlaying, modifier: Modifier) {
     }
 }
 
-/** Título, autor · narrador y porcentaje. */
+/** Título y autor · narrador, a todo el ancho: el porcentaje va entre los tiempos del libro. */
 @Composable
 private fun TitleBlock(np: NowPlaying, modifier: Modifier) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
-    val mono14 = t.meta.copy(fontSize = 14.sp)
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(np.title, style = t.bookTitle, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            val byline = listOfNotNull(np.author, np.narrator).filter { it.isNotBlank() }.distinct().joinToString(" · ")
-            if (byline.isNotEmpty()) Text(byline, style = t.body, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        val percent = if (np.durationMs > 0) (np.positionMs * 100.0 / np.durationMs).roundToInt() else 0
-        Text("$percent%", style = mono14, color = c.textSecondary, modifier = Modifier.padding(top = 6.dp))
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(np.title, style = t.bookTitle, color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        val byline = listOfNotNull(np.author, np.narrator).filter { it.isNotBlank() }.distinct().joinToString(" · ")
+        if (byline.isNotEmpty()) Text(byline, style = t.body, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -522,9 +539,12 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
             np.segments.drop(1).map { it.startMs.toFloat() / total }
         }
         // Cada barra con sus números encima: los del libro no se mezclan con los del tramo.
+        // Porcentaje en medio: mismo ancho a cada lado para que quede centrado.
         Row(Modifier.fillMaxWidth()) {
             Text(formatDuration(bookPos), style = mono13, color = c.text, modifier = Modifier.weight(1f))
-            Text("−" + formatDuration(np.durationMs - bookPos), style = mono13, color = c.textSecondary)
+            val percent = (bookPos * 100.0 / total).roundToInt()
+            Text("$percent%", style = mono13, color = c.textSecondary)
+            Text("−" + formatDuration(np.durationMs - bookPos), style = mono13, color = c.textSecondary, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
         }
         SeekBar(
             fraction = np.positionMs.toFloat() / total,
@@ -754,12 +774,12 @@ private fun SmallAction(
 
 /** Libro sin acceso: portada atenuada y tarjeta con "Volver a buscar" y "Quitar". */
 @Composable
-private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit) {
     if (showCover) {
-        CoverArea(Modifier.weight(1f)) { InaccessibleCover(book, coverPath, onMinimize) }
+        CoverArea(Modifier.weight(1f)) { InaccessibleCover(book, coverPath) }
         InaccessibleHeading(book, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
     } else {
-        Column(Modifier.weight(1f).fillMaxWidth().swipeDown(onMinimize)) {
+        Column(Modifier.weight(1f).fillMaxWidth().slideDown()) {
             InaccessibleHeading(book, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
         }
     }
@@ -768,14 +788,14 @@ private fun ColumnScope.Inaccessible(book: Book, coverPath: String?, showCover: 
 
 /** Libro sin acceso en horizontal: portada atenuada a la izquierda; título y tarjeta a la derecha. */
 @Composable
-private fun InaccessibleLandscape(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit, onMinimize: () -> Unit) {
+private fun InaccessibleLandscape(book: Book, coverPath: String?, showCover: Boolean, onRescan: (String) -> Unit, onRemove: () -> Unit) {
     Row(
         Modifier.fillMaxSize().padding(start = 24.dp, top = 20.dp, end = 24.dp, bottom = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (showCover) {
             Box(Modifier.fillMaxHeight().widthIn(max = 300.dp), contentAlignment = Alignment.Center) {
-                InaccessibleCover(book, coverPath, onMinimize)
+                InaccessibleCover(book, coverPath)
             }
         }
         Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
@@ -786,13 +806,13 @@ private fun InaccessibleLandscape(book: Book, coverPath: String?, showCover: Boo
 }
 
 @Composable
-private fun InaccessibleCover(book: Book, coverPath: String?, onMinimize: () -> Unit) {
+private fun InaccessibleCover(book: Book, coverPath: String?) {
     var ratio by remember(coverPath) { mutableStateOf(CoverRatio) }
     BookCover(
         coverPath,
         book.customName ?: book.title,
         author = book.author,
-        modifier = Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).swipeDown(onMinimize).alpha(0.35f),
+        modifier = Modifier.aspectRatio(ratio, matchHeightConstraintsFirst = true).slideDown().alpha(0.35f),
         titleStyle = LectorTheme.type.headline,
         onAspectRatio = { ratio = it },
     )
@@ -835,25 +855,38 @@ private fun NotFoundCard(book: Book, onRescan: (String) -> Unit, onRemove: () ->
     }
 }
 
+private val LocalPlayerSlide = staticCompositionLocalOf<PlayerSlide?> { null }
+
 /**
- * Deslizar la portada hacia abajo hace lo mismo que la flecha de la cabecera, al soltar pasado el
- * umbral (el del visor de portada). La portada no se mueve: sola, parecería que se despega.
+ * Arrastrar hacia abajo la raya, la portada o el hueco sin portada mueve Escuchando entera; solo
+ * hacia abajo, a los lados no hay gesto.
  */
 @Composable
-private fun Modifier.swipeDown(onSwipe: () -> Unit): Modifier {
-    val action by rememberUpdatedState(onSwipe)
-    var drag by remember { mutableFloatStateOf(0f) }
-    val threshold = with(LocalDensity.current) { 120.dp.toPx() }
-    return pointerInput(Unit) {
-            detectVerticalDragGestures(
-                onDragEnd = {
-                    if (drag > threshold) action()
-                    drag = 0f
-                },
-                onDragCancel = { drag = 0f },
-            ) { change, dy ->
-                change.consume()
-                drag = (drag + dy).coerceAtLeast(0f)
-            }
+private fun Modifier.slideDown(): Modifier {
+    val slide = LocalPlayerSlide.current ?: return this
+    val density = LocalDensity.current
+    val distance = with(density) { SlideDistance.toPx() }
+    val fling = with(density) { SlideVelocity.toPx() }
+    // El dedo, en coordenadas de la raíz: las de la zona se mueven con Escuchando y restarían
+    // lo que ya ha bajado.
+    val coords = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    return onGloballyPositioned { coords[0] = it }.pointerInput(slide) {
+        val tracker = VelocityTracker()
+        var lastY = Float.NaN
+        detectVerticalDragGestures(
+            onDragStart = {
+                tracker.resetTracking()
+                lastY = Float.NaN
+                slide.startDrag()
+            },
+            onDragEnd = { slide.release(tracker.calculateVelocity().y, distance, fling) },
+            onDragCancel = { slide.release(0f, distance, fling) },
+        ) { change, dy ->
+            change.consume()
+            val y = coords[0]?.takeIf { it.isAttached }?.localToRoot(change.position)?.y ?: return@detectVerticalDragGestures
+            slide.drag(if (lastY.isNaN()) dy else y - lastY)
+            lastY = y
+            tracker.addPosition(change.uptimeMillis, Offset(0f, y))
         }
+    }
 }
