@@ -48,6 +48,7 @@ fun SettingsScreen(
     onRemote: () -> Unit,
     onSleep: () -> Unit,
     onTags: () -> Unit,
+    onData: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
@@ -131,8 +132,8 @@ fun SettingsScreen(
         SwitchRow(stringResource(R.string.cover_on_lock_screen), playback.coverOutside, viewModel::setCoverOutside)
 
         SectionHeader(stringResource(R.string.settings_data))
-        LinkRow(stringResource(R.string.export_all), {}, note = stringResource(R.string.export_all_note), enabled = false, chevron = false)
-        LinkRow(stringResource(R.string.import_merge), {}, note = stringResource(R.string.import_merge_note), enabled = false, chevron = false)
+        LinkRow(stringResource(R.string.export_all), onData, note = stringResource(R.string.export_all_note), chevron = false)
+        LinkRow(stringResource(R.string.import_merge), onData, note = stringResource(R.string.import_merge_note), chevron = false)
 
         SectionHeader(stringResource(R.string.settings_system))
         LinkRow(stringResource(R.string.keep_screen_off), { openBatterySettings(context) }, note = stringResource(R.string.keep_screen_off_note))
@@ -212,5 +213,5 @@ private fun openAppDetails(context: Context) {
     runCatching { context.startActivity(appDetailsIntent(context)) }
 }
 
-private fun appVersion(context: Context): String =
+internal fun appVersion(context: Context): String =
     runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()

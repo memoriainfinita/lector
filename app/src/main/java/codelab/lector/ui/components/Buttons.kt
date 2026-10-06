@@ -107,10 +107,10 @@ fun HeroButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
 
 /** Secundario con borde: 36 / radio 6 / 13. */
 @Composable
-fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val c = LectorTheme.colors
-    ButtonBase(onClick, 36.dp, RoundedCornerShape(6.dp), modifier, border = BorderStroke(1.dp, c.outline), horizontalPadding = 12.dp) {
-        Text(text, style = LectorTheme.type.secondary, color = c.text)
+    ButtonBase(onClick, 36.dp, RoundedCornerShape(6.dp), modifier, border = BorderStroke(1.dp, if (enabled) c.outline else c.track), horizontalPadding = 12.dp, enabled = enabled) {
+        Text(text, style = LectorTheme.type.secondary, color = if (enabled) c.text else c.inactive)
     }
 }
 

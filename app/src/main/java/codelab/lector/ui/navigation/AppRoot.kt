@@ -72,12 +72,13 @@ import codelab.lector.ui.bookmarks.rememberBookmarkSheetsState
 import codelab.lector.ui.components.UndoBar
 import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
-import codelab.lector.ui.screens.PlaceholderScreen
 import codelab.lector.ui.onboarding.OnboardingFoldersScreen
 import codelab.lector.ui.onboarding.OnboardingFoldersViewModel
 import codelab.lector.ui.onboarding.OnboardingPermissionScreen
 import codelab.lector.ui.settings.AppearanceScreen
 import codelab.lector.ui.settings.ButtonsSettingsScreen
+import codelab.lector.ui.settings.DataScreen
+import codelab.lector.ui.settings.DataViewModel
 import codelab.lector.ui.settings.FolderPickerScreen
 import codelab.lector.ui.settings.FolderPickerViewModel
 import codelab.lector.ui.settings.LibrarySettingsScreen
@@ -366,6 +367,7 @@ private fun routeEntries(
                 onRemote = { navigator.open(SettingsRemoteRoute) },
                 onSleep = { navigator.open(SettingsSleepRoute) },
                 onTags = { navigator.open(SettingsTagsRoute) },
+                onData = { navigator.open(SettingsDataRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
@@ -382,7 +384,7 @@ private fun routeEntries(
         entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsTagsRoute> { TagsSettingsScreen(onBack = back) }
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
-        entry<SettingsDataRoute> { PlaceholderScreen(stringResource(R.string.settings_data), onBack = back) }
+        entry<SettingsDataRoute> { DataScreen(viewModel { DataViewModel(app) }, onBack = back) }
         entry<FolderPickerRoute> { FolderPicker(onClose = back) }
         entry<MergeBooksRoute> { key ->
             val context = LocalContext.current

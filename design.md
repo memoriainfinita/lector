@@ -509,6 +509,27 @@ Aprobado 2026-10-06 (lienzo `Settings-Buttons`, secciones "Botón del auricular"
 - Ajustes › Auricular: Pausar al desconectar (activado; hoy pausa siempre) y Reanudar al reconectar (activado): si vuelve en menos de 10 s tras una pausa por desconexión, sigue. Cable y Bluetooth
 - Salen de Ajustes las dos filas de retrasos y "Notificación estándar de Android": la de LECTOR ya es la estándar de Android (lo que cambia en Simple ABP, sin comprobar)
 
+#### D. Datos
+
+Aprobado 2026-10-06 (lienzo `Settings-Data`, `Export-Sheet`, `Onboarding-Permission`; Decisiones de diseño › Datos, Recomendaciones › Portabilidad).
+
+- Entregas: A, pantalla Datos con las dos exportaciones y la fila de Ajustes activa; B, Elegir copia, resumen y Combinar, con pruebas en el ordenador; C, "Importar una copia de otro móvil" en el primer arranque
+- Copia completa: un `.json` con formato y versión, guardado con el selector de Android. Lleva:
+  - Libros: firma, título, nombre propio, autor, duración total y nombres de archivo; posición con su fecha, terminado, velocidad y sonido propio. Sin id ni ruta: cambian de un móvil a otro
+  - Marcadores con sus tags (por nombre) y posiciones de tramo (`segment_position`)
+  - Correcciones (unir y separar), por firma: sin ellas los libros unidos o separados no se reconocen en el otro móvil
+  - Ajustes de DataStore e idioma de la app, salvo los propios del móvil: último libro, libro en curso y última búsqueda
+  - Fuera: carpetas de la biblioteca y clases de carpeta, que son rutas de este móvil
+- Marcadores como texto: abre la hoja Exportar de Marcadores C con todos los marcadores (vista previa, Copiar, Guardar como .txt, Compartir)
+- Elegir copia: selector de Android y resumen previo en la tarjeta del lienzo: marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados aquí; "Importar también los ajustes" apagado por defecto; Cancelar y Combinar
+- Combinar:
+  - Libro por firma y, si no, por duración ±1 s, como la reconciliación del escaneo
+  - Marcador con un id que ya existe: se omite
+  - Posición: gana la de fecha más reciente
+  - Libro no encontrado: entra como quitado, con sus marcadores; si sus archivos aparecen, el escaneo lo reconecta por firma o duración
+  - Una sola transacción: entra todo o nada
+  - Sin "Deshacer": el resumen ya confirma, como Unir
+
 ### Sin portadas
 
 Aprobado 2026-10-05 (lienzo, versión 151: "Biblioteca sin portadas: lista", "Biblioteca: libros sin portada", "Reproductor sin portadas").

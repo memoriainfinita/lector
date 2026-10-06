@@ -70,6 +70,10 @@ interface BookDao {
     @Query("SELECT * FROM book_file WHERE bookId = :bookId ORDER BY sortIndex")
     suspend fun files(bookId: String): List<BookFile>
 
+    /** Ajustes › Datos: la copia completa. */
+    @Query("SELECT * FROM book_file ORDER BY bookId, sortIndex")
+    suspend fun allFiles(): List<BookFile>
+
     /** Archivos de cualquier libro cuya ruta relativa acaba en [name] (el nombre del archivo). */
     @Query("SELECT * FROM book_file WHERE relativePath = :name OR substr(relativePath, -length(:name) - 1) = '/' || :name")
     suspend fun filesNamed(name: String): List<BookFile>
@@ -318,6 +322,9 @@ interface CorrectionDao {
 interface SegmentPositionDao {
     @Query("SELECT * FROM segment_position WHERE bookId = :bookId")
     suspend fun forBook(bookId: String): List<SegmentPosition>
+
+    @Query("SELECT * FROM segment_position")
+    suspend fun all(): List<SegmentPosition>
 
     @Upsert
     suspend fun save(position: SegmentPosition)

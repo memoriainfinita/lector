@@ -216,6 +216,16 @@
     <string name="export_all_note">Marcadores, posiciones y ajustes</string>
     <string name="import_merge">Importar y combinar</string>
     <string name="import_merge_note">Desde otro móvil o una copia</string>
+    <string name="full_backup">Copia completa</string>
+    <string name="full_backup_note">Marcadores, posiciones y ajustes · JSON</string>
+    <string name="bookmarks_as_text">Marcadores como texto</string>
+    <string name="bookmarks_as_text_note">Para leer o compartir</string>
+    <string name="choose_backup">Elegir copia</string>
+    <string name="choose_backup_note">De otro móvil o de una copia anterior</string>
+    <string name="choose">Elegir</string>
+    <string name="backup_file_name">%1$s – copia %2$s</string>
+    <string name="backup_saved">Copia guardada</string>
+    <string name="backup_failed">No se pudo guardar la copia</string>
     <string name="settings_system">Sistema</string>
     <string name="keep_screen_off">Seguir con la pantalla apagada</string>
     <string name="keep_screen_off_note">Abre el ajuste de batería de Android</string>

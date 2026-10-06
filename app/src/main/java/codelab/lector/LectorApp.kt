@@ -6,6 +6,7 @@ import androidx.annotation.OptIn
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import codelab.lector.bookmarks.BookmarkStore
+import codelab.lector.data.backup.BackupExporter
 import codelab.lector.data.db.LectorDatabase
 import codelab.lector.data.settings.AppearanceRepository
 import codelab.lector.data.settings.LastScan
@@ -53,6 +54,8 @@ class AppContainer(context: Context) {
     /** Pausa diferida: la publica el servicio. */
     val sleep = SleepStateHolder()
     val bookmarks by lazy { BookmarkStore(database, playback, playbackSettings, appScope) }
+    /** Ajustes › Datos. */
+    val backup by lazy { BackupExporter(database, context.settingsStore) }
 
     init {
         // Cada búsqueda terminada queda como la última (Ajustes › Biblioteca). Sin errores: un

@@ -217,6 +217,16 @@
     <string name="export_all_note">Bookmarks, positions and settings</string>
     <string name="import_merge">Import and merge</string>
     <string name="import_merge_note">From another phone or a backup</string>
+    <string name="full_backup">Full backup</string>
+    <string name="full_backup_note">Bookmarks, positions and settings · JSON</string>
+    <string name="bookmarks_as_text">Bookmarks as text</string>
+    <string name="bookmarks_as_text_note">To read or share</string>
+    <string name="choose_backup">Choose backup</string>
+    <string name="choose_backup_note">From another phone or an earlier backup</string>
+    <string name="choose">Choose</string>
+    <string name="backup_file_name">%1$s – backup %2$s</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_failed">Could not save the backup</string>
     <string name="settings_system">System</string>
     <string name="keep_screen_off">Keep playing with the screen off</string>
     <string name="keep_screen_off_note">Opens the Android battery setting</string>
