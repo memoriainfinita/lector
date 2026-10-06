@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import codelab.lector.R
 import codelab.lector.playback.LectorCommands
 import codelab.lector.playback.SleepState
@@ -73,19 +75,22 @@ fun SleepSheet(
 fun SleepStatus(state: SleepState) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-        when {
-            !state.active -> Text(stringResource(R.string.sleep_off), style = t.secondary, color = c.textSecondary)
-            else -> {
-                Text(
-                    stringResource(if (state.atChapterEnd) R.string.sleep_pauses_at_chapter_end else R.string.sleep_pauses_in),
-                    style = t.secondary,
-                    color = c.textSecondary,
-                )
-                Text(formatDuration(state.remainingMs), style = t.meta.copy(fontSize = 13.sp), color = c.accent)
-            }
-        }
+    if (!state.active) {
+        Text(stringResource(R.string.sleep_off), style = t.secondary, color = c.textSecondary)
+        return
     }
+    // Un solo texto: si no cabe, baja de línea entero y la hora no se parte.
+    val label = stringResource(if (state.atChapterEnd) R.string.sleep_pauses_at_chapter_end else R.string.sleep_pauses_in)
+    val time = SpanStyle(fontFamily = t.meta.fontFamily, color = c.accent)
+    Text(
+        buildAnnotatedString {
+            append(label)
+            append(' ')
+            withStyle(time) { append(formatDuration(state.remainingMs)) }
+        },
+        style = t.secondary,
+        color = c.textSecondary,
+    )
 }
 
 /**
