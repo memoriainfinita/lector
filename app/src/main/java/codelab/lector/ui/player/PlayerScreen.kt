@@ -140,7 +140,8 @@ fun PlayerScreen(
             }
         } else {
             Column(Modifier.fillMaxSize()) {
-                Header(onMinimize)
+                // Con portada, una raya como la de las hojas en lugar de la cabecera: más alto para la imagen.
+                if (np == null || !showCover) Header(onMinimize) else MinimizeHandle(onMinimize)
                 when {
                     np != null -> Player(
                         np = np,
@@ -214,7 +215,7 @@ fun PlayerScreen(
 private fun Header(onMinimize: () -> Unit) {
     val c = LectorTheme.colors
     Row(
-        Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp),
+        Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconAction(painterResource(R.drawable.ic_chevron_down), stringResource(R.string.minimize_player), onMinimize)
@@ -249,7 +250,7 @@ private fun ColumnScope.Player(
 ) {
     var scrub by remember { mutableStateOf<Scrub?>(null) }
     if (showCover) {
-        CoverArea(Modifier.weight(1f)) {
+        CoverArea(Modifier.weight(1f), horizontal = 8.dp) {
             PlayerCover(np, onCover, onMinimize)
             scrub?.let { ScrubLabel(np, it) }
         }
@@ -263,22 +264,22 @@ private fun ColumnScope.Player(
             scrub?.let { ScrubLabel(np, it) }
         }
     }
-    Bars(np, onJump, onChapters, { scrub = it }, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
+    Bars(np, onJump, onChapters, { scrub = it }, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 14.dp))
 
     // Controles: los huecos 1 y 2, play, los huecos 3 y 4 (Ajustes › Botones).
     Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp),
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SlotButton(buttons[0], np, compact = false, onCall)
         SlotButton(buttons[1], np, compact = false, onCall)
-        PlayButton(np, 76.dp, 30.dp, onAct)
+        PlayButton(np, 68.dp, 28.dp, onAct)
         SlotButton(buttons[2], np, compact = false, onCall)
         SlotButton(buttons[3], np, compact = false, onCall)
     }
 
-    ActionRow(np, bookmarks, onBookmarks, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
+    ActionRow(np, bookmarks, onBookmarks, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 4.dp, bottom = 2.dp))
 }
 
 /** Separación entre la portada y la columna central en horizontal. */
@@ -404,6 +405,21 @@ private fun PlayerCover(np: NowPlaying, onCover: () -> Unit, onMinimize: () -> U
     )
 }
 
+/** En vertical con portada: raya de las hojas (40 × 4) en una franja de 24. Deslizar o tocar minimiza. */
+@Composable
+private fun MinimizeHandle(onMinimize: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .swipeDown(onMinimize)
+            .clickable(onClickLabel = stringResource(R.string.minimize_player), role = Role.Button, onClick = onMinimize),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(width = 40.dp, height = 4.dp).background(LectorTheme.colors.outline, RoundedCornerShape(2.dp)))
+    }
+}
+
 /** Sin portadas: autor en mayúsculas, título de 28, narrador y "6% · quedan 24:22:14". */
 @Composable
 private fun NoCoverTitle(np: NowPlaying, modifier: Modifier) {
@@ -505,6 +521,11 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
         val marks = remember(np.segments, total) {
             np.segments.drop(1).map { it.startMs.toFloat() / total }
         }
+        // Cada barra con sus números encima: los del libro no se mezclan con los del tramo.
+        Row(Modifier.fillMaxWidth()) {
+            Text(formatDuration(bookPos), style = mono13, color = c.text, modifier = Modifier.weight(1f))
+            Text("−" + formatDuration(np.durationMs - bookPos), style = mono13, color = c.textSecondary)
+        }
         SeekBar(
             fraction = np.positionMs.toFloat() / total,
             onSeek = { onJump((it * total).toLong()) },
@@ -514,10 +535,6 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
                 scrubTo(f?.let { (it * total).toLong() }, fine)
             },
         )
-        Row(Modifier.fillMaxWidth()) {
-            Text(formatDuration(bookPos), style = mono13, color = c.text, modifier = Modifier.weight(1f))
-            Text("−" + formatDuration(np.durationMs - bookPos), style = mono13, color = c.textSecondary)
-        }
 
         val segLength = (np.segmentEndMs - np.segmentStartMs).coerceAtLeast(1)
         // Lista de tramos: capítulos o, sin ellos, archivos si hay más de uno.
@@ -526,8 +543,8 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(top = 6.dp)
-                .heightIn(min = 32.dp)
+                .padding(top = 2.dp)
+                .heightIn(min = 26.dp)
                 .let { if (hasList) it.clickable(role = Role.Button, onClick = onChapters) else it },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -545,7 +562,9 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
             }
             Text("${formatDuration(segPos)} / ${formatDuration(segLength)}", style = mono13, color = c.textSecondary)
         }
+        // Pegada a su fila: la zona táctil de 24 deja aire de sobra encima de una barra de 3.
         SeekBar(
+            modifier = Modifier.offset(y = (-4).dp),
             fraction = (np.positionMs - np.segmentStartMs).toFloat() / segLength,
             onSeek = { onJump(np.segmentStartMs + (it * segLength).toLong()) },
             thickness = 3.dp,
@@ -654,9 +673,9 @@ private fun ActionRow(
 
 /** Zona de la portada: ocupa el alto libre y la portada se ajusta sin deformarse. */
 @Composable
-private fun CoverArea(modifier: Modifier, content: @Composable () -> Unit) {
+private fun CoverArea(modifier: Modifier, horizontal: Dp = 16.dp, content: @Composable () -> Unit) {
     Box(
-        modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
+        modifier.fillMaxWidth().padding(start = horizontal, end = horizontal, bottom = 14.dp),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
