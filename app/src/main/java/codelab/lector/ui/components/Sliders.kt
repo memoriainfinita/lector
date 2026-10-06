@@ -130,9 +130,18 @@ fun VerticalSlider(
     }
 }
 
+/** Arrastre fino de [SeekBar]: con el dedo por encima de la barra, el avance se divide. */
+val FineSteps = listOf(1, 2, 4)
+
+/** Distancia por encima de la barra a la que empieza cada paso fino (≈ 1 cm y 2 cm). */
+private val FineStepAt = listOf(64.dp, 128.dp)
+
 /**
  * Barra de progreso que se arrastra: el reproductor la usa para el libro (con marcas de tramo)
- * y para el tramo actual. Mientras se arrastra muestra la fracción del dedo; al soltar llama a [onSeek].
+ * y para el tramo actual. Zona táctil de 24. Al tocar va al punto del dedo; al arrastrar avanza con
+ * el dedo, dividido entre 2 o 4 si se sube por encima de la barra ([FineSteps]). Mientras se
+ * arrastra engorda, muestra un círculo en el punto y avisa con [onDrag] (fracción y divisor); al
+ * soltar llama a [onSeek].
  */
 @Composable
 fun SeekBar(
@@ -142,7 +151,7 @@ fun SeekBar(
     thickness: Dp = 6.dp,
     color: Color = LectorTheme.colors.accent,
     marks: List<Float> = emptyList(),
-    onDrag: (Float?) -> Unit = {},
+    onDrag: (fraction: Float?, fine: Int) -> Unit = { _, _ -> },
 ) {
     val c = LectorTheme.colors
     val seek by rememberUpdatedState(onSeek)
@@ -154,30 +163,43 @@ fun SeekBar(
             .fillMaxWidth()
             .height(24.dp)
             .sliderSemantics(shown, 0f..1f, { seek(it) }, {})
-            .dragFraction(
-                vertical = false,
-                onChange = {
-                    dragFraction = it
-                    dragging(it)
-                },
-                onFinished = {
-                    dragFraction?.let { seek(it) }
+            .pointerInput(Unit) {
+                val steps = FineStepAt.map { it.toPx() }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    var at = (down.position.x / size.width).coerceIn(0f, 1f)
+                    var lastX = down.position.x
+                    dragFraction = at
+                    dragging(at, 1)
+                    drag(down.id) { change ->
+                        change.consume()
+                        val above = size.height / 2f - change.position.y
+                        val fine = FineSteps[steps.count { above >= it }]
+                        at = (at + (change.position.x - lastX) / size.width / fine).coerceIn(0f, 1f)
+                        lastX = change.position.x
+                        dragFraction = at
+                        dragging(at, fine)
+                    }
+                    seek(at)
                     dragFraction = null
-                    dragging(null)
-                },
-            ),
+                    dragging(null, 1)
+                }
+            },
     ) {
-        val h = thickness.toPx()
+        val active = dragFraction != null
+        val h = (if (active) thickness + 4.dp else thickness).toPx()
         val y = size.height / 2
         val r = CornerRadius(h / 2)
         drawRoundRect(c.track, Offset(0f, y - h / 2), Size(size.width, h), r)
         drawRoundRect(color, Offset(0f, y - h / 2), Size(size.width * shown, h), r)
-        val markHalf = 6.dp.toPx()
+        val markHalf = h / 2 + 3.dp.toPx()
         // Con muchos tramos las marcas serían ruido: solo si caben a 4 dp de media.
         val drawMarks = marks.isNotEmpty() && size.width / marks.size >= 4.dp.toPx()
         if (drawMarks) marks.forEach { m ->
             val x = size.width * m
             drawRect(c.inactive, Offset(x, y - markHalf), Size(1.dp.toPx(), markHalf * 2))
         }
+        if (active) drawCircle(c.text, 9.dp.toPx(), Offset(size.width * shown, y))
     }
 }

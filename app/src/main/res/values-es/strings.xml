@@ -381,4 +381,5 @@
     <string name="corrections">Correcciones</string>
     <string name="correction_split">separado</string>
     <string name="correction_merged">unido</string>
+    <string name="fine_scrub">Fino 1/%1$d</string>
 </resources>

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -276,8 +277,14 @@ fun ChaptersSheet(np: NowPlaying, onSegment: (Int) -> Unit, onDismiss: () -> Uni
     // Su propia lista ya se desplaza.
     LectorSheet(onDismiss, scrollable = false) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.chapters), style = t.sheetTitle, color = c.text, modifier = Modifier.weight(1f))
-            Text(stringResource(R.string.chapters_count, np.segments.size), style = t.secondary, color = c.textSecondary)
+            // Sin capítulos, los archivos del libro (como la pestaña Archivos en horizontal).
+            Text(stringResource(if (np.hasChapters) R.string.chapters else R.string.files), style = t.sheetTitle, color = c.text, modifier = Modifier.weight(1f))
+            Text(
+                if (np.hasChapters) stringResource(R.string.chapters_count, np.segments.size)
+                else pluralStringResource(R.plurals.files_count, np.segments.size, np.segments.size),
+                style = t.secondary,
+                color = c.textSecondary,
+            )
         }
         LazyColumn(state = list, modifier = Modifier.padding(bottom = 12.dp)) {
             itemsIndexed(np.segments) { i, _ -> SegmentRow(np, i, onSegment, base = c.surface, highlight = c.popup) }

@@ -77,6 +77,7 @@ import codelab.lector.ui.components.SeekBar
 import codelab.lector.ui.components.SegmentedControl
 import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.formatDuration
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import codelab.lector.ui.formatSpeed
 import codelab.lector.ui.theme.LectorTheme
@@ -246,16 +247,23 @@ private fun ColumnScope.Player(
     sleepActive: Boolean,
     onSleep: () -> Unit,
 ) {
+    var scrub by remember { mutableStateOf<Scrub?>(null) }
     if (showCover) {
-        CoverArea(Modifier.weight(1f)) { PlayerCover(np, onCover, onMinimize) }
+        CoverArea(Modifier.weight(1f)) {
+            PlayerCover(np, onCover, onMinimize)
+            scrub?.let { ScrubLabel(np, it) }
+        }
         TitleBlock(np, Modifier.fillMaxWidth().padding(horizontal = 24.dp))
     } else {
         // Lienzo "Reproductor sin portadas": el hueco queda en medio; deslizarlo hacia abajo hace Atrás.
-        Column(Modifier.weight(1f).fillMaxWidth().swipeDown(onMinimize)) {
-            NoCoverTitle(np, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(Modifier.fillMaxSize().swipeDown(onMinimize)) {
+                NoCoverTitle(np, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp))
+            }
+            scrub?.let { ScrubLabel(np, it) }
         }
     }
-    Bars(np, onJump, onChapters, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
+    Bars(np, onJump, onChapters, { scrub = it }, Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp))
 
     // Controles: los huecos 1 y 2, play, los huecos 3 y 4 (Ajustes › Botones).
     Row(
@@ -301,19 +309,24 @@ private fun LandscapePlayer(
     sleepActive: Boolean,
     onSleep: () -> Unit,
 ) {
+    var scrub by remember { mutableStateOf<Scrub?>(null) }
     Row(Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 20.dp)) {
             val coverMax = (maxWidth - LandscapeGap - LandscapeColumnMin).coerceAtMost(300.dp)
+            val withCover = showCover && coverMax >= 96.dp
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(LandscapeGap)) {
-                if (showCover && coverMax >= 96.dp) {
+                if (withCover) {
                     Box(Modifier.fillMaxHeight().widthIn(max = coverMax), contentAlignment = Alignment.Center) {
                         PlayerCover(np, onCover, onMinimize)
+                        scrub?.let { ScrubLabel(np, it) }
                     }
                 }
-                Column(Modifier.weight(1f).fillMaxHeight()) {
+                // Sin portada, el tiempo grande va arriba de la columna, sobre el título.
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                Column(Modifier.fillMaxSize()) {
                     TitleBlock(np, Modifier.fillMaxWidth())
                     Spacer(Modifier.weight(1f))
-                    Bars(np, onJump, onChapters, Modifier.fillMaxWidth())
+                    Bars(np, onJump, onChapters, { scrub = it }, Modifier.fillMaxWidth())
                     Spacer(Modifier.weight(1f))
                     Row(
                         Modifier.fillMaxWidth(),
@@ -328,6 +341,8 @@ private fun LandscapePlayer(
                     }
                     // Sin marcadores del libro: el panel de la derecha los tiene.
                     ActionRow(np, null, {}, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
+                }
+                if (!withCover) scrub?.let { ScrubLabel(np, it, Modifier.align(Alignment.TopCenter)) }
                 }
             }
         }
@@ -429,14 +444,61 @@ private fun TitleBlock(np: NowPlaying, modifier: Modifier) {
     }
 }
 
+/** Arrastre de una barra: adónde se va, desde dónde (al empezar) y el divisor del arrastre fino. */
+private class Scrub(val targetMs: Long, val fromMs: Long, val fine: Int)
+
+/**
+ * Tiempo grande mientras se arrastra una barra, sobre la portada para que el dedo no lo tape:
+ * adónde se va, cuánto se mueve, el capítulo en el que cae y el arrastre fino si lo hay.
+ */
+@Composable
+private fun ScrubLabel(np: NowPlaying, scrub: Scrub, modifier: Modifier = Modifier) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val delta = scrub.targetMs - scrub.fromMs
+    val chapter = if (np.hasChapters) np.segments.indexOfLast { it.startMs <= scrub.targetMs }.takeIf { it >= 0 } else null
+    Column(
+        modifier
+            .background(c.popup.copy(alpha = 0.94f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 22.dp, vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(formatDuration(scrub.targetMs), style = t.value, color = c.text)
+        Text((if (delta < 0) "−" else "+") + formatDuration(abs(delta)), style = t.meta.copy(fontSize = 15.sp), color = c.textSecondary)
+        if (chapter != null) {
+            Text(
+                stringResource(R.string.chapter_short, chapter + 1) + " · " + np.segments[chapter].title,
+                style = t.secondary,
+                color = c.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 260.dp),
+            )
+        }
+        if (scrub.fine > 1) Text(stringResource(R.string.fine_scrub, scrub.fine), style = t.secondary, color = c.accent)
+    }
+}
+
 /** Barra del libro con marcas de tramo, tiempos, tramo actual y su barra. */
 @Composable
-private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit, modifier: Modifier) {
+private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit, onScrub: (Scrub?) -> Unit, modifier: Modifier) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val mono13 = t.meta.copy(fontSize = 13.sp)
     var bookDrag by remember { mutableStateOf<Float?>(null) }
     var segmentDrag by remember { mutableStateOf<Float?>(null) }
+    // Posición al empezar a arrastrar: el desplazamiento se cuenta desde ahí aunque siga sonando.
+    var dragFrom by remember { mutableStateOf<Long?>(null) }
+    fun scrubTo(targetMs: Long?, fine: Int) {
+        if (targetMs == null) {
+            dragFrom = null
+            onScrub(null)
+            return
+        }
+        val from = dragFrom ?: np.positionMs.also { dragFrom = it }
+        onScrub(Scrub(targetMs, from, fine))
+    }
     Column(modifier) {
         val total = np.durationMs.coerceAtLeast(1)
         val bookPos = bookDrag?.let { (it * total).toLong() } ?: np.positionMs
@@ -447,21 +509,26 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
             fraction = np.positionMs.toFloat() / total,
             onSeek = { onJump((it * total).toLong()) },
             marks = marks,
-            onDrag = { bookDrag = it },
+            onDrag = { f, fine ->
+                bookDrag = f
+                scrubTo(f?.let { (it * total).toLong() }, fine)
+            },
         )
         Row(Modifier.fillMaxWidth()) {
-            Text(formatDuration(bookPos), style = mono13, color = c.textSecondary, modifier = Modifier.weight(1f))
+            Text(formatDuration(bookPos), style = mono13, color = c.text, modifier = Modifier.weight(1f))
             Text("−" + formatDuration(np.durationMs - bookPos), style = mono13, color = c.textSecondary)
         }
 
         val segLength = (np.segmentEndMs - np.segmentStartMs).coerceAtLeast(1)
+        // Lista de tramos: capítulos o, sin ellos, archivos si hay más de uno.
+        val hasList = np.hasChapters || np.segments.size > 1
         val segPos = segmentDrag?.let { (it * segLength).toLong() } ?: (np.positionMs - np.segmentStartMs).coerceIn(0, segLength)
         Row(
             Modifier
                 .fillMaxWidth()
                 .padding(top = 6.dp)
                 .heightIn(min = 32.dp)
-                .let { if (np.hasChapters) it.clickable(role = Role.Button, onClick = onChapters) else it },
+                .let { if (hasList) it.clickable(role = Role.Button, onClick = onChapters) else it },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -471,7 +538,9 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
                     Text(np.segmentTitle, style = t.secondary, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     Icon(painterResource(R.drawable.ic_chevron_down), stringResource(R.string.chapters), Modifier.size(14.dp), tint = c.textSecondary)
                 } else {
-                    Text(np.segmentTitle, style = t.secondary, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // Sin capítulos, los archivos: tocar abre la misma hoja, como "Archivos".
+                    Text(np.segmentTitle, style = t.secondary, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    if (hasList) Icon(painterResource(R.drawable.ic_chevron_down), stringResource(R.string.files), Modifier.size(14.dp), tint = c.textSecondary)
                 }
             }
             Text("${formatDuration(segPos)} / ${formatDuration(segLength)}", style = mono13, color = c.textSecondary)
@@ -481,7 +550,10 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
             onSeek = { onJump(np.segmentStartMs + (it * segLength).toLong()) },
             thickness = 3.dp,
             color = c.textSecondary,
-            onDrag = { segmentDrag = it },
+            onDrag = { f, fine ->
+                segmentDrag = f
+                scrubTo(f?.let { np.segmentStartMs + (it * segLength).toLong() }, fine)
+            },
         )
     }
 }

@@ -382,4 +382,5 @@
     <string name="corrections">Corrections</string>
     <string name="correction_split">split</string>
     <string name="correction_merged">merged</string>
+    <string name="fine_scrub">Fine 1/%1$d</string>
 </resources>
