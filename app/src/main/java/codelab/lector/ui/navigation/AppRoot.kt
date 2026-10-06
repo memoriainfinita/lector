@@ -74,6 +74,7 @@ import codelab.lector.ui.components.rememberUndoState
 import codelab.lector.ui.screens.PlaceholderLink
 import codelab.lector.ui.onboarding.OnboardingFoldersScreen
 import codelab.lector.ui.onboarding.OnboardingFoldersViewModel
+import codelab.lector.ui.onboarding.OnboardingImportViewModel
 import codelab.lector.ui.onboarding.OnboardingPermissionScreen
 import codelab.lector.ui.settings.AppearanceScreen
 import codelab.lector.ui.settings.ButtonsSettingsScreen
@@ -155,7 +156,7 @@ private fun Onboarding(withPermission: Boolean, onGranted: () -> Unit, onFinishe
         onBack = { stack.removeAt(stack.lastIndex) },
         entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()),
         entryProvider = entryProvider {
-            entry<OnboardingPermissionRoute> { OnboardingPermissionScreen(onGranted) }
+            entry<OnboardingPermissionRoute> { OnboardingPermissionScreen(viewModel { OnboardingImportViewModel(app) }, onGranted) }
             entry<OnboardingFoldersRoute> {
                 OnboardingFoldersScreen(
                     viewModel { OnboardingFoldersViewModel(app, storageRootsOf(context)) },

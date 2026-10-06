@@ -552,7 +552,7 @@ Aprobado 2026-10-05 (lienzo, versión 151: "Biblioteca sin portadas: lista", "Bi
 Hecho 2026-10-05 (lienzo `Onboarding-Permission`, `Onboarding-Folder`).
 
 - Permiso: "Dar permiso" abre el ajuste de acceso a todos los archivos de la app (Android 11+) o pide la lectura clásica (8–10; denegada para siempre, la ficha de la app). Al volver con el acceso, Carpetas; con carpetas ya guardadas (permiso retirado), directo a la Biblioteca. Carpetas sustituye a Permiso: Atrás sale de la app
-- Sin "Importar una copia de otro móvil" hasta la importación de Ajustes › Datos
+- "Importar una copia de otro móvil" (lienzo, texto de 14 bajo "Dar permiso"): selector de Android y el resumen de Ajustes › Datos en una hoja, con "Importar también los ajustes" activada de entrada (el móvil nuevo no tiene ajustes que perder; decidido 2026-10-06). Al combinar, "Copia combinada" bajo el botón, y los avisos de error en la misma línea. Sin carpetas, todos los libros entran como no encontrados y Empezar los reconecta al buscar
 - Carpetas: casillas con las carpetas con audio de niveles 1 y 2, por nombre, buscadas en segundo plano ("Buscando carpetas con audio…"). Fila: ruta desde la raíz y "Almacenamiento principal · n archivos de audio" en todas (no "n libros": contarlos exige la detección)
 - Marcadas de entrada las de nombre de audiolibros (audiobook, audio book, audiolibro, libros)
 - "Elegir otra carpeta" abre el explorador; la elegida aparece al final de la lista, marcada

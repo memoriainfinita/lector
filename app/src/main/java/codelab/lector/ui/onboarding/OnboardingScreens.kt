@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -47,8 +48,14 @@ import codelab.lector.library.hasStorageAccess
 import codelab.lector.library.libraryFolderInfo
 import codelab.lector.ui.components.CheckBox
 import codelab.lector.ui.components.HeroButton
+import codelab.lector.ui.components.LectorSheet
 import codelab.lector.ui.components.OutlineButton
+import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.library.StorageRoots
+import codelab.lector.ui.settings.BackupImportFlow
+import codelab.lector.ui.settings.ImportSummary
+import codelab.lector.ui.settings.importNoteText
+import codelab.lector.ui.settings.rememberBackupPicker
 import codelab.lector.ui.theme.LectorTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,20 +68,29 @@ import java.io.File
 
 /*
  * Primer arranque (design.md › Navegación, Decisiones de diseño; lienzo `Onboarding-Permission`
- * y `Onboarding-Folder`). Sin "Importar una copia de otro móvil" hasta Ajustes › Datos.
+ * y `Onboarding-Folder`).
  */
+
+/** "Importar una copia de otro móvil" (design.md › Ajustes › D, entrega C). */
+class OnboardingImportViewModel(app: AppContainer) : ViewModel() {
+    val import = BackupImportFlow(app, viewModelScope)
+}
 
 /**
  * Permiso: "Dar permiso" abre el ajuste de acceso a todos los archivos (Android 11+) o pide la
  * lectura clásica (8–10; denegada para siempre, la ficha de la app). Al volver a la app con el
- * acceso concedido, [onGranted].
+ * acceso concedido, [onGranted]. "Importar una copia de otro móvil": selector de Android y resumen
+ * en una hoja, con los ajustes activados de entrada (el móvil nuevo no tiene nada que perder).
  */
 @Composable
-fun OnboardingPermissionScreen(onGranted: () -> Unit) {
+fun OnboardingPermissionScreen(viewModel: OnboardingImportViewModel, onGranted: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val context = LocalContext.current
     val activity = LocalActivity.current
+    val pending by viewModel.import.pending.collectAsStateWithLifecycle()
+    val note by viewModel.import.note.collectAsStateWithLifecycle()
+    val choose = rememberBackupPicker(viewModel.import)
     LifecycleResumeEffect(Unit) {
         if (hasStorageAccess(context)) onGranted()
         onPauseOrDispose {}
@@ -101,6 +117,21 @@ fun OnboardingPermissionScreen(onGranted: () -> Unit) {
             Modifier.fillMaxWidth(),
             fill = true,
         )
+        TextButton(stringResource(R.string.onboarding_import), { choose.launch(arrayOf("*/*")) }, Modifier.fillMaxWidth().padding(top = 8.dp))
+        importNoteText(note)?.let {
+            Text(it, style = t.secondary, color = c.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+        }
+    }
+    pending?.let {
+        LectorSheet(viewModel.import::cancel) {
+            ImportSummary(
+                it,
+                onCancel = viewModel.import::cancel,
+                onCombine = viewModel.import::combine,
+                Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                settingsByDefault = true,
+            )
+        }
     }
 }
 

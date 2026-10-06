@@ -30,6 +30,7 @@
     <string name="onboarding_start">Start</string>
     <string name="onboarding_permission_body">It needs permission to read the audio on your phone. Nothing is uploaded to the internet.</string>
     <string name="onboarding_grant">Grant permission</string>
+    <string name="onboarding_import">Import a backup from another phone</string>
     <string name="onboarding_searching">Looking for folders with audio…</string>
     <string name="onboarding_found">Folders with audio found</string>
     <string name="onboarding_none_found">No folders with audio found</string>
