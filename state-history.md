@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-06 — Barras de Escuchando: el tamaño vuelve
+
+**Qué cambió:** las barras crecieron (zona táctil de 44, barras de 8 y 6, tiempos de 15) junto con el tiempo grande y el arrastre fino; después volvieron a su tamaño (24, 6 y 3, tiempos de 13) y se quedaron solo el tiempo grande, el arrastre fino y la barra que engorda al arrastrar.
+**Por qué:** el usuario comprobó que con el tiempo grande y el arrastre fino ya es fácil ir al punto que quiere, y no quería perder alto para la portada.
+
 ### 2026-10-06 — Girar por adb, otra vez permitido
 
 **Qué cambió:** `state.md` decía que no se tocara el giro automático por adb; ahora se puede girar para probar, avisando al usuario al terminar para que vuelva a encender el giro automático.
