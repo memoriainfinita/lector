@@ -50,6 +50,8 @@ import codelab.lector.ui.player.PlayerViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.bookmarks.BookmarkSheetsHost
+import codelab.lector.ui.bookmarks.BookmarksScreen
+import codelab.lector.ui.bookmarks.BookmarksViewModel
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.ui.bookmarks.rememberBookmarkSheetsState
 import codelab.lector.ui.components.UndoBar
@@ -284,7 +286,12 @@ private fun routeEntries(
             )
         }
         entry<BookmarksRoute> {
-            PlaceholderScreen(stringResource(R.string.tab_bookmarks), onBack = back, links = listOf(link(R.string.search_bookmarks, BookmarksSearchRoute)))
+            BookmarksScreen(
+                viewModel { BookmarksViewModel(app) },
+                onBack = back,
+                onSearch = { navigator.open(BookmarksSearchRoute) },
+                onManageTags = { navigator.open(SettingsTagsRoute) },
+            )
         }
         entry<BookmarksSearchRoute> { PlaceholderScreen(stringResource(R.string.search_bookmarks), onBack = back) }
         entry<SettingsRoute> {

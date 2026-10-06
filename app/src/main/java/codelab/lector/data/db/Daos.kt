@@ -16,6 +16,9 @@ interface BookDao {
     @Query("SELECT * FROM book WHERE id = :id")
     suspend fun get(id: String): Book?
 
+    @Query("SELECT * FROM book WHERE id IN (:ids)")
+    suspend fun byIds(ids: List<String>): List<Book>
+
     @Query("SELECT * FROM book WHERE identityKey = :identityKey")
     suspend fun findByIdentity(identityKey: String): List<Book>
 
@@ -161,6 +164,15 @@ interface BookmarkDao {
 
     @Query("SELECT * FROM bookmark WHERE id = :id")
     suspend fun get(id: String): Bookmark?
+
+    @Query("SELECT * FROM bookmark")
+    fun observeAll(): Flow<List<Bookmark>>
+
+    @Query(
+        "SELECT bookmark_tag.bookmarkId, tag.id AS tagId, tag.name FROM bookmark_tag " +
+            "JOIN tag ON tag.id = bookmark_tag.tagId ORDER BY tag.name"
+    )
+    fun observeAllTags(): Flow<List<BookmarkTagName>>
 
     @Query("SELECT * FROM bookmark WHERE id = :id")
     fun observe(id: String): Flow<Bookmark?>

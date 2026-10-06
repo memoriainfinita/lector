@@ -334,4 +334,16 @@
     <string name="create_tag">Crear «%1$s»</string>
     <string name="no_tags_yet">Aún no hay tags. Escribe uno para crearlo.</string>
     <string name="file_missing">Archivo fuera del libro</string>
+    <string name="clear">Limpiar</string>
+    <string name="apply">Aplicar</string>
+    <string name="untagged">sin tag</string>
+    <string name="filter_all">todos</string>
+    <string name="filter_pause">pausa</string>
+    <string name="filtered_count">%1$s con %2$s</string>
+    <string name="remove_filter">Quitar filtro</string>
+    <string name="copy_text">Copiar texto</string>
+    <string name="bookmark_deleted">Marcador borrado</string>
+    <string name="bookmark_options">Opciones del marcador</string>
+    <string name="no_bookmarks_title">Aún no hay marcadores</string>
+    <string name="no_bookmarks_body">Marca un momento con el botón de marcador del reproductor o de la notificación, o con el botón remoto que asignes en Ajustes. Título, nota y tags se pueden añadir después.</string>
 </resources>

@@ -529,10 +529,14 @@ Hecha 2026-10-06.
 
 #### B. Recopilación
 
-- Pantalla Marcadores agrupada por libro (lienzo `Bookmarks-All`, `Bookmarks-Empty`, `Bookmarks-Filtered`, `Bookmark-Item-Menu`), con estado vacío
-- Filtros: todos, tags, sin tag, pausa; varios tags, cualquiera de ellos. Con filtro, "n marcadores con [tag]" y "Quitar filtro"
-- ⋮: Copiar texto y Borrar con "Deshacer". "Escuchar desde aquí" salta y se queda en Marcadores
-- Lista de tags como filtro (lienzo `Tag-Picker`), con "sin tag", Limpiar y Aplicar
+Hecha 2026-10-06.
+
+- Pantalla Marcadores agrupada por libro (lienzo `Bookmarks-All`, `Bookmarks-Empty`, `Bookmarks-Filtered`, `Bookmark-Item-Menu`), con estado vacío. Cabecera de libro: portada de 28 (sin portadas, sin ella), título y número. El orden de los libros se fija al abrir la pantalla: escuchar desde un marcador no los reordena mientras se mira
+- Filtros en una fila con desplazamiento lateral: lista de tags, todos (quita el filtro), tags por uso, sin tag y pausa (discontinuos). Varios, cualquiera de ellos. Con filtro, "n marcadores con [tags]" y "Quitar filtro"; los tags filtrados, en acento dentro de las filas
+- Tocar la fila edita (hoja de marcador). ⋮: Copiar texto (formato de Exportar) y Borrar con "Marcador borrado" y "Deshacer". "Escuchar desde aquí" salta y se queda en Marcadores; sin play en libros sin archivos
+- Lista de tags como filtro (lienzo `Tag-Picker`): casillas, "sin tag" (sin búsqueda activa), Limpiar y Aplicar; los cambios valen al aplicar. "Pausa" solo en la fila de filtros
+- Columna de tiempo con el ancho de "00:00:00" en la letra del sistema (también en la hoja del libro): títulos alineados
+- Iconos nuevos: `ic_export`, `ic_filter_lines`, `ic_copy`
 
 #### C. Búsqueda y Exportar
 

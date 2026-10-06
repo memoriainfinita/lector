@@ -335,4 +335,16 @@
     <string name="create_tag">Create “%1$s”</string>
     <string name="no_tags_yet">No tags yet. Type one to create it.</string>
     <string name="file_missing">File not in the book</string>
+    <string name="clear">Clear</string>
+    <string name="apply">Apply</string>
+    <string name="untagged">untagged</string>
+    <string name="filter_all">all</string>
+    <string name="filter_pause">sleep</string>
+    <string name="filtered_count">%1$s with %2$s</string>
+    <string name="remove_filter">Remove filter</string>
+    <string name="copy_text">Copy text</string>
+    <string name="bookmark_deleted">Bookmark deleted</string>
+    <string name="bookmark_options">Bookmark options</string>
+    <string name="no_bookmarks_title">No bookmarks yet</string>
+    <string name="no_bookmarks_body">Mark a moment with the bookmark button in the player or the notification, or with the remote button you assign in Settings. Title, note and tags can be added later.</string>
 </resources>

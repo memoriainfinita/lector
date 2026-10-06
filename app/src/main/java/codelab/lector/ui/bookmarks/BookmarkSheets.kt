@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +47,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,12 +68,14 @@ import codelab.lector.container
 import codelab.lector.data.db.BookmarkKind
 import codelab.lector.ui.components.CheckBox
 import codelab.lector.ui.components.LectorSheet
+import codelab.lector.ui.components.ListDivider
 import codelab.lector.ui.components.PrimaryButton
 import codelab.lector.ui.components.SegmentedControl
 import codelab.lector.ui.components.SheetDivider
 import codelab.lector.ui.components.SheetLink
 import codelab.lector.ui.components.TagChip
 import codelab.lector.ui.components.TextButton
+import codelab.lector.ui.components.dashedBorder
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.theme.LectorTheme
 
@@ -417,7 +421,7 @@ private fun TagPickerSheet(id: String, search: Boolean, store: BookmarkStore, on
 }
 
 @Composable
-private fun SearchField(
+internal fun SearchField(
     value: String,
     onChange: (String) -> Unit,
     placeholder: String,
@@ -578,26 +582,43 @@ internal fun YouAreHere(positionMs: Long) {
  * con la luna y en gris. [onEdit] null: no se edita (el de pausa). [onPlay] null: sin play.
  */
 @Composable
-internal fun BookmarkItem(row: BookmarkRow, onEdit: (() -> Unit)?, onPlay: (() -> Unit)?) {
+internal fun BookmarkItem(
+    row: BookmarkRow,
+    onEdit: (() -> Unit)?,
+    onPlay: (() -> Unit)?,
+    /** Sobre el fondo de una pantalla (recopilación), no de una hoja: su separador. */
+    onBackground: Boolean = false,
+    /** ⋮ de la recopilación, tras el play. */
+    trailing: (@Composable () -> Unit)? = null,
+    /** Tags del filtro activo: en acento. */
+    highlightTags: Set<Long> = emptySet(),
+) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val mark = row.bookmark
     val pause = mark.kind == BookmarkKind.PAUSE
+    val timeStyle = t.meta.copy(fontSize = 13.sp)
+    // Ancho de "00:00:00" con la letra del sistema: los títulos quedan alineados con horas de una o dos cifras.
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val timeWidth = remember(timeStyle, density) {
+        with(density) { measurer.measure("00:00:00", timeStyle).size.width.toDp() }.coerceAtLeast(64.dp)
+    }
     Column {
         Row(
             Modifier
                 .fillMaxWidth()
                 .let { if (onEdit != null) it.clickable(role = Role.Button, onClick = onEdit) else it }
-                .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                .padding(start = 20.dp, end = if (trailing != null) 0.dp else 12.dp, top = 12.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
                 row.bookMs?.let(::formatDuration) ?: "—",
-                style = t.meta.copy(fontSize = 13.sp),
+                style = timeStyle,
                 color = if (pause) c.textSecondary else c.accent,
                 maxLines = 1,
                 softWrap = false,
-                modifier = Modifier.padding(top = 1.dp).widthIn(min = 64.dp),
+                modifier = Modifier.padding(top = 1.dp).width(timeWidth),
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 when {
@@ -611,7 +632,7 @@ internal fun BookmarkItem(row: BookmarkRow, onEdit: (() -> Unit)?, onPlay: (() -
                 mark.note?.let { Text(it, style = t.secondary.copy(lineHeight = 19.sp), color = c.textSecondary, maxLines = 4, overflow = TextOverflow.Ellipsis) }
                 if (row.tags.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        row.tags.forEach { TagLabel(it.name) }
+                        row.tags.forEach { TagLabel(it.name, it.tagId in highlightTags) }
                     }
                 }
                 Text(
@@ -635,20 +656,24 @@ internal fun BookmarkItem(row: BookmarkRow, onEdit: (() -> Unit)?, onPlay: (() -
                     }
                 }
             }
+            trailing?.invoke()
         }
-        SheetDivider()
+        if (onBackground) ListDivider() else SheetDivider()
     }
 }
 
 /** Tag dentro de una fila: 11 mono, borde fino. */
 @Composable
-internal fun TagLabel(name: String) {
+internal fun TagLabel(name: String, highlighted: Boolean = false) {
     val c = LectorTheme.colors
+    val shape = RoundedCornerShape(2.dp)
     Text(
         name,
         style = LectorTheme.type.label.copy(fontFamily = LectorTheme.type.meta.fontFamily),
-        color = c.text,
-        modifier = Modifier.border(1.dp, c.outline, RoundedCornerShape(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp),
+        color = if (highlighted) c.onAccent else c.text,
+        modifier = Modifier
+            .then(if (highlighted) Modifier.background(c.accent, shape) else Modifier.border(1.dp, c.outline, shape))
+            .padding(horizontal = 5.dp, vertical = 1.dp),
     )
 }
 
@@ -697,5 +722,81 @@ fun BookBookmarksPanel(bookId: String, positionMs: Long, modifier: Modifier = Mo
                 )
             }
         }
+    }
+}
+
+/** Filtro de la recopilación: tags elegidos, "sin tag" y "pausa". Vacío: todos (sin pausa). */
+data class BookmarkFilter(val tagIds: Set<Long> = emptySet(), val untagged: Boolean = false, val pause: Boolean = false) {
+    val active: Boolean get() = tagIds.isNotEmpty() || untagged || pause
+}
+
+/**
+ * Lista de tags como filtro de la recopilación (lienzo `Tag-Picker`): casillas, "sin tag", búsqueda,
+ * orden por uso o A–Z, Limpiar y Aplicar. Los cambios valen al aplicar.
+ */
+@Composable
+internal fun TagFilterSheet(filter: BookmarkFilter, store: BookmarkStore, onApply: (BookmarkFilter) -> Unit, onManage: () -> Unit, onDismiss: () -> Unit) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    val tags by remember { store.observeTags() }.collectAsStateWithLifecycle(emptyList())
+    var chosen by remember { mutableStateOf(filter.tagIds) }
+    var untagged by remember { mutableStateOf(filter.untagged) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var byName by rememberSaveable { mutableStateOf(false) }
+    val focus = remember { FocusRequester() }
+    val q = query.trim()
+    val shown = tags
+        .filter { q.isEmpty() || it.name.contains(q, ignoreCase = true) }
+        .let { list -> if (byName) list.sortedBy { it.name.lowercase() } else list }
+
+    LectorSheet(onDismiss, scrollable = false) {
+        Column(Modifier.imePadding()) {
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.tags), style = t.sheetTitle, color = c.text, modifier = Modifier.weight(1f))
+                SheetLink(stringResource(R.string.manage), onManage)
+            }
+            SearchField(query, { query = it }, stringResource(R.string.search_tags), focus, onDone = {}, modifier = Modifier.padding(horizontal = 20.dp))
+            SegmentedControl(
+                listOf(stringResource(R.string.tags_by_use), stringResource(R.string.tags_a_z)),
+                selected = if (byName) 1 else 0,
+                onSelect = { byName = it == 1 },
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp),
+            )
+            LazyColumn(Modifier.weight(1f, fill = false)) {
+                items(shown, key = { it.id }) { tag ->
+                    val on = tag.id in chosen
+                    FilterRow(tag.name, "${tag.uses}", on, dashed = false) { chosen = if (on) chosen - tag.id else chosen + tag.id }
+                }
+                if (q.isEmpty()) {
+                    item { FilterRow(stringResource(R.string.untagged), null, untagged, dashed = true) { untagged = !untagged } }
+                }
+            }
+            SheetDivider(Modifier.padding(top = 6.dp))
+            Row(
+                Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            ) {
+                TextButton(stringResource(R.string.clear), {
+                    chosen = emptySet()
+                    untagged = false
+                })
+                PrimaryButton(stringResource(R.string.apply), { onApply(filter.copy(tagIds = chosen, untagged = untagged)) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterRow(name: String, count: String?, on: Boolean, dashed: Boolean, onToggle: () -> Unit) {
+    val c = LectorTheme.colors
+    val t = LectorTheme.type
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 44.dp).clickable(role = Role.Checkbox, onClick = onToggle).padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        if (dashed && !on) Box(Modifier.size(20.dp).dashedBorder(c.outline, 3.dp)) else CheckBox(on)
+        Text(name, style = t.meta.copy(fontSize = 14.sp), color = if (dashed) c.textSecondary else c.text, modifier = Modifier.weight(1f))
+        if (count != null) Text(count, style = t.meta, color = c.textSecondary)
     }
 }
