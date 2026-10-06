@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-06 — Girar por adb, otra vez permitido
+
+**Qué cambió:** `state.md` decía que no se tocara el giro automático por adb; ahora se puede girar para probar, avisando al usuario al terminar para que vuelva a encender el giro automático.
+**Por qué:** en este móvil el giro automático no se deja volver a encender por adb. El usuario prefiere encenderlo a mano a tener que probar él la vista en horizontal.
+
 ### 2026-10-06 — Sin retrasos de botones
 
 **Qué cambió:** "Retrasar los botones inferiores" y "Retrasar el botón Atrás", del inventario de Simple ABP y del lienzo, salen de LECTOR; sus filas se quitan en Ajustes C2.
