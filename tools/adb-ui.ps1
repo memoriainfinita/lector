@@ -87,3 +87,9 @@ function Db([string]$sql) {
     foreach ($f in 'lector.db','lector.db-wal','lector.db-shm') { Remove-Item "$d\$f" -ErrorAction SilentlyContinue; cmd /c "adb exec-out run-as codelab.lector cat databases/$f > `"$d\$f`" 2>nul" }
     python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); [print(r) for r in c.execute(sys.argv[2])]" "$d\lector.db" $sql
 }
+
+# Estado de la sesión de LECTOR: PLAYING / PAUSED y posición dentro del archivo, en ms.
+function State {
+    (adb shell dumpsys media_session | Select-String -Context 0,8 'package=codelab.lector' | Out-String) -split "`n" |
+        Select-String -Pattern 'state=[A-Z]+\(\d+\), position=\d+' | Select-Object -First 1 | ForEach-Object { $_.Matches[0].Value }
+}
