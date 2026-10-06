@@ -65,6 +65,7 @@ import codelab.lector.ui.settings.LibrarySettingsViewModel
 import codelab.lector.ui.settings.RemoteButtonsScreen
 import codelab.lector.ui.settings.SettingsScreen
 import codelab.lector.ui.settings.SettingsViewModel
+import codelab.lector.ui.settings.SleepSettingsScreen
 import codelab.lector.ui.settings.SoundSettingsScreen
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -268,6 +269,7 @@ private fun routeEntries(
                 viewModel = viewModel { PlayerViewModel(app) },
                 onMinimize = navigator::goBack,
                 onOpenSettings = { navigator.open(SettingsRoute) },
+                onOpenSleepSettings = { navigator.open(SettingsSleepRoute) },
                 onOpenCover = { navigator.open(CoverViewerRoute(it)) },
                 onShowFolder = navigator::showFolder,
             )
@@ -285,6 +287,7 @@ private fun routeEntries(
                 onLibrary = { navigator.open(SettingsLibraryRoute) },
                 onButtons = { navigator.open(SettingsButtonsRoute) },
                 onRemote = { navigator.open(SettingsRemoteRoute) },
+                onSleep = { navigator.open(SettingsSleepRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
@@ -295,7 +298,7 @@ private fun routeEntries(
                 onAddFolder = { navigator.open(FolderPickerRoute) },
             )
         }
-        entry<SettingsSleepRoute> { PlaceholderScreen(stringResource(R.string.settings_sleep), onBack = back) }
+        entry<SettingsSleepRoute> { SleepSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsButtonsRoute> { ButtonsSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsRemoteRoute> { RemoteButtonsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }

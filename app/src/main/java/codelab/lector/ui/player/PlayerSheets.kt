@@ -73,6 +73,7 @@ fun PlayerMenuSheet(
     onDismiss: () -> Unit,
     onSound: () -> Unit,
     onSpeed: () -> Unit,
+    onSleep: () -> Unit,
     onFolder: () -> Unit,
     onSettings: () -> Unit,
 ) {
@@ -89,8 +90,7 @@ fun PlayerMenuSheet(
         Column(Modifier.padding(bottom = 14.dp)) {
             MenuRow(stringResource(R.string.settings_sound), onSound, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_equalizer))
             MenuRow(stringResource(R.string.speed), onSpeed, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_speed), trailing = formatSpeed(np.speed))
-            // Pausa diferida: llega con su función.
-            MenuRow(stringResource(R.string.settings_sleep), {}, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_sleep), enabled = false)
+            MenuRow(stringResource(R.string.settings_sleep), onSleep, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_sleep))
             MenuRow(stringResource(R.string.go_to_book_folder), onFolder, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_folder))
             MenuRow(
                 stringResource(R.string.next_book),

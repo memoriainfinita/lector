@@ -77,7 +77,7 @@ import kotlin.math.roundToInt
 import codelab.lector.ui.formatSpeed
 import codelab.lector.ui.theme.LectorTheme
 
-private enum class PlayerSheet { MENU, SPEED, SOUND, CHAPTERS }
+private enum class PlayerSheet { MENU, SPEED, SOUND, CHAPTERS, SLEEP }
 
 /** Marco de la portada del lienzo (358 × 411) mientras no hay imagen. */
 private const val CoverRatio = 358f / 411f
@@ -88,6 +88,7 @@ fun PlayerScreen(
     viewModel: PlayerViewModel,
     onMinimize: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenSleepSettings: () -> Unit,
     onOpenCover: (String) -> Unit,
     onShowFolder: (String) -> Unit,
 ) {
@@ -96,6 +97,7 @@ fun PlayerScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val bookmarks by viewModel.bookmarkCount.collectAsStateWithLifecycle()
     val appearance by viewModel.appearance.collectAsStateWithLifecycle()
+    val sleep by viewModel.sleep.collectAsStateWithLifecycle()
     val showCover = appearance.showCovers
     var sheet by remember { mutableStateOf<PlayerSheet?>(null) }
     val undo = LocalUndoState.current
@@ -125,6 +127,8 @@ fun PlayerScreen(
                     onChapters = { sheet = PlayerSheet.CHAPTERS },
                     onSpeed = { sheet = PlayerSheet.SPEED },
                     onMenu = { sheet = PlayerSheet.MENU },
+                    sleepActive = sleep.active,
+                    onSleep = { sheet = PlayerSheet.SLEEP },
                 )
                 lost != null -> InaccessibleLandscape(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
             }
@@ -145,6 +149,8 @@ fun PlayerScreen(
                         onChapters = { sheet = PlayerSheet.CHAPTERS },
                         onSpeed = { sheet = PlayerSheet.SPEED },
                         onMenu = { sheet = PlayerSheet.MENU },
+                        sleepActive = sleep.active,
+                        onSleep = { sheet = PlayerSheet.SLEEP },
                     )
                     lost != null -> Inaccessible(lost, viewModel.coverPath(lost.id), showCover, viewModel::rescan, { removeLost(lost) }, onMinimize)
                 }
@@ -160,6 +166,7 @@ fun PlayerScreen(
             onDismiss = { sheet = null },
             onSound = { sheet = PlayerSheet.SOUND },
             onSpeed = { sheet = PlayerSheet.SPEED },
+            onSleep = { sheet = PlayerSheet.SLEEP },
             onFolder = {
                 sheet = null
                 viewModel.bookFolder(onShowFolder)
@@ -171,6 +178,19 @@ fun PlayerScreen(
         )
         PlayerSheet.SPEED -> SpeedSheet(np, settings.newBookSpeed, viewModel, onDismiss = { sheet = null })
         PlayerSheet.SOUND -> SoundSheet(np, viewModel, onDismiss = { sheet = null })
+        PlayerSheet.SLEEP -> SleepSheet(
+            state = sleep,
+            extend = settings.sleepExtend,
+            lastMinutes = settings.sleepLastMinutes,
+            onSet = viewModel::setSleep,
+            onExtend = viewModel::setSleepExtend,
+            onOther = viewModel::setSleepOther,
+            onMore = {
+                sheet = null
+                onOpenSleepSettings()
+            },
+            onDismiss = { sheet = null },
+        )
         PlayerSheet.CHAPTERS -> ChaptersSheet(
             np,
             onSegment = {
@@ -216,6 +236,8 @@ private fun ColumnScope.Player(
     onChapters: () -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
+    sleepActive: Boolean,
+    onSleep: () -> Unit,
 ) {
     if (showCover) {
         CoverArea(Modifier.weight(1f)) { PlayerCover(np, onCover, onMinimize) }
@@ -241,7 +263,7 @@ private fun ColumnScope.Player(
         SlotButton(buttons[3], np, compact = false, onCall)
     }
 
-    ActionRow(np, bookmarks, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
+    ActionRow(np, bookmarks, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 6.dp))
 }
 
 /** Separación entre la portada y la columna central en horizontal. */
@@ -269,6 +291,8 @@ private fun LandscapePlayer(
     onChapters: () -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
+    sleepActive: Boolean,
+    onSleep: () -> Unit,
 ) {
     Row(Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 20.dp)) {
@@ -296,7 +320,7 @@ private fun LandscapePlayer(
                         SlotButton(buttons[3], np, compact = true, onCall)
                     }
                     // Sin marcadores del libro: el panel de la derecha los tiene.
-                    ActionRow(np, null, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
+                    ActionRow(np, null, sleepActive, onSleep, onAct, onSpeed, onMenu, Modifier.fillMaxWidth().padding(top = 6.dp))
                 }
             }
         }
@@ -513,6 +537,8 @@ private fun PlayButton(np: NowPlaying, size: Dp, iconSize: Dp, onAct: (PlayerAct
 private fun ActionRow(
     np: NowPlaying,
     bookmarks: Int?,
+    sleepActive: Boolean,
+    onSleep: () -> Unit,
     onAct: (PlayerAction) -> Unit,
     onSpeed: () -> Unit,
     onMenu: () -> Unit,
@@ -524,8 +550,8 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Pausa diferida y marcadores del libro: llegan con sus funciones.
-        SmallAction(R.drawable.ic_sleep, null, stringResource(R.string.settings_sleep), c.inactive, enabled = false) {}
+        // La luna, en acento mientras la pausa diferida está activa. Marcadores del libro: llegan con su función.
+        SmallAction(R.drawable.ic_sleep, null, stringResource(R.string.settings_sleep), if (sleepActive) c.accent else c.iconSoft, onClick = onSleep)
         RoundIcon(R.drawable.ic_bookmark, stringResource(R.string.add_bookmark), 44.dp, 20.dp, tint = c.accent) {
             onAct(PlayerAction.ADD_BOOKMARK)
         }

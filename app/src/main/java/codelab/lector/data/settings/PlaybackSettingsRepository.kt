@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.time.LocalTime
 
 data class PlaybackSettings(
     /** Tramo que se repite al reanudar tras una pausa. */
@@ -39,6 +40,18 @@ data class PlaybackSettings(
     /** Ajustes › Auricular. */
     val pauseOnUnplug: Boolean = true,
     val resumeOnReplug: Boolean = true,
+    /** Pausa diferida (design.md › Pausa diferida): alargar hasta el final del capítulo. */
+    val sleepExtend: Boolean = false,
+    /** Últimos minutos elegidos con "…": la hoja Elegir valor empieza ahí. */
+    val sleepLastMinutes: Int = 30,
+    /** Automática por horario: franja (puede cruzar la medianoche) y duración. */
+    val sleepAuto: Boolean = false,
+    val sleepAutoMinutes: Int = 30,
+    val sleepFrom: LocalTime = LocalTime.of(23, 0),
+    val sleepTo: LocalTime = LocalTime.of(7, 0),
+    /** Al pausar: marcador de pausa (solo el último por libro) y seguir si se mueve el móvil. */
+    val sleepMarkPause: Boolean = true,
+    val sleepMotionResume: Boolean = true,
 ) {
     /** Segundos de los saltos sin hueco propio (minirreproductor sin salto, coche): los del reproductor. */
     val appSkipBackSec: Int get() = playerButtons.firstOrNull { it.action == PlayerAction.SKIP_BACK }?.seconds ?: DEFAULT_SKIP_SEC
@@ -97,6 +110,14 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
             remoteWhenClosed = p[REMOTE_WHEN_CLOSED] ?: d.remoteWhenClosed,
             pauseOnUnplug = p[PAUSE_ON_UNPLUG] ?: d.pauseOnUnplug,
             resumeOnReplug = p[RESUME_ON_REPLUG] ?: d.resumeOnReplug,
+            sleepExtend = p[SLEEP_EXTEND] ?: d.sleepExtend,
+            sleepLastMinutes = p[SLEEP_LAST_MIN] ?: d.sleepLastMinutes,
+            sleepAuto = p[SLEEP_AUTO] ?: d.sleepAuto,
+            sleepAutoMinutes = p[SLEEP_AUTO_MIN] ?: d.sleepAutoMinutes,
+            sleepFrom = p[SLEEP_FROM]?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: d.sleepFrom,
+            sleepTo = p[SLEEP_TO]?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: d.sleepTo,
+            sleepMarkPause = p[SLEEP_MARK] ?: d.sleepMarkPause,
+            sleepMotionResume = p[SLEEP_MOTION] ?: d.sleepMotionResume,
         )
     }
 
@@ -137,6 +158,23 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setPauseOnUnplug(enabled: Boolean) = store.edit { it[PAUSE_ON_UNPLUG] = enabled }
 
     suspend fun setResumeOnReplug(enabled: Boolean) = store.edit { it[RESUME_ON_REPLUG] = enabled }
+
+    suspend fun setSleepExtend(enabled: Boolean) = store.edit { it[SLEEP_EXTEND] = enabled }
+
+    suspend fun setSleepLastMinutes(minutes: Int) = store.edit { it[SLEEP_LAST_MIN] = minutes }
+
+    suspend fun setSleepAuto(enabled: Boolean) = store.edit { it[SLEEP_AUTO] = enabled }
+
+    suspend fun setSleepAutoMinutes(minutes: Int) = store.edit { it[SLEEP_AUTO_MIN] = minutes }
+
+    suspend fun setSleepWindow(from: LocalTime, to: LocalTime) = store.edit {
+        it[SLEEP_FROM] = from.toSecondOfDay()
+        it[SLEEP_TO] = to.toSecondOfDay()
+    }
+
+    suspend fun setSleepMarkPause(enabled: Boolean) = store.edit { it[SLEEP_MARK] = enabled }
+
+    suspend fun setSleepMotionResume(enabled: Boolean) = store.edit { it[SLEEP_MOTION] = enabled }
 
     suspend fun setAutoNextBook(enabled: Boolean) = store.edit { it[AUTO_NEXT] = enabled }
 
@@ -182,6 +220,14 @@ class PlaybackSettingsRepository(private val store: DataStore<Preferences>) {
         val REMOTE_WHEN_CLOSED = booleanPreferencesKey("remote_when_closed")
         val PAUSE_ON_UNPLUG = booleanPreferencesKey("pause_on_unplug")
         val RESUME_ON_REPLUG = booleanPreferencesKey("resume_on_replug")
+        val SLEEP_EXTEND = booleanPreferencesKey("sleep_extend")
+        val SLEEP_LAST_MIN = intPreferencesKey("sleep_last_minutes")
+        val SLEEP_AUTO = booleanPreferencesKey("sleep_auto")
+        val SLEEP_AUTO_MIN = intPreferencesKey("sleep_auto_minutes")
+        val SLEEP_FROM = intPreferencesKey("sleep_from")
+        val SLEEP_TO = intPreferencesKey("sleep_to")
+        val SLEEP_MARK = booleanPreferencesKey("sleep_mark_pause")
+        val SLEEP_MOTION = booleanPreferencesKey("sleep_motion_resume")
         val PREAMP = floatPreferencesKey("sound_preamp_db")
         val EQ_ON = booleanPreferencesKey("sound_eq_enabled")
         val EQ_BANDS = stringPreferencesKey("sound_eq_bands")

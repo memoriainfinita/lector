@@ -286,4 +286,25 @@
     <string name="remote_play">Play, Pause, Stop</string>
     <string name="remote_when_closed">Respond when the app is closed</string>
     <string name="remote_tip">Press a headset button to highlight it in the list.</string>
+    <string name="sleep_off">Off</string>
+    <string name="sleep_pauses_in">Pauses in</string>
+    <string name="sleep_pauses_at_chapter_end">Pauses at the end of the chapter in</string>
+    <string name="sleep_turn_off">Turn off</string>
+    <string name="sleep_chapter_end">At the end of the chapter</string>
+    <string name="sleep_extend">Extend to the end of the chapter</string>
+    <string name="sleep_more">Automatic schedule and more</string>
+    <string name="sleep_other_note">Minutes of continuous listening</string>
+    <string name="minutes_value">%1$d min</string>
+    <string name="sleep_timer">Timer</string>
+    <string name="sleep_auto">Automatic by schedule</string>
+    <string name="sleep_auto_enable">Turn on by itself</string>
+    <string name="sleep_auto_note">Counts continuous listening; starts over if you stop</string>
+    <string name="sleep_duration">Duration</string>
+    <string name="sleep_window">From / to</string>
+    <string name="sleep_on_pause">On pause</string>
+    <string name="sleep_mark_pause">Mark where it paused</string>
+    <string name="sleep_mark_pause_note">Only the last one per book</string>
+    <string name="sleep_motion">Keep playing if I move the phone</string>
+    <string name="sleep_motion_note">Within 30 s after the pause</string>
+    <string name="sleep_auto_summary">%1$d min · automatic from %2$s to %3$s</string>
 </resources>

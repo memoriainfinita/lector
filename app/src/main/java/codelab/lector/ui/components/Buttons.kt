@@ -200,7 +200,7 @@ fun IconSegmentedControl(icons: List<Painter>, labels: List<String>, selected: I
 
 /** Opción en hoja (velocidad, pausa, valores): 36 / radio 2 / 13 mono. */
 @Composable
-fun OptionChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun OptionChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, mono: Boolean = true) {
     val c = LectorTheme.colors
     val shape = RoundedCornerShape(2.dp)
     Box(
@@ -216,7 +216,8 @@ fun OptionChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
     ) {
         Text(
             text,
-            style = LectorTheme.type.meta.copy(fontSize = 13.sp, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal),
+            style = (if (mono) LectorTheme.type.meta else LectorTheme.type.secondary)
+                .copy(fontSize = 13.sp, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal),
             color = if (selected) c.onAccent else c.text,
         )
     }

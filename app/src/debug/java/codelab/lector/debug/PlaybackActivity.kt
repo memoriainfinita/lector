@@ -79,6 +79,8 @@ class PlaybackActivity : ComponentActivity() {
             }
         }
         if (intent.hasExtra("jump")) playback.jumpTo(intent.getLongExtra("jump", 0))
+        // Pausa diferida: minutos, 0 apaga, -1 al terminar el capítulo.
+        if (intent.hasExtra("sleep")) playback.setSleep(intent.getIntExtra("sleep", 0))
         if (intent.hasExtra("speed")) playback.setSpeed(intent.getFloatExtra("speed", 1f))
         if (intent.hasExtra("skipSilence")) playback.setSkipSilence(intent.getBooleanExtra("skipSilence", false))
         if (intent.hasExtra("ownSound")) playback.setOwnSound(intent.getBooleanExtra("ownSound", false))

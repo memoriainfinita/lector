@@ -91,6 +91,9 @@ class PlaybackConnection(
 
     fun unload(bookId: String) = send(LectorCommands.UNLOAD_BOOK, bookArgs(bookId))
 
+    /** Pausa diferida: minutos, 0 para apagar o [LectorCommands.SLEEP_CHAPTER_END]. */
+    fun setSleep(minutes: Int) = send(LectorCommands.SET_SLEEP, Bundle().apply { putInt(LectorCommands.ARG_MINUTES, minutes) })
+
     private fun bookArgs(bookId: String) = Bundle().apply { putString(LectorCommands.ARG_BOOK_ID, bookId) }
 
     fun clearError() = holder.clearError()

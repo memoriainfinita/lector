@@ -46,6 +46,7 @@ fun SettingsScreen(
     onLibrary: () -> Unit,
     onButtons: () -> Unit,
     onRemote: () -> Unit,
+    onSleep: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
@@ -73,7 +74,16 @@ fun SettingsScreen(
         LinkRow(stringResource(R.string.equalizer), onSound, note = stringResource(R.string.equalizer_note))
 
         SectionHeader(stringResource(R.string.settings_sleep))
-        LinkRow(stringResource(R.string.sleep_timer_and_schedule), {}, enabled = false)
+        val time = DateTimeFormatter.ofPattern("HH:mm")
+        LinkRow(
+            stringResource(R.string.sleep_timer_and_schedule),
+            onSleep,
+            note = if (playback.sleepAuto) {
+                stringResource(R.string.sleep_auto_summary, playback.sleepAutoMinutes, playback.sleepFrom.format(time), playback.sleepTo.format(time))
+            } else {
+                null
+            },
+        )
 
         SectionHeader(stringResource(R.string.settings_buttons))
         LinkRow(stringResource(R.string.skip_buttons), onButtons, note = stringResource(R.string.skip_buttons_note))
@@ -107,7 +117,6 @@ fun SettingsScreen(
 
         SectionHeader(stringResource(R.string.settings_appearance))
         ValueRow(stringResource(R.string.theme), stringResource(themeLabel(appearance.mode)), onAppearance, mono = false)
-        val time = DateTimeFormatter.ofPattern("HH:mm")
         SwitchRow(
             stringResource(R.string.theme_by_time),
             appearance.schedule.enabled,

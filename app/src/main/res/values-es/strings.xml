@@ -285,4 +285,25 @@
     <string name="remote_play">Play, Pausa, Stop</string>
     <string name="remote_when_closed">Responder con la app cerrada</string>
     <string name="remote_tip">Pulsa un botón del auricular para resaltarlo en la lista.</string>
+    <string name="sleep_off">Apagada</string>
+    <string name="sleep_pauses_in">Se pausa en</string>
+    <string name="sleep_pauses_at_chapter_end">Se pausa al terminar el capítulo, en</string>
+    <string name="sleep_turn_off">Apagar</string>
+    <string name="sleep_chapter_end">Al terminar el capítulo</string>
+    <string name="sleep_extend">Alargar hasta el final del capítulo</string>
+    <string name="sleep_more">Horario automático y más</string>
+    <string name="sleep_other_note">Minutos de escucha seguida</string>
+    <string name="minutes_value">%1$d min</string>
+    <string name="sleep_timer">Temporizador</string>
+    <string name="sleep_auto">Automática por horario</string>
+    <string name="sleep_auto_enable">Activar sola</string>
+    <string name="sleep_auto_note">Cuenta la escucha seguida; vuelve a empezar si paras</string>
+    <string name="sleep_duration">Duración</string>
+    <string name="sleep_window">Desde / hasta</string>
+    <string name="sleep_on_pause">Al pausar</string>
+    <string name="sleep_mark_pause">Marcar dónde se pausó</string>
+    <string name="sleep_mark_pause_note">Solo el último por libro</string>
+    <string name="sleep_motion">Seguir si muevo el móvil</string>
+    <string name="sleep_motion_note">En los 30 s tras la pausa</string>
+    <string name="sleep_auto_summary">%1$d min · automática de %2$s a %3$s</string>
 </resources>

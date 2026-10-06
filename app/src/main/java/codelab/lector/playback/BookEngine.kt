@@ -289,6 +289,28 @@ class BookEngine(
         )
     }
 
+    /** Pausa diferida: marcador de pausa en la posición, solo el último por libro. */
+    suspend fun addPauseBookmark() {
+        val b = book ?: return
+        val now = System.currentTimeMillis()
+        db.bookmarks().replacePauseMarker(
+            Bookmark(
+                id = UUID.randomUUID().toString(),
+                bookId = b.id,
+                file = files[exo.currentMediaItemIndex].relativePath,
+                positionMs = exo.currentPosition,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
+    }
+
+    /** Fin del tramo que suena, en ms del libro (pausa diferida al terminar el capítulo). */
+    fun currentSegmentEnd(): Long? {
+        if (!loaded) return null
+        return timeline.segments.getOrNull(timeline.segmentIndexAt(position()))?.endMs
+    }
+
     private suspend fun previousBookmark() {
         val b = book ?: return
         val marks = db.bookmarks().ofKind(b.id, BookmarkKind.NORMAL).mapNotNull { m ->

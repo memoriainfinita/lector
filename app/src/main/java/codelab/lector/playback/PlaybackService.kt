@@ -56,6 +56,7 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var engine: BookEngine
     private var session: MediaLibrarySession? = null
     private lateinit var remote: RemoteButtons
+    private lateinit var sleep: SleepTimer
     /** Último libro cargado al arrancar (o nada): lo esperan los botones remotos y retomar. */
     private val restored = CompletableDeferred<Unit>()
     /** Pausa por desconectar el auricular, para reanudar si vuelve (Ajustes › Auricular). */
@@ -74,6 +75,7 @@ class PlaybackService : MediaLibraryService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         engine = BookEngine(exo, app.database, app.covers, app.playbackSettings, app.nowPlaying, sound, scope, app.appScope)
+        sleep = SleepTimer(this, exo, engine, app.sleep, scope)
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_PLAYER),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -204,6 +206,7 @@ class PlaybackService : MediaLibraryService() {
     override fun onDestroy() {
         getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(headsets)
         remote.release()
+        sleep.release()
         engine.release()
         session?.release()
         session = null
@@ -250,6 +253,11 @@ class PlaybackService : MediaLibraryService() {
                 LectorCommands.RESET_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let(engine::reset)
                 LectorCommands.REFRESH_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.refresh(it) }
                 LectorCommands.UNLOAD_BOOK -> args.getString(LectorCommands.ARG_BOOK_ID)?.let { engine.unload(it) }
+                LectorCommands.SET_SLEEP -> when (val minutes = args.getInt(LectorCommands.ARG_MINUTES)) {
+                    LectorCommands.SLEEP_CHAPTER_END -> sleep.setChapterEnd()
+                    0 -> sleep.cancel()
+                    else -> sleep.setTimer(minutes)
+                }
                 else -> return@future SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED)
             }
             SessionResult(SessionResult.RESULT_SUCCESS)

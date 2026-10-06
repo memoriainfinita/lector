@@ -54,6 +54,20 @@ class SettingsViewModel(private val app: AppContainer) : ViewModel() {
     fun setPlayerButton(index: Int, call: ActionCall) = save { app.playbackSettings.setPlayerButton(index, call) }
     fun setNotificationButton(index: Int, call: ActionCall) = save { app.playbackSettings.setNotificationButton(index, call) }
 
+    // Pausa diferida
+    val sleep = app.sleep.state
+    fun setSleep(minutes: Int) = app.playback.setSleep(minutes)
+    fun setSleepOther(minutes: Int) {
+        app.playback.setSleep(minutes)
+        save { app.playbackSettings.setSleepLastMinutes(minutes) }
+    }
+    fun setSleepExtend(enabled: Boolean) = save { app.playbackSettings.setSleepExtend(enabled) }
+    fun setSleepAuto(enabled: Boolean) = save { app.playbackSettings.setSleepAuto(enabled) }
+    fun setSleepAutoMinutes(minutes: Int) = save { app.playbackSettings.setSleepAutoMinutes(minutes) }
+    fun setSleepWindow(from: java.time.LocalTime, to: java.time.LocalTime) = save { app.playbackSettings.setSleepWindow(from, to) }
+    fun setSleepMarkPause(enabled: Boolean) = save { app.playbackSettings.setSleepMarkPause(enabled) }
+    fun setSleepMotionResume(enabled: Boolean) = save { app.playbackSettings.setSleepMotionResume(enabled) }
+
     // Botones remotos y auricular
     val remoteKeys = app.remoteKeys
     fun setRemoteButton(index: Int, call: ActionCall) = save { app.playbackSettings.setRemoteButton(index, call) }

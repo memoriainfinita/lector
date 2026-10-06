@@ -11,6 +11,7 @@ import codelab.lector.playback.NowPlaying
 import codelab.lector.playback.PlaybackError
 import codelab.lector.playback.ActionCall
 import codelab.lector.playback.PlayerAction
+import codelab.lector.playback.SleepState
 import codelab.lector.playback.SoundSettings
 import codelab.lector.playback.Volume
 import codelab.lector.ui.theme.ThemeMode
@@ -58,6 +59,21 @@ class PlayerViewModel(private val app: AppContainer) : ViewModel() {
     val inaccessibleBook: StateFlow<Book?> = playback.error
         .map { e -> (e as? PlaybackError.Inaccessible)?.let { app.database.books().get(it.bookId) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val sleep: StateFlow<SleepState> = app.sleep.state
+
+    /** Minutos, 0 apaga o [codelab.lector.playback.LectorCommands.SLEEP_CHAPTER_END]. */
+    fun setSleep(minutes: Int) = playback.setSleep(minutes)
+
+    /** "…" de la pausa diferida: se arranca y se recuerda para la próxima vez. */
+    fun setSleepOther(minutes: Int) {
+        playback.setSleep(minutes)
+        viewModelScope.launch { app.playbackSettings.setSleepLastMinutes(minutes) }
+    }
+
+    fun setSleepExtend(enabled: Boolean) {
+        viewModelScope.launch { app.playbackSettings.setSleepExtend(enabled) }
+    }
 
     fun act(action: PlayerAction) = playback.act(action)
 

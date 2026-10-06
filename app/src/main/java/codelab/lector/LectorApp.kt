@@ -16,6 +16,7 @@ import codelab.lector.library.Media3MetadataReader
 import codelab.lector.playback.PlaybackConnection
 import codelab.lector.playback.PlaybackStateHolder
 import codelab.lector.playback.RemoteKeyMonitor
+import codelab.lector.playback.SleepStateHolder
 import codelab.lector.playback.VolumeControl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -45,6 +46,8 @@ class AppContainer(context: Context) {
     val volume = VolumeControl(context)
     /** Ajustes › Botones remotos abierta: las pulsaciones se resaltan en vez de ejecutarse. */
     val remoteKeys = RemoteKeyMonitor()
+    /** Pausa diferida: la publica el servicio. */
+    val sleep = SleepStateHolder()
 
     init {
         // Cada búsqueda terminada queda como la última (Ajustes › Biblioteca). Sin errores: un

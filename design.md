@@ -291,6 +291,20 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - `00.05 Mentats of Dune.m4b` no es audio: es un ZIP (cabecera `PK`) con el m4b dentro. Ningún extractor lo lee; error de reproducción
 - Pendiente: capítulos de los MP4 con el índice al final (el escaneo no los lee; Heir of Caladan sin capítulos en la base de datos, sin comprobar si los tiene)
 
+## Pausa diferida
+
+Aprobado 2026-10-06 (lienzo `Sleep-Sheet`, `Settings-Sleep`; Referencia: Voice). Dos entregas: A temporizador y hoja en Escuchando; B Ajustes › Pausa diferida (horario automático, marcar dónde se pausó, seguir si se mueve el móvil). Código en `playback/SleepTimer.kt`.
+
+- Vive en el servicio: sigue con la pantalla apagada. La hoja manda órdenes por la sesión y lee el estado de `app.sleep`
+- Temporizador: cuenta solo mientras suena. Una pausa (del usuario, de otra app que se queda el audio, del auricular) lo devuelve a la duración completa; una interrupción breve (notificación, foco transitorio) no, porque no cambia `playWhenReady`
+- Al terminar el capítulo: pausa al final del tramo que suena (capítulo, o archivo sin capítulos). Alargar hasta el final del capítulo: cumplido el tiempo, sigue hasta el final del tramo
+- Fundido del volumen del reproductor en los últimos 10 s (también al final del capítulo); al pausar vuelve al volumen normal. Sin ajuste
+- Al pausar, la pausa diferida se apaga; la automática vuelve a empezar la próxima vez que suene dentro del horario
+- Hoja: 20, 30, 35, 40 min y "…" (Elegir valor, 1–180 min, empieza en el último elegido), "Al terminar el capítulo", "Alargar hasta el final del capítulo" (DataStore), "Se pausa en mm:ss" con Apagar, enlace "Horario automático y más". La luna de Escuchando, en acento mientras está activa
+- Automática por horario: apagada por defecto, de 23:00 a 7:00, 30 min. Arranca al empezar a sonar dentro de la franja (que puede cruzar la medianoche)
+- Marcar dónde se pausó (activado): marcador de clase pausa en la posición, solo el último por libro
+- Seguir si muevo el móvil (activado): 30 s tras la pausa, con el acelerómetro y un bloqueo de activación parcial de 30 s; si se mueve, vuelve a sonar con la misma pausa diferida
+
 ## Navegación
 
 Aprobado 2026-10-03. Revisado 2026-10-04: sin menú inferior, una sola pila.
