@@ -26,6 +26,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,6 +86,8 @@ class PlaybackActivity : ComponentActivity() {
         if (intent.hasExtra("skipSilence")) playback.setSkipSilence(intent.getBooleanExtra("skipSilence", false))
         if (intent.hasExtra("ownSound")) playback.setOwnSound(intent.getBooleanExtra("ownSound", false))
         if (intent.hasExtra("volume")) container.volume.set(intent.getIntExtra("volume", 0))
+        // Nivel del pellizco de la Biblioteca (adb no hace gestos de dos dedos): 1–3 columnas, 4 lista.
+        if (intent.hasExtra("columns")) container.appScope.launch { container.librarySettings.setGridColumns(intent.getIntExtra("columns", 2)) }
         // Sonido: --ef preamp <dB> --ez eq <bool> --es bands "0,2,0,-1,3" [--ez global true]
         if (intent.hasExtra("preamp") || intent.hasExtra("eq") || intent.hasExtra("bands")) {
             val sound = SoundSettings(

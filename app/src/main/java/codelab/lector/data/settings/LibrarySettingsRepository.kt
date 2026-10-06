@@ -24,7 +24,7 @@ class LibrarySettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setSort(sort: LibrarySort) = store.edit { it[SORT] = sort.name }
 
-    /** Columnas en vertical (1, 2 o 3), elegidas con el pellizco. En horizontal, el doble. */
+    /** Columnas en vertical (1, 2 o 3) o [ListLevel], elegidas con el pellizco. En horizontal, el doble. */
     val gridColumns: Flow<Int> = store.data.map { p -> (p[GRID_COLUMNS] ?: 2).coerceIn(MinColumns, MaxColumns) }.distinctUntilChanged()
 
     suspend fun setGridColumns(columns: Int) = store.edit { it[GRID_COLUMNS] = columns.coerceIn(MinColumns, MaxColumns) }
@@ -45,7 +45,9 @@ class LibrarySettingsRepository(private val store: DataStore<Preferences>) {
 
     companion object {
         const val MinColumns = 1
-        const val MaxColumns = 3
+        /** Nivel del pellizco tras 3 columnas: lista con portada pequeña. */
+        const val ListLevel = 4
+        const val MaxColumns = ListLevel
         private val SORT = stringPreferencesKey("library_sort")
         private val GRID_COLUMNS = intPreferencesKey("library_grid_columns")
         private val SHOW_UNAVAILABLE = booleanPreferencesKey("library_show_unavailable")

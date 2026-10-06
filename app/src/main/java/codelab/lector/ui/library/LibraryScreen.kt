@@ -112,6 +112,7 @@ import codelab.lector.library.folderToShow
 import codelab.lector.library.progress
 import codelab.lector.library.remainingMs
 import codelab.lector.library.status
+import codelab.lector.data.settings.LibrarySettingsRepository
 import codelab.lector.ui.components.BookCover
 import codelab.lector.ui.components.toneKeyOf
 import codelab.lector.ui.components.ListDivider
@@ -447,11 +448,20 @@ private fun BookGrid(
     }
     val bottom = maxOf(LocalBottomInset.current, keyboard)
     // Sin portadas (Ajustes › Mostrar portadas): lista, como Simple ABP; sin pellizco.
-    val list = !state.showCovers
+    // Con portadas, el pellizco baja de 3 columnas a una lista con portada pequeña.
+    val coverList = state.showCovers && state.columns == LibrarySettingsRepository.ListLevel
+    val list = !state.showCovers || coverList
     // Columnas del pellizco: 1, 2 o 3 en vertical; en horizontal, el doble (mismo tamaño de tarjeta).
+    // La lista con portadas, en dos columnas en horizontal.
+    val columns = when {
+        !state.showCovers -> 1
+        coverList -> if (landscape) 2 else 1
+        landscape -> state.columns * 2
+        else -> state.columns
+    }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(if (list) 1 else if (landscape) state.columns * 2 else state.columns),
-        modifier = Modifier.fillMaxSize().then(if (list) Modifier else Modifier.pinchToZoom(viewModel::zoom)),
+        columns = GridCells.Fixed(columns),
+        modifier = Modifier.fillMaxSize().then(if (state.showCovers) Modifier.pinchToZoom(viewModel::zoom) else Modifier),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = bottom + 20.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(if (list) 0.dp else 18.dp),
@@ -493,10 +503,12 @@ private fun BookGrid(
         items(state.entries, key = { it.key }) { entry ->
             if (list) {
                 // A todo el ancho, con su propio margen: las filas llevan separador de lado a lado.
-                Column(Modifier.bleed(20.dp)) {
+                // En dos columnas, cada fila en la suya.
+                Column(if (columns == 1) Modifier.bleed(20.dp) else Modifier) {
                     when (entry) {
                         is LibraryEntry.BookEntry -> BookListRow(
                             entry.item,
+                            cover = if (coverList) CoverSlot(state.covers[entry.item.book.id]) else null,
                             loaded = entry.item.book.id == state.loadedBookId,
                             onOpen = if (entry.item.book.removed) {
                                 { bookmarkSheets.showBook(entry.item.book.id) }
@@ -511,6 +523,7 @@ private fun BookGrid(
                         )
                         is LibraryEntry.FolderEntry -> FolderListRow(
                             entry,
+                            cover = if (coverList) CoverSlot(entry.items.firstNotNullOfOrNull { state.covers[it.book.id] }) else null,
                             onOpen = { onOpenFolder(entry.path) },
                             onOptions = { onFolderOptions(entry.path) },
                             terms = state.searchTerms,
@@ -797,12 +810,16 @@ private fun folderKindName(kind: FolderKind) = when (kind) {
     FolderKind.EPISODES -> R.string.folder_class_episodes
 }
 
+/** Portada pequeña de la lista del pellizco; [path] null, la tipográfica. */
+private class CoverSlot(val path: String?)
+
 /**
  * Fila de la lista sin portadas (lienzo "Biblioteca sin portadas: lista"): título, autor, línea
- * mono y barra si está en curso; ⋮ a la derecha. Cargado: título en acento.
+ * mono y barra si está en curso; ⋮ a la derecha. Cargado: título en acento. Con [cover] (lista del
+ * pellizco), portada de 44 a la izquierda, como en Unir.
  */
 @Composable
-private fun BookListRow(item: LibraryItem, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>) {
+private fun BookListRow(item: LibraryItem, cover: CoverSlot?, loaded: Boolean, onOpen: (() -> Unit)?, onOptions: () -> Unit, terms: List<String>) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     val book = item.book
@@ -819,6 +836,10 @@ private fun BookListRow(item: LibraryItem, loaded: Boolean, onOpen: (() -> Unit)
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        if (cover != null) {
+            BookCover(cover.path, title, Modifier.size(44.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 8.sp), toneKey = toneKeyOf(book.author, title))
+            Spacer(Modifier.width(10.dp))
+        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 highlighted(title, terms),
@@ -839,7 +860,7 @@ private fun BookListRow(item: LibraryItem, loaded: Boolean, onOpen: (() -> Unit)
 
 /** Carpeta de Sesiones o Episodios en la lista: icono de carpeta, nombre, "Sesiones · 12" y ⋮. */
 @Composable
-private fun FolderListRow(entry: LibraryEntry.FolderEntry, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>) {
+private fun FolderListRow(entry: LibraryEntry.FolderEntry, cover: CoverSlot?, onOpen: () -> Unit, onOptions: () -> Unit, terms: List<String>) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
     ListDivider()
@@ -851,7 +872,11 @@ private fun FolderListRow(entry: LibraryEntry.FolderEntry, onOpen: () -> Unit, o
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(20.dp), tint = c.textSecondary)
+        if (cover != null) {
+            BookCover(cover.path, entry.name, Modifier.size(44.dp), radius = 4.dp, titleStyle = t.label.copy(fontSize = 8.sp))
+        } else {
+            Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(20.dp), tint = c.textSecondary)
+        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(highlighted(entry.name, terms), style = t.row.copy(fontWeight = FontWeight.Medium), color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(stringResource(R.string.folder_subtitle_class, stringResource(folderKindName(entry.kind)), entry.items.size), style = t.meta, color = c.textSecondary)
