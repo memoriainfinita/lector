@@ -99,6 +99,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import codelab.lector.R
+import codelab.lector.ui.components.highlighted
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.data.db.LibraryItem
 import codelab.lector.library.FolderKind
@@ -385,16 +386,6 @@ private fun SearchCount(count: Int) {
         color = LectorTheme.colors.textSecondary,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 4.dp),
     )
-}
-
-/** Lo encontrado en acento. */
-@Composable
-private fun highlighted(text: String, terms: List<String>): AnnotatedString {
-    val accent = LectorTheme.colors.accent
-    return buildAnnotatedString {
-        append(text)
-        searchHighlights(text, terms).forEach { addStyle(SpanStyle(color = accent), it.first, it.last + 1) }
-    }
 }
 
 @Composable

@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.bookmarks.BookmarkSheetsHost
 import codelab.lector.ui.bookmarks.BookmarksScreen
+import codelab.lector.ui.bookmarks.BookmarksSearchScreen
 import codelab.lector.ui.bookmarks.BookmarksViewModel
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.ui.bookmarks.rememberBookmarkSheetsState
@@ -293,7 +294,7 @@ private fun routeEntries(
                 onManageTags = { navigator.open(SettingsTagsRoute) },
             )
         }
-        entry<BookmarksSearchRoute> { PlaceholderScreen(stringResource(R.string.search_bookmarks), onBack = back) }
+        entry<BookmarksSearchRoute> { BookmarksSearchScreen(viewModel { BookmarksViewModel(app) }, onBack = back) }
         entry<SettingsRoute> {
             SettingsScreen(
                 viewModel = viewModel { SettingsViewModel(app) },

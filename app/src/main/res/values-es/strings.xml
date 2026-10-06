@@ -346,4 +346,11 @@
     <string name="bookmark_options">Opciones del marcador</string>
     <string name="no_bookmarks_title">Aún no hay marcadores</string>
     <string name="no_bookmarks_body">Marca un momento con el botón de marcador del reproductor o de la notificación, o con el botón remoto que asignes en Ajustes. Título, nota y tags se pueden añadir después.</string>
+    <string name="export_bookmarks">Exportar marcadores</string>
+    <string name="export_filter_note">%1$d · filtro: %2$s</string>
+    <string name="copy">Copiar</string>
+    <string name="save_as_file">Guardar como archivo</string>
+    <string name="share_with_app">Compartir con otra app</string>
+    <string name="bookmarks_file_name">%1$s – marcadores</string>
+    <string name="search_bookmarks_fields">título, nota o tag</string>
 </resources>

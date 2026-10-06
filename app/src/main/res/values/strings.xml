@@ -347,4 +347,11 @@
     <string name="bookmark_options">Bookmark options</string>
     <string name="no_bookmarks_title">No bookmarks yet</string>
     <string name="no_bookmarks_body">Mark a moment with the bookmark button in the player or the notification, or with the remote button you assign in Settings. Title, note and tags can be added later.</string>
+    <string name="export_bookmarks">Export bookmarks</string>
+    <string name="export_filter_note">%1$d · filter: %2$s</string>
+    <string name="copy">Copy</string>
+    <string name="save_as_file">Save as file</string>
+    <string name="share_with_app">Share with another app</string>
+    <string name="bookmarks_file_name">%1$s – bookmarks</string>
+    <string name="search_bookmarks_fields">title, note or tag</string>
 </resources>

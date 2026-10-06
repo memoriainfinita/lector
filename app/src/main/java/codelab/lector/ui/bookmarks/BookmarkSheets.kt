@@ -76,6 +76,8 @@ import codelab.lector.ui.components.SheetLink
 import codelab.lector.ui.components.TagChip
 import codelab.lector.ui.components.TextButton
 import codelab.lector.ui.components.dashedBorder
+import codelab.lector.ui.components.highlighted
+import codelab.lector.library.fold
 import codelab.lector.ui.formatDuration
 import codelab.lector.ui.theme.LectorTheme
 
@@ -90,6 +92,7 @@ class BookmarkSheetsState internal constructor(initial: List<Sheet>) {
         data class Book(val bookId: String) : Sheet
         data class Edit(val bookmarkId: String, val created: Boolean) : Sheet
         data class Tags(val bookmarkId: String, val search: Boolean) : Sheet
+        data class Export(val bookId: String) : Sheet
     }
 
     internal val stack = mutableStateListOf<Sheet>().apply { addAll(initial) }
@@ -108,6 +111,8 @@ class BookmarkSheetsState internal constructor(initial: List<Sheet>) {
 
     internal fun tags(bookmarkId: String, search: Boolean) = stack.add(Sheet.Tags(bookmarkId, search))
 
+    internal fun export(bookId: String) = stack.add(Sheet.Export(bookId))
+
     internal fun back() {
         if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex)
     }
@@ -123,6 +128,7 @@ class BookmarkSheetsState internal constructor(initial: List<Sheet>) {
                         is Sheet.Book -> "B|${it.bookId}"
                         is Sheet.Edit -> "E|${it.bookmarkId}|${it.created}"
                         is Sheet.Tags -> "T|${it.bookmarkId}|${it.search}"
+                        is Sheet.Export -> "X|${it.bookId}"
                     }
                 }
             },
@@ -134,6 +140,7 @@ class BookmarkSheetsState internal constructor(initial: List<Sheet>) {
                             "B" -> Sheet.Book(p[1])
                             "E" -> Sheet.Edit(p[1], p[2].toBoolean())
                             "T" -> Sheet.Tags(p[1], p[2].toBoolean())
+                            "X" -> Sheet.Export(p[1])
                             else -> null
                         }
                     },
@@ -166,6 +173,7 @@ fun BookmarkSheetsHost(state: BookmarkSheetsState, onSeeAll: () -> Unit, onManag
                 state.close()
                 onSeeAll()
             },
+            onExport = { state.export(top.bookId) },
             onDismiss = state::back,
             onPlayed = state::close,
         )
@@ -186,8 +194,26 @@ fun BookmarkSheetsHost(state: BookmarkSheetsState, onSeeAll: () -> Unit, onManag
             },
             onDismiss = state::back,
         )
+        is BookmarkSheetsState.Sheet.Export -> BookExportSheet(top.bookId, store, onDismiss = state::back)
         null -> Unit
     }
+}
+
+/** Exportar desde la hoja del libro: sus marcadores, sin el de pausa. */
+@Composable
+private fun BookExportSheet(bookId: String, store: BookmarkStore, onDismiss: () -> Unit) {
+    val app = LocalContext.current.container
+    val rows by remember(bookId) { store.observeBook(bookId) }.collectAsStateWithLifecycle(null)
+    val book by produceState<codelab.lector.data.db.Book?>(null, bookId) { value = app.database.books().get(bookId) }
+    val b = book ?: return
+    val marks = rows?.filter { it.bookmark.kind == BookmarkKind.NORMAL } ?: return
+    val name = b.customName ?: b.title
+    ExportSheet(
+        "$name · ${marks.size}",
+        listOf(name to marks),
+        safeFileName(stringResource(R.string.bookmarks_file_name, name)),
+        onDismiss,
+    )
 }
 
 /** "1:47:57 · CD02 · 31:58": posición en el libro, tramo y posición en el tramo. */
@@ -469,6 +495,7 @@ private fun BookBookmarksSheet(
     store: BookmarkStore,
     onEdit: (String) -> Unit,
     onSeeAll: () -> Unit,
+    onExport: () -> Unit,
     onDismiss: () -> Unit,
     onPlayed: () -> Unit,
 ) {
@@ -532,13 +559,9 @@ private fun BookBookmarksSheet(
         ) {
             SheetLink(stringResource(R.string.see_all_bookmarks), onSeeAll, Modifier.weight(1f, fill = false))
             Spacer(Modifier.weight(1f))
-            // Exportar llega con su hoja (entrega C).
-            Text(
-                stringResource(R.string.export),
-                style = t.secondary,
-                color = c.inactive,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
+            if (normal > 0) {
+                TextButton(stringResource(R.string.export), onExport)
+            }
         }
     }
 }
@@ -592,6 +615,8 @@ internal fun BookmarkItem(
     trailing: (@Composable () -> Unit)? = null,
     /** Tags del filtro activo: en acento. */
     highlightTags: Set<Long> = emptySet(),
+    /** Palabras de la búsqueda (searchTerms): lo encontrado en título, nota y tags, en acento. */
+    terms: List<String> = emptyList(),
 ) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
@@ -626,13 +651,13 @@ internal fun BookmarkItem(
                         Icon(painterResource(R.drawable.ic_sleep), null, Modifier.size(13.dp), tint = c.textSecondary)
                         Text(stringResource(R.string.pause_marker, ago(mark.createdAt)), style = t.body, color = c.textSecondary)
                     }
-                    mark.title != null -> Text(mark.title, style = t.row.copy(fontWeight = FontWeight.Medium), color = c.text)
+                    mark.title != null -> Text(highlighted(mark.title, terms), style = t.row.copy(fontWeight = FontWeight.Medium), color = c.text)
                     else -> Text(stringResource(R.string.bookmark_untitled), style = t.body, color = c.textTertiary)
                 }
-                mark.note?.let { Text(it, style = t.secondary.copy(lineHeight = 19.sp), color = c.textSecondary, maxLines = 4, overflow = TextOverflow.Ellipsis) }
+                mark.note?.let { Text(highlighted(it, terms), style = t.secondary.copy(lineHeight = 19.sp), color = c.textSecondary, maxLines = 4, overflow = TextOverflow.Ellipsis) }
                 if (row.tags.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        row.tags.forEach { TagLabel(it.name, it.tagId in highlightTags) }
+                        row.tags.forEach { tag -> TagLabel(tag.name, tag.tagId in highlightTags || terms.any { it in fold(tag.name) }) }
                     }
                 }
                 Text(

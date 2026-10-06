@@ -118,8 +118,10 @@ fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch:
     val sheets = LocalBookmarkSheets.current
     val undo = LocalUndoState.current
     val deletedText = stringResource(R.string.bookmark_deleted)
+    val pauseLabel = stringResource(R.string.settings_sleep)
     val context = LocalContext.current
     var picking by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
 
     val groups = all ?: return
     val empty = groups.none { g -> g.rows.any { it.bookmark.kind == BookmarkKind.NORMAL } } && !filter.active
@@ -132,8 +134,7 @@ fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch:
             Text(stringResource(R.string.tab_bookmarks), style = t.subpageTitle, color = c.text, modifier = Modifier.weight(1f))
             if (!empty) {
                 IconAction(painterResource(R.drawable.ic_search), stringResource(R.string.search_bookmarks), onSearch)
-                // Exportar llega con su hoja (entrega C).
-                IconAction(painterResource(R.drawable.ic_export), stringResource(R.string.export), {}, tint = c.inactive)
+                IconAction(painterResource(R.drawable.ic_export), stringResource(R.string.export), { exporting = true })
             }
         }
         if (empty) {
@@ -159,7 +160,7 @@ fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch:
                         trailing = {
                             BookmarkMenu(
                                 onCopy = {
-                                    val text = bookmarksText(listOf(group.book.displayTitle to listOf(row)))
+                                    val text = bookmarksText(listOf(group.book.displayTitle to listOf(row)), pauseLabel)
                                     context.getSystemService(ClipboardManager::class.java)
                                         .setPrimaryClip(ClipData.newPlainText(group.book.displayTitle, text))
                                 },
@@ -170,6 +171,18 @@ fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch:
                 }
             }
         }
+    }
+
+    if (exporting) {
+        // Exporta lo que se ve: respeta el filtro activo.
+        val count = shown.sumOf { it.rows.size }
+        val subtitle = if (filter.active) stringResource(R.string.export_filter_note, count, filterNames(filter, tags).joinToString(", ")) else "$count"
+        ExportSheet(
+            subtitle,
+            shown.map { it.book.displayTitle to it.rows },
+            safeFileName(stringResource(R.string.bookmarks_file_name, "LECTOR")),
+            onDismiss = { exporting = false },
+        )
     }
 
     if (picking) {
@@ -223,8 +236,7 @@ private fun FilterRow(tags: List<TagUse>, filter: BookmarkFilter, viewModel: Boo
 private fun FilterSummary(count: Int, filter: BookmarkFilter, tags: List<TagUse>, onClear: () -> Unit) {
     val c = LectorTheme.colors
     val t = LectorTheme.type
-    val names = tags.filter { it.id in filter.tagIds }.map { it.name } +
-        listOfNotNull(stringResource(R.string.untagged).takeIf { filter.untagged }, stringResource(R.string.filter_pause).takeIf { filter.pause })
+    val names = filterNames(filter, tags)
     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             stringResource(R.string.filtered_count, pluralStringResource(R.plurals.bookmarks_count, count, count), names.joinToString(", ")),
@@ -237,6 +249,12 @@ private fun FilterSummary(count: Int, filter: BookmarkFilter, tags: List<TagUse>
         codelab.lector.ui.components.TextButton(stringResource(R.string.remove_filter), onClear, color = c.accent)
     }
 }
+
+/** Nombres de lo filtrado: tags, "sin tag" y "pausa". */
+@Composable
+private fun filterNames(filter: BookmarkFilter, tags: List<TagUse>): List<String> =
+    tags.filter { it.id in filter.tagIds }.map { it.name } +
+        listOfNotNull(stringResource(R.string.untagged).takeIf { filter.untagged }, stringResource(R.string.filter_pause).takeIf { filter.pause })
 
 /** Cabecera de libro: portada de 28, título y número de marcadores. */
 @Composable

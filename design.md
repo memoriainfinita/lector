@@ -540,8 +540,12 @@ Hecha 2026-10-06.
 
 #### C. Búsqueda y Exportar
 
-- Búsqueda en título, nota y tag, con lo encontrado resaltado (lienzo `Bookmarks-Search`)
-- Hoja Exportar con vista previa: Copiar, Guardar como archivo (.txt), Compartir con otra app; respeta el filtro activo (lienzo `Export-Sheet`)
+Hecha 2026-10-06.
+
+- Búsqueda en título, nota y tag, con lo encontrado resaltado en acento, como en la Biblioteca (lienzo `Bookmarks-Search`). Cada palabra tiene que estar; sin distinguir mayúsculas ni acentos. Sin los marcadores de pausa. Tocar edita; el play salta y se queda en la búsqueda
+- Hoja Exportar con vista previa: Copiar, Guardar como archivo (.txt, selector de Android), Compartir con otra app; respeta el filtro activo (lienzo `Export-Sheet`). Desde la recopilación ("n · filtro: …", archivo "LECTOR – marcadores") y desde la hoja del libro (sus marcadores sin el de pausa, archivo "[libro] – marcadores")
+- Texto: libro y, por marcador, "13:42 · título" (el de pausa, "Pausa diferida"), nota y tags con #; libros separados por una línea. El mismo de Copiar texto
+- Iconos nuevos: `ic_download`, `ic_share`
 
 #### D. Gestionar tags
 
