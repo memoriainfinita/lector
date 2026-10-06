@@ -224,6 +224,12 @@ interface TagDao {
     @Query("SELECT * FROM tag WHERE name = :name COLLATE NOCASE LIMIT 1")
     suspend fun byName(name: String): Tag?
 
+    @Query("SELECT * FROM tag WHERE id = :id")
+    suspend fun get(id: Long): Tag?
+
+    @Query("SELECT * FROM bookmark_tag WHERE tagId = :tagId")
+    suspend fun links(tagId: Long): List<BookmarkTag>
+
     @Query("UPDATE tag SET name = :name WHERE id = :id")
     suspend fun rename(id: Long, name: String)
 

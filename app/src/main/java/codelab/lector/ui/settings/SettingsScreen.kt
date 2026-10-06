@@ -47,6 +47,7 @@ fun SettingsScreen(
     onButtons: () -> Unit,
     onRemote: () -> Unit,
     onSleep: () -> Unit,
+    onTags: () -> Unit,
 ) {
     val context = LocalContext.current
     val c = LectorTheme.colors
@@ -112,7 +113,7 @@ fun SettingsScreen(
         SwitchRow(stringResource(R.string.show_covers), appearance.showCovers, viewModel::setShowCovers)
 
         SectionHeader(stringResource(R.string.tab_bookmarks))
-        LinkRow(stringResource(R.string.settings_tags), {}, note = stringResource(R.string.manage_tags_note), enabled = false)
+        LinkRow(stringResource(R.string.settings_tags), onTags, note = stringResource(R.string.manage_tags_note))
         SwitchRow(stringResource(R.string.open_sheet_on_bookmark), playback.openSheetOnMark, viewModel::setOpenSheetOnMark, note = stringResource(R.string.open_sheet_on_bookmark_note))
 
         SectionHeader(stringResource(R.string.settings_appearance))

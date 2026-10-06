@@ -354,4 +354,13 @@
     <string name="share_with_app">Share with another app</string>
     <string name="bookmarks_file_name">%1$s – bookmarks</string>
     <string name="search_bookmarks_fields">title, note or tag</string>
+    <string name="merge_with_tag">Merge with another tag</string>
+    <string name="delete_tag">Delete tag</string>
+    <string name="tag_options">Options for %1$s</string>
+    <string name="merge_tag_title">Merge “%1$s” with…</string>
+    <string name="merge_tag_note">Bookmarks with “%1$s” get the chosen tag and “%1$s” disappears.</string>
+    <string name="merge">Merge</string>
+    <string name="tag_deleted">Tag deleted</string>
+    <string name="no_tags">No tags yet. Create them from a bookmark.</string>
+    <string name="rename_tag_note">With the name of another tag, both are merged.</string>
 </resources>

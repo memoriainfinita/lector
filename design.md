@@ -514,7 +514,7 @@ Hecho 2026-10-05 (lienzo `Onboarding-Permission`, `Onboarding-Folder`).
 
 ### Marcadores
 
-Aprobado 2026-10-06. Cuatro entregas. Sin cambios en el esquema (tablas `bookmark`, `tag`, `bookmark_tag` desde la versión 4).
+Aprobado y hecho 2026-10-06. Cuatro entregas. Sin cambios en el esquema (tablas `bookmark`, `tag`, `bookmark_tag` desde la versión 4).
 
 #### A. Hoja de marcador y marcadores del libro
 
@@ -549,7 +549,12 @@ Hecha 2026-10-06.
 
 #### D. Gestionar tags
 
-- Ajustes › Gestionar tags: renombrar, unir con otro tag, borrar con "Deshacer" (lienzo `Settings-Tags`, `Merge-Tag`)
+Hecha 2026-10-06.
+
+- Ajustes › Gestionar tags (lienzo `Settings-Tags`, `Merge-Tag`), también desde "Gestionar" en la lista de tags: cada tag con su número de marcadores y su ⋮: Renombrar, Unir con otro tag (si hay otro) y Borrar tag en coral. Sin tags, "Aún no hay tags. Se crean desde un marcador."
+- Renombrar: diálogo como el de Renombrar libro. Con el nombre de otro tag que ya existe (sin distinguir mayúsculas), se unen
+- Unir: hoja "Unir «x» con…" con elección única, Cancelar y Unir; sin "Deshacer" (ya confirma)
+- Borrar tag: sin confirmación, "Tag borrado" con "Deshacer", que lo devuelve a los mismos marcadores. Los marcadores no se borran
 
 #### Huecos resueltos (2026-10-06)
 

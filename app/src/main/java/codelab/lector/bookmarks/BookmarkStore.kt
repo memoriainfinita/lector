@@ -130,6 +130,49 @@ class BookmarkStore(
         }
     }
 
+    /**
+     * Renombrar un tag (Ajustes › Gestionar tags). Con el nombre de otro tag que ya existe, se une
+     * a ese.
+     */
+    fun renameTag(id: Long, name: String) {
+        val clean = name.trim()
+        if (clean.isEmpty()) return
+        scope.launch {
+            val other = db.tags().byName(clean)
+            if (other != null && other.id != id) merge(id, other.id) else db.tags().rename(id, clean)
+        }
+    }
+
+    /** Unir: los marcadores de [from] pasan a llevar [into] y [from] desaparece. */
+    fun mergeTag(from: Long, into: Long) {
+        scope.launch { merge(from, into) }
+    }
+
+    private suspend fun merge(from: Long, into: Long) {
+        if (from == into) return
+        db.bookmarks().addTags(db.tags().links(from).map { BookmarkTag(it.bookmarkId, into) })
+        db.tags().delete(from)
+    }
+
+    /** Borra el tag, no sus marcadores. Devuelve el "Deshacer", que lo devuelve a los mismos marcadores. */
+    fun deleteTag(id: Long): () -> Unit {
+        var saved: Pair<Tag, List<BookmarkTag>>? = null
+        val job = scope.launch {
+            val tag = db.tags().get(id) ?: return@launch
+            saved = tag to db.tags().links(id)
+            db.tags().delete(id)
+        }
+        return {
+            scope.launch {
+                job.join()
+                saved?.let { (tag, links) ->
+                    db.tags().insert(tag)
+                    db.bookmarks().addTags(links)
+                }
+            }
+        }
+    }
+
     /** Borra el marcador. Devuelve el "Deshacer", que lo devuelve con sus tags. */
     fun delete(id: String): () -> Unit {
         var saved: Pair<Bookmark, List<BookmarkTag>>? = null

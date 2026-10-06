@@ -52,6 +52,7 @@ import codelab.lector.ui.components.LocalUndoState
 import codelab.lector.ui.bookmarks.BookmarkSheetsHost
 import codelab.lector.ui.bookmarks.BookmarksScreen
 import codelab.lector.ui.bookmarks.BookmarksSearchScreen
+import codelab.lector.ui.bookmarks.TagsSettingsScreen
 import codelab.lector.ui.bookmarks.BookmarksViewModel
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.ui.bookmarks.rememberBookmarkSheetsState
@@ -305,6 +306,7 @@ private fun routeEntries(
                 onButtons = { navigator.open(SettingsButtonsRoute) },
                 onRemote = { navigator.open(SettingsRemoteRoute) },
                 onSleep = { navigator.open(SettingsSleepRoute) },
+                onTags = { navigator.open(SettingsTagsRoute) },
             )
         }
         entry<SettingsLibraryRoute> {
@@ -319,7 +321,7 @@ private fun routeEntries(
         entry<SettingsButtonsRoute> { ButtonsSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsRemoteRoute> { RemoteButtonsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsSoundRoute> { SoundSettingsScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
-        entry<SettingsTagsRoute> { PlaceholderScreen(stringResource(R.string.settings_tags), onBack = back) }
+        entry<SettingsTagsRoute> { TagsSettingsScreen(onBack = back) }
         entry<SettingsAppearanceRoute> { AppearanceScreen(viewModel { SettingsViewModel(app) }, onBack = back) }
         entry<SettingsDataRoute> { PlaceholderScreen(stringResource(R.string.settings_data), onBack = back) }
         entry<FolderPickerRoute> { FolderPicker(onClose = back) }

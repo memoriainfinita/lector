@@ -353,4 +353,13 @@
     <string name="share_with_app">Compartir con otra app</string>
     <string name="bookmarks_file_name">%1$s – marcadores</string>
     <string name="search_bookmarks_fields">título, nota o tag</string>
+    <string name="merge_with_tag">Unir con otro tag</string>
+    <string name="delete_tag">Borrar tag</string>
+    <string name="tag_options">Opciones de %1$s</string>
+    <string name="merge_tag_title">Unir «%1$s» con…</string>
+    <string name="merge_tag_note">Los marcadores con «%1$s» pasan a llevar el tag elegido y «%1$s» desaparece.</string>
+    <string name="merge">Unir</string>
+    <string name="tag_deleted">Tag borrado</string>
+    <string name="no_tags">Aún no hay tags. Se crean desde un marcador.</string>
+    <string name="rename_tag_note">Con el nombre de otro tag, se unen los dos.</string>
 </resources>
