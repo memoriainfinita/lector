@@ -90,7 +90,9 @@ class LibraryScanner(
         _state.update { it.copy(currentFolder = null) }
         val detected = applyCorrections(trees.flatMap { detectBooks(it, rules) }, db.corrections().all())
         val existing = db.books().all()
-        val result = reconcile(detected, existing, folders)
+        val contents = db.books().allFiles().groupBy { it.bookId }
+            .mapNotNull { (id, files) -> contentKey(files.map { it.relativePath to it.sizeBytes })?.let { id to it } }.toMap()
+        val result = reconcile(detected, existing, folders, contents)
         val now = System.currentTimeMillis()
         val written = mutableListOf<Pair<String, DetectedBook>>()
         val created = mutableSetOf<String>()

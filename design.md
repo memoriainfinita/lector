@@ -106,7 +106,7 @@ Pendientes de confirmar en el lienzo de diseño.
 - Idioma de la interfaz: español e inglés
 - Portabilidad:
   - Exportar/importar JSON con marcadores, posiciones y ajustes
-  - Libro identificado por nombre de carpeta y archivos; si falla, por duración total. No por ruta
+  - Libro identificado por nombre de carpeta y archivos; si falla, por nombre y tamaño de los archivos; si falla, por duración total. No por ruta
   - Marcadores con ID único; fusión sin duplicados
   - Posición de escucha en conflicto: gana la más reciente
 
@@ -254,7 +254,7 @@ Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR esca
 - Portadas: miniatura (lado mayor 1024) en almacenamiento de la app, de la imagen incrustada o, si no hay, de una imagen de carpeta (2026-10-07). Sitios, por orden: la carpeta del libro, sus discos y sus subcarpetas sin audio (`Scans/`, `Artwork/`…). Elección: cover / folder / front; si no, la que contiene cover o front; si no, la que lleva el nombre del libro (carpeta, título o archivo); si no, la primera por nombre. Nunca las que contienen "back" ni las miniaturas de Windows Media Player (`AlbumArtSmall`, `AlbumArt_{…}_Small`). En una carpeta con varios libros, solo la que lleva el nombre del libro
 - Caché `file_meta` por ruta: el escaneo rápido (al abrir) solo relee archivos con tamaño o fecha distintos; "Volver a buscar" relee todo y rehace portadas
 - Dos fases: recorrer y leer (progreso: encontrados y carpeta actual), después detectar, aplicar correcciones, reconciliar y guardar en una transacción. Los libros aparecen al terminar
-- Reconciliación: por firma; si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos, salvo los reagrupados (todos sus archivos siguen y son de otros libros): marcadores y posición pasan a esos libros y el antiguo se borra (Pantallas › Biblioteca › B)
+- Reconciliación: por firma; si no, por contenido (nombre y tamaño de cada archivo, sin carpetas: libro movido o carpeta renombrada; entre todos los libros, como la firma; no vale para los importados, sin tamaños) (2026-10-07); si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos, salvo los reagrupados (todos sus archivos siguen y son de otros libros): marcadores y posición pasan a esos libros y el antiguo se borra (Pantallas › Biblioteca › B)
 - Carpetas candidatas para el primer arranque: niveles 1 y 2 con audio bajo cada almacenamiento
 
 ## Reproducción
@@ -646,7 +646,7 @@ Aprobado 2026-10-03.
 - Libro:
   - ID interno estable, independiente de la ruta
   - Tipo (de momento solo audio)
-  - Firma de identidad: nombre de carpeta + lista ordenada de nombres de archivo; si no coincide, duración total con margen de 1 s. Nunca la ruta
+  - Firma de identidad: nombre de carpeta + lista ordenada de nombres de archivo; si no coincide, contenido (nombre y tamaño de cada archivo); si no, duración total con margen de 1 s. Nunca la ruta
   - Ruta actual, actualizada al volver a buscar
   - Título de etiquetas o carpeta; nombre propio si se renombra en LECTOR
   - Autor, narrador, serie y número en la serie (etiquetas)

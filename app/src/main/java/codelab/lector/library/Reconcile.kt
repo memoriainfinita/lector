@@ -109,18 +109,33 @@ data class Match(val detected: DetectedBook, val existing: Book?)
 data class Reconciliation(val matches: List<Match>, val missing: List<Book>)
 
 /**
- * Por firma entre todos los libros (uno movido desde una carpeta quitada se reconecta); si no, por
- * duración ±1 s entre los que no han aparecido. Solo los de [folders] entran por duración y quedan
- * como perdidos: los de una carpeta quitada no se tocan.
+ * Huella del contenido: nombre y tamaño de cada archivo, sin carpetas. No cambia al mover el libro ni al
+ * renombrar su carpeta. Null si falta algún tamaño (libros importados de otro móvil).
  */
-fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<String>): Reconciliation {
+fun contentKey(files: List<Pair<String, Long>>): String? =
+    if (files.isEmpty() || files.any { it.second <= 0 }) null
+    else files.map { (path, size) -> path.substringAfterLast('/') + "\u0000" + size }.sorted().joinToString("\n")
+
+fun DetectedBook.contentKey(): String? = contentKey(parts.map { it.file.name to it.file.meta.sizeBytes })
+
+/**
+ * Por firma entre todos los libros (uno movido desde una carpeta quitada se reconecta); si no, por
+ * contenido ([contents]: id del libro → [contentKey]) también entre todos; si no, por duración ±1 s
+ * entre los que no han aparecido. Solo los de [folders] entran por duración y quedan como perdidos:
+ * los de una carpeta quitada no se tocan.
+ */
+fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<String>, contents: Map<String, String> = emptyMap()): Reconciliation {
     val unmatched = existing.toMutableList()
     val byIdentity = detected.associateWith { d ->
         unmatched.firstOrNull { it.identityKey == d.identityKey }?.also { unmatched.remove(it) }
     }
+    // Los mismos archivos en otra carpeta, o con la carpeta renombrada.
+    val byContent = detected.filter { byIdentity[it] == null }.associateWith { d ->
+        d.contentKey()?.let { key -> unmatched.firstOrNull { contents[it.id] == key }?.also { unmatched.remove(it) } }
+    }
     unmatched.retainAll { book -> folders.any { isInside(book.path, it) } }
     val matches = detected.map { d ->
-        val found = byIdentity[d] ?: unmatched
+        val found = byIdentity[d] ?: byContent[d] ?: unmatched
             .filter { abs(it.totalDurationMs - d.durationMs) <= DurationToleranceMs }
             .minByOrNull { abs(it.totalDurationMs - d.durationMs) }
             ?.also { unmatched.remove(it) }

@@ -19,11 +19,11 @@ import org.junit.Test
 /** Casos sacados de la biblioteca real del usuario (2026-10-03). */
 class DetectionTest {
 
-    private fun file(dir: String, name: String, album: String? = null, chapters: Int = 0, durationMs: Long = 3_600_000) =
+    private fun file(dir: String, name: String, album: String? = null, chapters: Int = 0, durationMs: Long = 3_600_000, size: Long = 1) =
         ScannedFile(
             "$dir/$name", name,
             FileMeta(
-                path = "$dir/$name", sizeBytes = 1, modifiedAt = 0, durationMs = durationMs, album = album,
+                path = "$dir/$name", sizeBytes = size, modifiedAt = 0, durationMs = durationMs, album = album,
                 chapters = ChapterList(List(chapters) { ChapterInfo(it * 1000L, it * 1000L + 999, "c$it") }),
             ),
         )
@@ -264,6 +264,37 @@ class DetectionTest {
         assertEquals("same", r.matches[0].existing?.id)
         assertEquals("renamed", r.matches[1].existing?.id)
         assertEquals(listOf("gone"), r.missing.map { it.id })
+    }
+
+    @Test
+    fun movedBooksReconnectByContentBeforeDuration() {
+        // "new/A.mp3" pasa a "finished/A.mp3": la firma cambia (lleva el nombre de la carpeta).
+        val f = "$root/finished"
+        val detected = detectBooks(
+            folder(f, listOf(file(f, "A.mp3", durationMs = 50_000_000, size = 700), file(f, "B.mp3", durationMs = 60_000_000, size = 800))),
+            emptyList(),
+        )
+        fun book(id: String, path: String, duration: Long) =
+            Book(id = id, identityKey = "$id-key", totalDurationMs = duration, path = path, title = id, addedAt = 0, speed = 1f)
+        val existing = listOf(
+            // Otro libro desaparecido con la misma duración que A: sin el contenido, se emparejaría por duración.
+            book("lookalike", "$root/old/Lookalike.mp3", 50_000_000),
+            book("a", "$root/new/A.mp3", 50_000_000),
+            // Fuera de las carpetas de la biblioteca: por contenido también se reconecta.
+            book("b", "/removed/B.mp3", 60_000_000),
+        )
+        val contents = mapOf(
+            "lookalike" to contentKey(listOf("Lookalike.mp3" to 999L))!!,
+            "a" to contentKey(listOf("A.mp3" to 700L))!!,
+            "b" to contentKey(listOf("B.mp3" to 800L))!!,
+        )
+        val r = reconcile(detected, existing, listOf(root), contents)
+        assertEquals(listOf("a", "b"), r.matches.map { it.existing?.id })
+        assertEquals(listOf("lookalike"), r.missing.map { it.id })
+        // Sin tamaños (libro importado) no hay huella.
+        assertNull(contentKey(listOf("A.mp3" to 0L)))
+        // Las carpetas no cuentan: un libro de discos movido o con la carpeta renombrada da la misma huella.
+        assertEquals(contentKey(listOf("CD1/01.mp3" to 5L)), contentKey(listOf("01.mp3" to 5L)))
     }
 
     @Test
