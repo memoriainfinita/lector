@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget antes de que la app lo dibuje (al ponerlo, tras instalar o actualizar): logo y nombre, como el
+  widget sin libro. Fijo en oscuro, el tema por defecto: el ajuste de tema no se puede leer aquí.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_loading_background"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp">
+
+    <ImageView
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_lector_logo" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="LECTOR"
+        android:textColor="#EDEDED"
+        android:textSize="15sp" />
+</LinearLayout>
