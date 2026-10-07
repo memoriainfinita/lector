@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-07 — Biblioteca sin refrescar un libro perdido: era la prueba
+
+**Qué cambió:** salió del TODO. Un libro marcado inaccesible por la búsqueda al abrir seguía en la Biblioteca como disponible (menú completo, sin "no encontrado") hasta reiniciar.
+**Por qué:** solo pasó tras sustituir el archivo de la base por adb con la app parada. Por el camino real (borrar la carpeta y volver a abrir, con el proceso vivo y con el proceso muerto) la Biblioteca muestra "no encontrado" y el menú de un libro sin archivos. Tras cambiar la base por adb, no fiarse de lo que muestra la app sin reiniciarla.
+
 ### 2026-10-06 — Escuchando: la portada ya se mueve
 
 **Qué cambió:** deslizar la portada hacia abajo actuaba al soltar y la portada no se movía (2026-10-04); ahora la pantalla entera sigue al dedo y Escuchando sube y baja como las hojas, también desde el minirreproductor.
