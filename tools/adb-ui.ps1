@@ -65,10 +65,11 @@ function Nodes {
     }
 }
 
-# Elemento por texto o descripción exactos. Una coincidencia parcial puede caer en otro
-# elemento ("Undo" dentro de "can't be undone").
+# Elemento por texto o descripción exactos, distinguiendo mayúsculas. Una coincidencia parcial
+# puede caer en otro elemento ("Undo" dentro de "can't be undone"), y sin distinguir mayúsculas
+# también ("AUDIOBOOKS" tocó "Audiobooks").
 function Find([string]$t) {
-    Nodes | Where-Object { $_.text -eq $t -or $_.desc -eq $t } | Select-Object -First 1
+    Nodes | Where-Object { $_.text -ceq $t -or $_.desc -ceq $t } | Select-Object -First 1
 }
 
 function TapText([string]$t, [int]$wait = 800) {
