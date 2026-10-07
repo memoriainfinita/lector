@@ -73,7 +73,7 @@ class LibraryScanner(
         _state.value = ScanState(running = true, quiet = quiet)
         val folders = db.folders().folders().map { it.path }
         val roots = folders.map(::File).filter { it.isDirectory }
-        val rules = db.folders().rules()
+        var rules = db.folders().rules()
         val stored = db.fileMeta().all()
         // Primera búsqueda (nada leído aún): lee todo, se muestra entera aunque se pidiera discreta.
         if (stored.isEmpty()) _state.update { it.copy(quiet = false) }
@@ -88,9 +88,33 @@ class LibraryScanner(
 
         // Fase 2: detectar, corregir, reconciliar y guardar.
         _state.update { it.copy(currentFolder = null) }
-        val detected = applyCorrections(trees.flatMap { detectBooks(it, rules) }, db.corrections().all())
         val existing = db.books().all()
-        val contents = db.books().allFiles().groupBy { it.bookId }
+        val filesByBook = db.books().allFiles().groupBy { it.bookId }
+        // La clase sigue a su carpeta si se movió o se renombró.
+        // Huella con todos sus libros y solo con los accesibles: uno puede estar marcado inaccesible desde
+        // antes (archivos borrados) o desde que arrancó el reproductor sin encontrarlo.
+        val before = rules.associate { rule ->
+            val inside = existing.filter { !it.removed && isInside(it.path, rule.folderPath) }
+            fun key(books: List<Book>) = contentKey(books.flatMap { b -> filesByBook[b.id].orEmpty().map { it.relativePath to it.sizeBytes } })
+            rule.folderPath to setOfNotNull(key(inside), key(inside.filterNot { it.inaccessible }))
+        }
+        val moved = movedRules(rules, trees, before) { File(it).isDirectory }
+        if (moved.isNotEmpty()) {
+            db.withWriteTransaction {
+                for (rule in rules) {
+                    val to = moved[rule.folderPath] ?: continue
+                    db.folders().clearRule(rule.folderPath)
+                    db.folders().setRule(rule.copy(folderPath = to))
+                }
+            }
+            rules = db.folders().rules()
+        }
+        val raw = trees.flatMap { detectBooks(it, rules) }
+        // Unir y separar siguen a sus libros si se movieron.
+        val followed = followCorrections(raw, db.corrections().all(), existing, filesByBook)
+        if (followed.isNotEmpty()) db.withWriteTransaction { followed.forEach { db.corrections().replace(it) } }
+        val detected = applyCorrections(raw, db.corrections().all())
+        val contents = filesByBook
             .mapNotNull { (id, files) -> contentKey(files.map { it.relativePath to it.sizeBytes })?.let { id to it } }.toMap()
         val result = reconcile(detected, existing, folders, contents)
         val now = System.currentTimeMillis()

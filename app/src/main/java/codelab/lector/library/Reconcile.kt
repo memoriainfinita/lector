@@ -1,11 +1,13 @@
 package codelab.lector.library
 
 import codelab.lector.data.db.Book
+import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.ChapterInfo
 import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.Correction
 import codelab.lector.data.db.CorrectionType
 import codelab.lector.data.db.FileMeta
+import codelab.lector.data.db.FolderRule
 import java.io.File
 import kotlin.math.abs
 
@@ -65,6 +67,68 @@ private fun split(books: List<DetectedBook>, key: String?, startFiles: List<Stri
     else split.mapIndexed { i, piece -> piece.copy(partLabel = "${i + 1}/${split.size}") }
     val index = books.indexOf(book)
     return books.toMutableList().apply { removeAt(index); addAll(index, pieces) }
+}
+
+/**
+ * Correcciones cuyos libros ya no aparecen con su firma (movidos, carpeta renombrada), con las firmas de ahora;
+ * solo las que cambian. Se reconocen por los archivos (nombre y tamaño) de los libros que salieron de ellas
+ * ([books] y [files], la base): al unir, los libros detectados que juntos tienen exactamente esos archivos, en
+ * su orden; al separar, el que los tiene todos. Las firmas que salen de una corrección cambiada (libro unido,
+ * trozos) pasan a las siguientes. Si los archivos no están todos, o el resultado ya no está en la base (cadenas
+ * de correcciones), la corrección queda como está.
+ */
+fun followCorrections(raw: List<DetectedBook>, corrections: List<Correction>, books: List<Book>, files: Map<String, List<BookFile>>): List<Correction> {
+    fun entriesOf(fs: List<BookFile>) = fs.sortedBy { it.sortIndex }.map { it.relativePath.substringAfterLast('/') to it.sizeBytes }
+    fun DetectedBook.entries() = parts.map { it.file.name to it.file.meta.sizeBytes }
+    fun mergedKey(keys: List<String>) = sha256("merge\n" + keys.joinToString("\n"))
+    fun pieceKey(key: String, first: String) = sha256("split\n$key\n$first")
+
+    // Un libro que sigue siendo otro de la base (copia de una parte en otro sitio) no es una parte movida.
+    val known = books.map { it.identityKey }.toSet()
+    var detected = raw
+    val renamed = mutableMapOf<String, String>()
+    val changed = mutableListOf<Correction>()
+    for (c in corrections.sortedBy { it.createdAt }) {
+        var current = c.copy(identityKeys = c.identityKeys.map { renamed[it] ?: it })
+        val present = detected.map { it.identityKey }.toSet()
+        if (current.identityKeys.any { it !in present }) {
+            val candidates = detected.filter { it.identityKey in current.identityKeys || it.identityKey !in known }
+            val results = when (c.type) {
+                CorrectionType.MERGE -> books.filter { it.identityKey == mergedKey(c.identityKeys) }
+                CorrectionType.SPLIT -> books.filter { b ->
+                    val first = files[b.id]?.minByOrNull { it.sortIndex } ?: return@filter false
+                    b.identityKey == pieceKey(c.identityKeys.first(), first.relativePath)
+                }
+            }
+            val wanted = results.flatMap { entriesOf(files[it.id].orEmpty()) }
+            if (wanted.isNotEmpty() && wanted.none { it.second <= 0 }) {
+                val found = when (c.type) {
+                    CorrectionType.MERGE -> {
+                        val counts = wanted.groupingBy { it }.eachCount()
+                        val members = candidates.filter { d -> d.entries().groupingBy { it }.eachCount().all { (e, n) -> (counts[e] ?: 0) >= n } }
+                        val union = members.flatMap { it.entries() }.groupingBy { it }.eachCount()
+                        if (members.size >= 2 && union == counts) members.sortedBy { wanted.indexOf(it.entries().first()) }.map { it.identityKey } else null
+                    }
+                    CorrectionType.SPLIT -> candidates.singleOrNull { it.contentKey() == contentKey(wanted) }?.let { listOf(it.identityKey) }
+                }
+                if (found != null) current = current.copy(identityKeys = found)
+            }
+        }
+        if (current.identityKeys != c.identityKeys) {
+            changed += current
+            when (c.type) {
+                CorrectionType.MERGE -> renamed[mergedKey(c.identityKeys)] = mergedKey(current.identityKeys)
+                CorrectionType.SPLIT -> {
+                    val book = detected.firstOrNull { it.identityKey == current.identityKeys.first() }
+                    (listOfNotNull(book?.parts?.firstOrNull()?.relativePath) + c.splitStartFiles).forEach { f ->
+                        renamed[pieceKey(c.identityKeys.first(), f)] = pieceKey(current.identityKeys.first(), f)
+                    }
+                }
+            }
+        }
+        detected = applyCorrections(detected, listOf(current))
+    }
+    return changed
 }
 
 private fun relativeTo(base: String, path: String): String =
@@ -142,6 +206,30 @@ fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<
         Match(d, found)
     }
     return Reconciliation(matches, unmatched)
+}
+
+/**
+ * Reglas de clase cuya carpeta ya no está y aparece en otro sitio (movida o renombrada): ruta antigua → nueva.
+ * [before]: huellas ([contentKey]) válidas de lo que había bajo cada carpeta con regla, sacadas de la base. La
+ * nueva es la carpeta recorrida con una de esas huellas, sin regla propia; si la tienen también sus carpetas de
+ * encima (movida a una carpeta vacía), la más honda. Con varias candidatas (copias), ninguna.
+ */
+fun movedRules(rules: List<FolderRule>, trees: List<ScannedFolder>, before: Map<String, Set<String>>, exists: (String) -> Boolean): Map<String, String> {
+    val missing = rules.filter { !exists(it.folderPath) && !before[it.folderPath].isNullOrEmpty() }
+    if (missing.isEmpty()) return emptyMap()
+    val ruled = rules.map { it.folderPath }.toSet()
+    val keys = mutableMapOf<String, String>()
+    fun visit(folder: ScannedFolder): List<Pair<String, Long>> {
+        val files = folder.files.map { it.name to it.meta.sizeBytes } + folder.subfolders.flatMap(::visit)
+        contentKey(files)?.let { keys[folder.path] = it }
+        return files
+    }
+    trees.forEach(::visit)
+    return missing.mapNotNull { rule ->
+        val matches = keys.filter { (_, key) -> key in before.getValue(rule.folderPath) }.keys
+        val deepest = matches.filter { m -> matches.none { it != m && isInside(it, m) } }
+        deepest.singleOrNull()?.takeIf { it !in ruled }?.let { rule.folderPath to it }
+    }.toMap()
 }
 
 /** [path] es [folder] o está dentro. */

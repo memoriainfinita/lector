@@ -1,6 +1,7 @@
 package codelab.lector.library
 
 import codelab.lector.data.db.Book
+import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.ChapterInfo
 import codelab.lector.data.db.ChapterList
 import codelab.lector.data.db.Correction
@@ -295,6 +296,69 @@ class DetectionTest {
         assertNull(contentKey(listOf("A.mp3" to 0L)))
         // Las carpetas no cuentan: un libro de discos movido o con la carpeta renombrada da la misma huella.
         assertEquals(contentKey(listOf("CD1/01.mp3" to 5L)), contentKey(listOf("01.mp3" to 5L)))
+    }
+
+    @Test
+    fun folderRuleFollowsItsMovedFolder() {
+        val old = "$root/yoga nidra"
+        val rule = FolderRule(old, WorkUnit.FILE, OnFinish.RESTART)
+        val before = mapOf(old to setOf(contentKey(listOf("Session 1.mp3" to 10L, "Session 2.mp3" to 20L))!!))
+        fun sessions(dir: String) = folder(dir, (1..2).map { file(dir, "Session $it.mp3", size = it * 10L) })
+        // Movida a una carpeta nueva que solo la contiene a ella: la más honda, no "finished".
+        val moved = "$root/finished/yoga nidra"
+        val tree = folder(root, subs = listOf(folder("$root/finished", subs = listOf(sessions(moved))), sessions("$root/Other")))
+        assertEquals(mapOf(old to "$root/Other"), movedRules(listOf(rule), listOf(folder(root, subs = listOf(sessions("$root/Other")))), before) { false })
+        val withCopy = movedRules(listOf(rule), listOf(tree), before) { false }
+        assertTrue("two copies: none", withCopy.isEmpty())
+        val single = folder(root, subs = listOf(folder("$root/finished", subs = listOf(sessions(moved)))))
+        assertEquals(mapOf(old to moved), movedRules(listOf(rule), listOf(single), before) { false })
+        // La carpeta sigue en su sitio: la regla no se toca.
+        assertTrue(movedRules(listOf(rule), listOf(single), before) { true }.isEmpty())
+        // Destino con regla propia: no se pisa.
+        assertTrue(movedRules(listOf(rule, FolderRule(moved, WorkUnit.FOLDER, OnFinish.RESTART)), listOf(single), before) { it == moved }.isEmpty())
+    }
+
+    @Test
+    fun correctionsFollowMovedBooks() {
+        fun book(id: String, key: String) = Book(id = id, identityKey = key, totalDurationMs = 1, path = "/x", title = id, addedAt = 0, speed = 1f)
+        fun files(id: String, vararg f: Pair<String, Long>) = f.mapIndexed { i, (p, s) -> BookFile(bookId = id, relativePath = p, sortIndex = i, durationMs = 1, sizeBytes = s) }
+
+        // Unir: "new/A.mp3" y "new/B.mp3" unidos; B pasa a "finished/" y la firma de B cambia.
+        val n = "$root/new"
+        val f = "$root/finished"
+        val oldA = detectBooks(folder(n, listOf(file(n, "A.mp3", size = 7), file(n, "B.mp3", size = 8))), emptyList())
+        val merge = Correction(id = 1, type = CorrectionType.MERGE, identityKeys = oldA.map { it.identityKey }, createdAt = 1)
+        val merged = applyCorrections(oldA, listOf(merge)).single()
+        val raw = detectBooks(folder(root, subs = listOf(folder(n, listOf(file(n, "A.mp3", size = 7), file(n, "Z.mp3", size = 9))), folder(f, listOf(file(f, "B.mp3", size = 8))))), emptyList())
+        val db = listOf(book("m", merged.identityKey))
+        val followed = followCorrections(raw, listOf(merge), db, mapOf("m" to files("m", "A.mp3" to 7L, "../finished/B.mp3" to 8L)))
+        assertEquals(1, followed.size)
+        val again = applyCorrections(raw, followed)
+        assertEquals(listOf("A.mp3", "B.mp3"), again.single { it.parts.size == 2 }.parts.map { it.file.name })
+        // Una copia de A en otra carpeta, que la base ya conoce como otro libro, no estorba.
+        val c = "$root/copy"
+        val copy = detectBooks(folder(c, listOf(file(c, "A.mp3", size = 7))), emptyList())
+        val withCopy = followCorrections(raw + copy, listOf(merge), db + book("c", copy.single().identityKey), mapOf("m" to files("m", "A.mp3" to 7L, "../finished/B.mp3" to 8L)))
+        assertEquals(followed, withCopy)
+
+        // Separar: "Vol 3" separado en 03.mp3; la carpeta pasa a llamarse "Volume 3".
+        val v = "$root/Vol 3"
+        val old = detectBooks(folder(v, (1..4).map { file(v, "0$it.mp3", size = it.toLong()) }), emptyList()).single()
+        val split = Correction(id = 2, type = CorrectionType.SPLIT, identityKeys = listOf(old.identityKey), splitStartFiles = listOf("03.mp3"), createdAt = 2)
+        val pieces = applyCorrections(listOf(old), listOf(split))
+        val w = "$root/Volume 3"
+        val renamed = detectBooks(folder(w, (1..4).map { file(w, "0$it.mp3", size = it.toLong()) }), emptyList())
+        val piecesDb = pieces.mapIndexed { i, p -> book("p$i", p.identityKey) }
+        val piecesFiles = mapOf("p0" to files("p0", "01.mp3" to 1L, "02.mp3" to 2L), "p1" to files("p1", "03.mp3" to 3L, "04.mp3" to 4L))
+        val followedSplit = followCorrections(renamed, listOf(split), piecesDb, piecesFiles)
+        assertEquals(listOf(renamed.single().identityKey), followedSplit.single().identityKeys)
+        assertEquals(2, applyCorrections(renamed, followedSplit).size)
+
+        // Falta un archivo: la corrección se queda como está.
+        val partial = detectBooks(folder(w, (1..3).map { file(w, "0$it.mp3", size = it.toLong()) }), emptyList())
+        assertTrue(followCorrections(partial, listOf(split), piecesDb, piecesFiles).isEmpty())
+        // Sin mover: nada que cambiar.
+        assertTrue(followCorrections(oldA, listOf(merge), db, mapOf("m" to files("m", "A.mp3" to 7L, "B.mp3" to 8L))).isEmpty())
     }
 
     @Test

@@ -311,6 +311,10 @@ interface CorrectionDao {
     @Query("DELETE FROM correction WHERE id = :id")
     suspend fun delete(id: Long)
 
+    /** Misma corrección con otras firmas (libros movidos). */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun replace(correction: Correction)
+
     @Query("SELECT * FROM correction ORDER BY createdAt")
     suspend fun all(): List<Correction>
 
