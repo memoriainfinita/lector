@@ -33,15 +33,18 @@ fun detectBooks(root: ScannedFolder, rules: List<FolderRule>): List<DetectedBook
             .sortedWith(compareBy(NaturalOrder) { it.name })
         when (rule?.workUnit) {
             WorkUnit.FILE -> {
-                folder.files.sortedWith(compareBy(NaturalOrder) { it.name }).forEach { out += single(folder, it) }
+                val shared = folder.files.size > 1
+                folder.files.sortedWith(compareBy(NaturalOrder) { it.name }).forEach {
+                    out += single(folder, it).let { b -> if (shared) b.copy(folderImages = folder.images, sharedFolder = true) else b }
+                }
                 folder.subfolders.forEach(::visit)
                 return
             }
             WorkUnit.FOLDER -> {
-                partsWithDiscs(folder, discs).takeIf { it.isNotEmpty() }?.let { out += whole(folder, it) }
+                partsWithDiscs(folder, discs).takeIf { it.isNotEmpty() }?.let { out += whole(folder, it, discs) }
             }
             null, WorkUnit.DETECT -> {
-                if (discs.isNotEmpty()) out += whole(folder, partsWithDiscs(folder, discs))
+                if (discs.isNotEmpty()) out += whole(folder, partsWithDiscs(folder, discs), discs)
                 else out += groupLoose(folder)
             }
         }
@@ -57,14 +60,22 @@ private fun partsWithDiscs(folder: ScannedFolder, discs: List<ScannedFolder>): L
             d.files.sortedWith(compareBy(NaturalOrder) { it.name }).map { BookPart("${d.name}/${it.name}", it) }
         }
 
-private fun whole(folder: ScannedFolder, parts: List<BookPart>) = DetectedBook(
+/** Imágenes de la carpeta, de sus discos y de sus subcarpetas sin audio ("Scans", "Artwork"…), en ese orden. */
+private fun coverCandidates(folder: ScannedFolder, discs: List<ScannedFolder>): List<String> {
+    fun ScannedFolder.sortedImages() = images.sortedWith(NaturalOrder)
+    val imageOnly = folder.subfolders.filter { it.files.isEmpty() && it.subfolders.isEmpty() }
+        .sortedWith(compareBy(NaturalOrder) { it.name })
+    return folder.sortedImages() + (discs + imageOnly).flatMap { sub -> sub.sortedImages().map { "${sub.name}/$it" } }
+}
+
+private fun whole(folder: ScannedFolder, parts: List<BookPart>, discs: List<ScannedFolder> = emptyList()) = DetectedBook(
     identityKey = identityKey(folder.name, parts.map { it.relativePath }),
     path = folder.path,
     folderPath = folder.path,
     folderName = folder.name,
     parts = parts,
     wholeFolder = true,
-    folderImages = folder.images,
+    folderImages = coverCandidates(folder, discs),
 )
 
 private fun single(folder: ScannedFolder, file: ScannedFile) = DetectedBook(
@@ -74,7 +85,7 @@ private fun single(folder: ScannedFolder, file: ScannedFile) = DetectedBook(
     folderName = folder.name,
     parts = listOf(BookPart(file.name, file)),
     wholeFolder = false,
-    folderImages = folder.images,
+    folderImages = coverCandidates(folder, emptyList()),
 )
 
 private fun groupLoose(folder: ScannedFolder): List<DetectedBook> {
@@ -130,17 +141,19 @@ private fun groupLoose(folder: ScannedFolder): List<DetectedBook> {
             folderName = folder.name,
             parts = parts,
             wholeFolder = false,
+            folderImages = folder.images,
+            sharedFolder = true,
         )
     } + singles.map { file ->
-        // La imagen de carpeta solo vale si la carpeta tiene un único libro.
+        // Con varios libros en la carpeta, su imagen solo vale si lleva el nombre del libro.
         single(folder, file)
-            .let { if (onlyOne) it else it.copy(folderImages = emptyList()) }
+            .let { if (onlyOne) it else it.copy(folderImages = folder.images, sharedFolder = true) }
             .let { if (file in sagaFiles) it.copy(albumIsTitle = false) else it }
     }
     return result.sortedWith(compareBy(NaturalOrder) { it.parts.first().file.name })
 }
 
-private fun normalize(text: String) = text.lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
+internal fun normalize(text: String) = text.lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
 
 /** Nombre sin números ni signos: "The Dharma Bums-Part01" y "-Part02" comparten clave. */
 private fun stemKey(name: String) = normalize(stemOf(name).replace(Regex("\\d+"), " "))

@@ -199,9 +199,24 @@ fun carryOver(sources: List<Book>): Carried? {
     )
 }
 
-/** Imagen de carpeta: cover/folder/front, o la única que haya. */
+/** Contraportadas y miniaturas de Windows Media Player (AlbumArtSmall, AlbumArt_{…}_Small): nunca portada. */
+private fun isNotCover(stem: String) =
+    "back" in stem || stem == "albumartsmall" || (stem.startsWith("albumart_") && stem.endsWith("_small"))
+
+/**
+ * Imagen de carpeta, ruta relativa a [DetectedBook.folderPath]: cover/folder/front; si no, la que contiene
+ * cover o front; si no, la que lleva el nombre del libro; si no, la primera. En una carpeta con más libros,
+ * solo la que lleva el nombre del libro.
+ */
 fun DetectedBook.folderCover(): String? {
-    val preferred = listOf("cover", "folder", "front")
-    return folderImages.firstOrNull { stemOf(it).lowercase() in preferred }
-        ?: folderImages.singleOrNull()
+    fun stem(path: String) = stemOf(path.substringAfterLast('/')).lowercase()
+    val images = folderImages.filterNot { isNotCover(stem(it)) }
+    val names = (parts.map { stemOf(it.file.name) } + detectedTitle() + listOfNotNull(folderName.takeUnless { sharedFolder }))
+        .map(::normalize).toSet()
+    val named = images.firstOrNull { normalize(stem(it)) in names }
+    if (sharedFolder) return named
+    return images.firstOrNull { stem(it) in setOf("cover", "folder", "front") }
+        ?: images.firstOrNull { "cover" in stem(it) || "front" in stem(it) }
+        ?: named
+        ?: images.firstOrNull()
 }

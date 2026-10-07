@@ -54,6 +54,55 @@ class DetectionTest {
     }
 
     @Test
+    fun folderCoverPrefersNamedCoverAndSkipsBackAndThumbnails() {
+        val d = "$root/Abiding in Mindfulness, Volume 1"
+        fun coverOf(vararg images: String) =
+            detectBooks(folder(d, listOf(file(d, "01.mp3"), file(d, "02.mp3")), images = images.toList()), emptyList()).single().folderCover()
+        assertEquals("Folder.jpg", coverOf("AlbumArtSmall.jpg", "Folder.jpg", "Abiding in Mindfulness, Volume 1.jpg"))
+        assertEquals("Abiding in Mindfulness, Volume 1-Cover.jpg", coverOf("Abiding in Mindfulness, Volume 1.jpg", "Abiding in Mindfulness, Volume 1-Cover.jpg"))
+        assertEquals("Abiding in Mindfulness, Volume 1.jpg", coverOf("booklet.jpg", "Abiding in Mindfulness, Volume 1.jpg"))
+        assertEquals("AlbumArt_{B502}_Large.jpg", coverOf("back.jpg", "Back Cover.jpg", "AlbumArt_{B502}_Small.jpg", "AlbumArt_{B502}_Large.jpg"))
+        assertNull(coverOf("back.jpg", "AlbumArtSmall.jpg"))
+    }
+
+    @Test
+    fun folderCoverLooksInDiscsAndImageOnlySubfolders() {
+        val k = "$root/PRACTICE/Kornfield"
+        val discs = (1..3).map { n ->
+            val disc = "$k/disc $n"
+            folder(disc, listOf(file(disc, "01.mp3")), images = if (n == 3) listOf("front.jpg") else emptyList())
+        }
+        assertEquals("disc 3/front.jpg", detectBooks(folder(k, subs = discs), emptyList()).single().folderCover())
+
+        val s = "$root/Ripped"
+        val scans = folder("$s/Scans", images = listOf("inlay.jpg", "Cover.jpg"))
+        assertEquals("Scans/Cover.jpg", detectBooks(folder(s, listOf(file(s, "01.mp3")), subs = listOf(scans)), emptyList()).single().folderCover())
+    }
+
+    @Test
+    fun sharedFolderCoverOnlyByBookName() {
+        val d = "$root/readed"
+        val books = detectBooks(
+            folder(
+                d,
+                listOf(file(d, "The Dharma Bums.mp3"), file(d, "Dust.mp3", album = "Dust The Silo Saga"), file(d, "Shift.mp3")),
+                images = listOf("cover.jpg", "The Dharma Bums.jpg", "Dust The Silo Saga.png"),
+            ),
+            emptyList(),
+        )
+        assertEquals("The Dharma Bums.jpg", books.single { it.parts[0].file.name == "The Dharma Bums.mp3" }.folderCover())
+        assertEquals("Dust The Silo Saga.png", books.single { it.parts[0].file.name == "Dust.mp3" }.folderCover())
+        assertNull(books.single { it.parts[0].file.name == "Shift.mp3" }.folderCover())
+
+        val s = "$root/yoga nidra"
+        val sessions = detectBooks(
+            folder(s, (1..2).map { file(s, "Session $it.mp3") }, images = listOf("cover.jpg")),
+            listOf(FolderRule(s, WorkUnit.FILE, OnFinish.RESTART)),
+        )
+        assertTrue(sessions.all { it.folderCover() == null })
+    }
+
+    @Test
     fun partsWithSameAlbumAreOneBook() {
         val d = "$root/Jack Kerouac - The Dharma Bums"
         val books = detectBooks(folder(d, (1..4).map { file(d, "The Dharma Bums-Part0$it.mp3", album = "The Dharma Bums") }), emptyList())

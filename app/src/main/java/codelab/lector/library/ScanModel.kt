@@ -34,7 +34,10 @@ data class DetectedBook(
     val parts: List<BookPart>,
     /** El libro es la carpeta entera (portada de carpeta y título de carpeta). */
     val wholeFolder: Boolean,
+    /** Imágenes candidatas a portada, relativas a [folderPath]: la carpeta, sus discos y sus subcarpetas sin audio. */
     val folderImages: List<String> = emptyList(),
+    /** La carpeta tiene más libros: su imagen solo vale si lleva el nombre de este. */
+    val sharedFolder: Boolean = false,
     /** Falso en libros de una saga que comparten álbum: el álbum no es su título. */
     val albumIsTitle: Boolean = true,
     /** Libro separado que comparte título con los demás trozos: "2/3", tras el título. */

@@ -200,10 +200,11 @@ class LibraryScanner(
         val files = coroutineScope {
             audio.map { f -> async { readers.withPermit { ScannedFile(f.path, f.name, meta(f, cache, seen, fresh)) } } }.awaitAll()
         }
-        val images = entries.filter { it.isFile && extensionOf(it.name) in ImageExtensions }.map { it.name }
+        val images = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in ImageExtensions }.map { it.name }
+        // Las subcarpetas solo de imágenes ("Scans", "Artwork") quedan: dan portada al libro de encima.
         val subfolders = entries.filter { it.isDirectory && isScannableDir(it) }
             .map { walk(it, cache, seen, fresh, depth + 1) }
-            .filter { it.files.isNotEmpty() || it.subfolders.isNotEmpty() }
+            .filter { it.files.isNotEmpty() || it.subfolders.isNotEmpty() || it.images.isNotEmpty() }
         val folder = ScannedFolder(dir.path, dir.name, files, images, subfolders)
         // Recuento provisional (sin reglas ni correcciones): subárboles de primer nivel y archivos sueltos de la raíz.
         val counted = when (depth) {
