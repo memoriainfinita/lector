@@ -30,6 +30,7 @@ import androidx.media3.session.MediaButtonReceiver
 import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSession.MediaItemsWithStartPosition
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import codelab.lector.MainActivity
 import codelab.lector.R
@@ -43,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.guava.future
@@ -62,6 +64,8 @@ class PlaybackService : MediaLibraryService() {
     private val restored = CompletableDeferred<Unit>()
     /** Pausa por desconectar el auricular, para reanudar si vuelve (Ajustes › Auricular). */
     private var unpluggedAt = 0L
+    /** Biblioteca para el coche (design.md › Pantallas › Android Auto). */
+    private lateinit var car: CarLibrary
 
     override fun onCreate() {
         super.onCreate()
@@ -77,6 +81,7 @@ class PlaybackService : MediaLibraryService() {
             .build()
         engine = BookEngine(exo, app.database, app.covers, app.playbackSettings, app.nowPlaying, sound, scope, app.appScope)
         sleep = SleepTimer(this, exo, engine, app.sleep, scope)
+        car = CarLibrary(this, app)
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_PLAYER),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -97,6 +102,12 @@ class PlaybackService : MediaLibraryService() {
         scope.launch {
             app.playbackSettings.settings.map { it.remoteWhenClosed }.distinctUntilChanged().collect {
                 setMediaButtonReceiverEnabled(this@PlaybackService, it)
+            }
+        }
+        // El coche vuelve a pedir las pestañas cuando cambia lo que muestran.
+        scope.launch {
+            car.changes.drop(1).collect {
+                car.tabIds.forEach { id -> session?.notifyChildrenChanged(id, car.children(id)?.size ?: 0, null) }
             }
         }
         // Unir, separar o cambiar la clase de carpeta pueden borrar el libro cargado: se pasa al nuevo.
@@ -222,12 +233,14 @@ class PlaybackService : MediaLibraryService() {
 
     private inner class Callback : MediaLibrarySession.Callback {
 
-        /** La app y los controladores de confianza (sistema, Bluetooth) reciben también las acciones propias. */
+        /** La app, los controladores de confianza (sistema, Bluetooth) y Android Auto reciben también las acciones propias. */
         override fun onConnectAsync(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): ListenableFuture<ConnectionResult> {
-            if (!controller.isTrusted && controller.packageName != packageName) return super.onConnectAsync(session, controller)
+            if (!controller.isTrusted && controller.packageName != packageName && controller.packageName != AndroidAutoPackage) {
+                return super.onConnectAsync(session, controller)
+            }
             val commands = ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                 .apply { LectorCommands.all.forEach(::add) }
                 .build()
@@ -307,24 +320,91 @@ class PlaybackService : MediaLibraryService() {
             )
         }
 
-        /** Raíz vacía: la navegación de la biblioteca (Android Auto) llega más adelante. */
+        /**
+         * Tocar un libro o un marcador en el coche, o pedirlo por voz: el motor lo abre y Media3 lo
+         * pone a sonar. Devuelve los archivos ya puestos, que `LectorPlayer` ignora. Los que traen
+         * archivo (retomar) siguen el camino de Media3.
+         */
+        override fun onSetMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+            startIndex: Int,
+            startPositionMs: Long,
+        ): ListenableFuture<MediaItemsWithStartPosition> {
+            val request = mediaItems.singleOrNull()?.takeIf { it.localConfiguration == null }
+                ?: return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+            return scope.future {
+                restored.await()
+                val wanted = when (val target = car.target(request)) {
+                    is CarLibrary.Target.Book -> target.bookId.also { engine.open(it, play = false) }
+                    is CarLibrary.Target.Mark -> target.bookId.also {
+                        engine.open(it, play = false)
+                        if (engine.bookId == it) engine.jumpTo(target.bookMs)
+                    }
+                    // Por voz sin libro concreto: el cargado.
+                    null -> engine.bookId
+                }
+                if (wanted == null || engine.bookId != wanted || exo.mediaItemCount == 0) throw UnsupportedOperationException("nothing to play")
+                MediaItemsWithStartPosition(
+                    (0 until exo.mediaItemCount).map(exo::getMediaItemAt),
+                    exo.currentMediaItemIndex,
+                    exo.currentPosition,
+                )
+            }
+        }
+
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(
-            LibraryResult.ofItem(
-                MediaItem.Builder()
-                    .setMediaId("root")
-                    .setMediaMetadata(MediaMetadata.Builder().setIsBrowsable(true).setIsPlayable(false).build())
-                    .build(),
-                params,
-            ),
-        )
+        ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(LibraryResult.ofItem(car.root(), params))
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = scope.future {
+            car.children(parentId)?.let { LibraryResult.ofItemList(it, params) } ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+        }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String,
+        ): ListenableFuture<LibraryResult<MediaItem>> = scope.future {
+            car.item(mediaId)?.let { LibraryResult.ofItem(it, null) } ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+        }
+
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<Void>> = scope.future {
+            session.notifySearchResultChanged(browser, query, car.search(query).size, params)
+            LibraryResult.ofVoid()
+        }
+
+        override fun onGetSearchResult(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = scope.future {
+            LibraryResult.ofItemList(car.search(query), params)
+        }
     }
 }
 
 private const val ReplugWindowMs = 10_000L
+
+private const val AndroidAutoPackage = "com.google.android.projection.gearhead"
 
 private val HeadsetTypes = setOf(
     AudioDeviceInfo.TYPE_WIRED_HEADSET,

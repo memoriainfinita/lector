@@ -77,6 +77,17 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Portadas para otras apps: Android Auto no lee file://. Solo lectura (CoverProvider). -->
+        <provider
+            android:name=".library.CoverProvider"
+            android:authorities="${applicationId}.covers"
+            android:exported="true" />
+
+        <!-- Android Auto: app de audio (design.md › Pantallas › Android Auto). -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <!-- Idioma por app en Android 8–12: AppCompat lo guarda y lo restaura. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

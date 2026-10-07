@@ -62,6 +62,7 @@ class BookEngine(
     private var seeked = false
 
     val loaded: Boolean get() = book != null
+    val bookId: String? get() = book?.id
     val currentPrefs: PlaybackSettings get() = prefs
 
     init {
@@ -151,12 +152,12 @@ class BookEngine(
     /** Título del libro; debajo, el capítulo si lo hay, si no el autor. Portada para notificación y bloqueo, si está activada. */
     private fun metadata(b: Book, segment: Segment?): MediaMetadata {
         val title = b.customName ?: b.title
-        val cover = covers.file(b.id).takeIf { prefs.coverOutside && it.exists() }
+        val cover = if (prefs.coverOutside) covers.uri(b.id) else null
         return MediaMetadata.Builder()
             .setTitle(title)
             .setAlbumTitle(title)
             .setArtist(if (timeline.hasChapters && segment != null) segment.title else b.author)
-            .setArtworkUri(cover?.let(Uri::fromFile))
+            .setArtworkUri(cover)
             .setMediaType(MediaMetadata.MEDIA_TYPE_AUDIO_BOOK_CHAPTER)
             .setIsBrowsable(false)
             .setIsPlayable(true)

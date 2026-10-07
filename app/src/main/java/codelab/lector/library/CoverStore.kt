@@ -2,12 +2,23 @@ package codelab.lector.library
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import java.io.File
 
-/** Miniaturas de portada por libro, generadas al escanear. */
-class CoverStore(private val dir: File) {
+/**
+ * Miniaturas de portada por libro, generadas al escanear. Fuera de la app (notificación, coche) se
+ * leen por [CoverProvider], con la autoridad [authority].
+ */
+class CoverStore(val dir: File, private val authority: String) {
 
     fun file(bookId: String) = File(dir, "$bookId.jpg")
+
+    /** URI de la portada para otras apps, o null sin portada. La fecha evita que se vea una portada vieja. */
+    fun uri(bookId: String): Uri? {
+        val f = file(bookId).takeIf { it.exists() } ?: return null
+        return Uri.Builder().scheme("content").authority(authority).appendPath(f.name)
+            .appendQueryParameter("v", f.lastModified().toString()).build()
+    }
 
     fun has(bookId: String) = file(bookId).exists()
 

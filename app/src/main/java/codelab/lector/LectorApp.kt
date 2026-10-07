@@ -39,7 +39,7 @@ class AppContainer(context: Context) {
     val appScope = CoroutineScope(SupervisorJob())
     val database: LectorDatabase by lazy { LectorDatabase.create(context) }
     val appearance = AppearanceRepository(context.settingsStore)
-    val covers = CoverStore(File(context.filesDir, "covers"))
+    val covers = CoverStore(File(context.filesDir, "covers"), "${context.packageName}.covers")
     val scanner by lazy {
         LibraryScanner(database, Media3MetadataReader(context), covers, appScope) { playbackSettings.current().newBookSpeed }
     }

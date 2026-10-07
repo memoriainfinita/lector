@@ -623,6 +623,21 @@ Hecha 2026-10-06.
 - "+ tag" en la hoja de marcador abre la lista completa de tags con la búsqueda activa; si lo escrito no existe, "Crear «x»"
 - Posición mostrada: tiempo del libro entero, con capítulo o archivo debajo
 
+### Android Auto
+
+Diseño aprobado 2026-10-07. Sin coche: pruebas con el Desktop Head Unit (DHU).
+
+- Navegar la biblioteca desde la pantalla del coche, con `MediaLibraryService` (ya en uso). Código en `playback/CarLibrary.kt`
+- Tres pestañas en la raíz (Android Auto admite 4 como mucho, todas navegables; sin paginación):
+  - Seguir escuchando: libros a medias, sin los quitados de recientes ni de la biblioteca, el más reciente primero. Cuadrícula
+  - Biblioteca: todos los libros sin los quitados, en el orden guardado de la app. Carpetas de Episodios o Sesiones como carpeta con sus libros dentro. Cuadrícula
+  - Marcadores: libros con marcadores, el escuchado más recientemente primero; dentro, sus marcadores normales por posición (como la recopilación sin filtro). Título del marcador, o capítulo y tiempo. Tocar uno: "Escuchar desde aquí"
+- Cada libro con su estado (sin empezar, a medias con porcentaje, terminado). Tocarlo: abre y suena desde su posición
+- Búsqueda por voz o texto con la misma búsqueda de la Biblioteca
+- Portadas por un `ContentProvider` de solo lectura (Android Auto no acepta `file://`). En las listas, según "Mostrar portadas"; sin portada, la de Android Auto por defecto. En el reproductor, según "Portada en la pantalla de bloqueo", como la notificación
+- Reproductor del coche: los huecos de la notificación. Las acciones propias también para el paquete de Android Auto (`com.google.android.projection.gearhead`)
+- Sin Google Play: en el móvil, modo desarrollador de Android Auto y "Fuentes desconocidas"
+
 ## Modelo de datos
 
 Aprobado 2026-10-03.
