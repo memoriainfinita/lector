@@ -4,6 +4,16 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-08 — Datos desde el nombre de carpeta, reader.txt, OPF y NFO: descartados
+
+**Qué cambió:** salieron del TODO, decidido por el usuario.
+**Por qué:** el nombre de carpeta solo da el título cuando falta la etiqueta de álbum, y quien organiza al estilo Audiobookshelf (o tiene OPF / NFO de Audiobookshelf o Calibre) suele tener los archivos etiquetados: mandan las etiquetas. Lo que añadía (número de serie, narrador en libros sin etiquetas) no compensaba; OPF / NFO era lo más trabajoso. Reglas de Audiobookshelf consultadas: audiobookshelf.org/docs › Libraries › Book Library Structure.
+
+### 2026-10-08 — Mp3 de tasa variable sin cabecera: descartado
+
+**Qué cambió:** salió del TODO, decidido por el usuario: ni arreglo ni aviso.
+**Por qué:** es raro (LAME escribe la cabecera Xing o Info por defecto; aparece en mp3 unidos o cortados con herramientas que la pierden) y el efecto es menor: el libro suena entero, solo los saltos caen desviados y la duración puede salir algo mal. Arreglarlo exigía copiar el `Mp3Extractor` de Media3: en 1.11.1 el salto por índice solo se usa si no hay otra forma de saltar, y con el tamaño del archivo siempre la hay (`computeSeeker`).
+
 ### 2026-10-08 — Formatos: por bibliotecas en general, no por la del usuario
 
 **Qué cambió:** el TODO de formatos estaba en "solo si aparecen", tras comprobar que la biblioteca del usuario no tenía esos casos. El usuario lo corrigió: la app es para cualquier biblioteca. Se hicieron el orden por pista, los discos con texto, los formatos no admitidos visibles y mka / mp4 / webm.

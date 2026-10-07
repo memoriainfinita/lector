@@ -4,6 +4,7 @@ import codelab.lector.data.db.Book
 import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.BookmarkKind
 import codelab.lector.data.db.Chapter
+import codelab.lector.data.db.ChapterList
 import codelab.lector.data.db.CoverSource
 import codelab.lector.data.db.FileMeta
 import codelab.lector.data.db.LectorDatabase
@@ -223,9 +224,19 @@ class LibraryScanner(
         val entries = dir.listFiles().orEmpty()
         // Sin ocultos: la papelera de Android deja lo borrado como ".trashed-…" en la misma carpeta.
         val audio = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in AudioExtensions }
-        val files = coroutineScope {
+        val read = coroutineScope {
             audio.map { f -> async { readers.withPermit { ScannedFile(f.path, f.name, meta(f, cache, seen, fresh)) } } }.awaitAll()
         }.filterNot { it.meta.hasVideo }
+        // Capítulos de un `.cue` para los archivos sin capítulos propios. Se leen en cada búsqueda, fuera de
+        // la caché: editar el `.cue` cuenta en la siguiente.
+        val cues = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) == "cue" }
+            .mapNotNull { f -> runCatching { f.name to parseCue(decodeCue(f.readBytes())) }.getOrNull() }
+            .toMap()
+        val files = if (cues.isEmpty()) read else read.map { f ->
+            if (f.meta.chapters.items.isNotEmpty()) return@map f
+            val chapters = cueChapters(f.name, read.size, cues, f.meta.durationMs)
+            if (chapters.isEmpty()) f else f.copy(meta = f.meta.copy(chapters = ChapterList(chapters)))
+        }
         val images = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in ImageExtensions }.map { it.name }
         // Las subcarpetas solo de imágenes ("Scans", "Artwork") quedan: dan portada al libro de encima.
         val subfolders = entries.filter { it.isDirectory && isScannableDir(it) }
