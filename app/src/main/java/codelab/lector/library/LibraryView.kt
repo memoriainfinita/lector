@@ -139,7 +139,7 @@ private fun comparatorFor(sort: LibrarySort): Comparator<LibraryEntry> {
  */
 fun continueListening(items: List<LibraryItem>, loadedBookId: String?): LibraryItem? =
     items.firstOrNull { it.book.id == loadedBookId }
-        ?: items.filter { it.recentAt != null && !it.book.finished && !it.book.removed }.maxByOrNull { it.recentAt!! }
+        ?: items.filter { it.recentAt != null && !it.book.finished && !it.book.removed && it.book.unsupportedFormat == null }.maxByOrNull { it.recentAt!! }
 
 /** Ruta para mostrar, relativa a su almacenamiento: "Audiobooks / Frank Herbert". */
 fun displayPath(path: String, storageRoots: List<String>): String {

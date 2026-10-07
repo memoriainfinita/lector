@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-08 — Formatos: por bibliotecas en general, no por la del usuario
+
+**Qué cambió:** el TODO de formatos estaba en "solo si aparecen", tras comprobar que la biblioteca del usuario no tenía esos casos. El usuario lo corrigió: la app es para cualquier biblioteca. Se hicieron el orden por pista, los discos con texto, los formatos no admitidos visibles y mka / mp4 / webm.
+**Por qué:** su biblioteca sirve para probar, no para decidir alcance. Además, "ALAC y AC-3 necesitan la extensión de FFmpeg" era falso en el móvil principal: se reproducen con sus decodificadores. Por eso el formato no admitido se decide por el decodificador del móvil (Media3 `MediaCodecUtil`), no por una lista fija de códecs; la lista fija queda solo para wma, aax, aaxc y ape, que Media3 no sabe abrir.
+
 ### 2026-10-08 — Importar con libros en otras rutas: por contenido, no por duración
 
 **Qué cambió:** salió del TODO. Un libro importado que en el móvil nuevo está en otra ruta (o un libro de un archivo con la carpeta renombrada) no se reconectaba: la copia no llevaba tamaños, la importación guardaba `sizeBytes = 0` y el paso por contenido no lo veía. Ahora la copia lleva el tamaño de cada archivo, la importación lo guarda y el plan de Combinar también empareja por contenido.

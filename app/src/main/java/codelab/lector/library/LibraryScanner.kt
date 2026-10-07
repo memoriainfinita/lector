@@ -225,7 +225,7 @@ class LibraryScanner(
         val audio = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in AudioExtensions }
         val files = coroutineScope {
             audio.map { f -> async { readers.withPermit { ScannedFile(f.path, f.name, meta(f, cache, seen, fresh)) } } }.awaitAll()
-        }
+        }.filterNot { it.meta.hasVideo }
         val images = entries.filter { it.isFile && !it.name.startsWith(".") && extensionOf(it.name) in ImageExtensions }.map { it.name }
         // Las subcarpetas solo de imágenes ("Scans", "Artwork") quedan: dan portada al libro de encima.
         val subfolders = entries.filter { it.isDirectory && isScannableDir(it) }
@@ -248,9 +248,12 @@ class LibraryScanner(
     private suspend fun meta(file: File, cache: Map<String, FileMeta>, seen: MutableSet<String>, fresh: MutableSet<FileMeta>): FileMeta {
         seen += file.path
         val cached = cache[file.path]
-        if (cached != null && cached.sizeBytes == file.length() && cached.modifiedAt == file.lastModified()) return cached
-        val read = runCatching { reader.read(file) }
-            .getOrElse { FileMeta(path = file.path, sizeBytes = file.length(), modifiedAt = file.lastModified(), durationMs = 0) }
+        if (cached != null && cached.sizeBytes == file.length() && cached.modifiedAt == file.lastModified() && cached.readVersion >= MetaReadVersion) return cached
+        fun unread(unsupported: String? = null) =
+            FileMeta(path = file.path, sizeBytes = file.length(), modifiedAt = file.lastModified(), durationMs = 0, unsupported = unsupported, readVersion = MetaReadVersion)
+        // Un formato no admitido no se lee: Media3 no lo entiende.
+        val read = UnsupportedExtensions[extensionOf(file.name)]?.let(::unread)
+            ?: runCatching { reader.read(file) }.getOrElse { unread() }
         fresh += read
         return read
     }

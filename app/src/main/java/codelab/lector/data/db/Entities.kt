@@ -47,7 +47,15 @@ data class Book(
     /** Ecualizador activado en el sonido propio. Versión 2 de la base de datos. */
     @ColumnInfo(defaultValue = "0") val eqEnabled: Boolean = false,
     val eqBands: List<Float>? = null,
+    /**
+     * Formato que este móvil no reproduce ("WMA", "ALAC"…), de alguno de sus archivos; null si se
+     * reproduce. Sale atenuado y sin reproducir. Versión 6 de la base de datos.
+     */
+    val unsupportedFormat: String? = null,
 )
+
+/** Se puede reproducir: tiene sus archivos y su formato se admite. */
+val Book.playable: Boolean get() = !inaccessible && !removed && unsupportedFormat == null
 
 @Entity(
     tableName = "book_file",
@@ -166,6 +174,15 @@ data class FileMeta(
     val seriesPart: String? = null,
     val hasArtwork: Boolean = false,
     val chapters: ChapterList = ChapterList(),
+    /** Pista y disco de las etiquetas (ID3 TRCK / TPOS, MP4 trkn / disk, Vorbis). Versión 6. */
+    val trackNumber: Int? = null,
+    val discNumber: Int? = null,
+    /** Formato que este móvil no reproduce ("WMA", "ALAC"…); null si se reproduce. Versión 6. */
+    val unsupported: String? = null,
+    /** Lleva vídeo (mp4, webm): no es un audiolibro y el escaneo lo deja fuera. Versión 6. */
+    @ColumnInfo(defaultValue = "0") val hasVideo: Boolean = false,
+    /** Versión de la lectura: lo leído con una anterior a `MetaReadVersion` se vuelve a leer. Versión 6. */
+    @ColumnInfo(defaultValue = "0") val readVersion: Int = 0,
 )
 
 @Entity(tableName = "correction")

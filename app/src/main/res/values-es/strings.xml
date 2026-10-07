@@ -98,6 +98,7 @@
     <string name="book_not_started">sin empezar · %1$s</string>
     <string name="book_finished">terminado · %1$s</string>
     <string name="book_missing">no encontrado</string>
+    <string name="book_unsupported">no admitido · %1$s</string>
     <plurals name="folder_sessions">
         <item quantity="one">%d sesión</item>
         <item quantity="other">%d sesiones</item>

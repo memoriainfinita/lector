@@ -102,6 +102,7 @@ import codelab.lector.R
 import codelab.lector.ui.components.highlighted
 import codelab.lector.ui.bookmarks.LocalBookmarkSheets
 import codelab.lector.data.db.LibraryItem
+import codelab.lector.data.db.playable
 import codelab.lector.library.FolderKind
 import codelab.lector.library.LibraryEntry
 import codelab.lector.library.LibraryFilter
@@ -288,8 +289,12 @@ fun LibraryScreen(
                 showCovers = state.showCovers,
                 onFolder = { folder = it },
                 onBook = { item ->
-                    viewModel.open(item.book.id)
-                    onOpenPlayer()
+                    if (item.book.unsupportedFormat != null) {
+                        openMenu(item.book.id)
+                    } else {
+                        viewModel.open(item.book.id)
+                        onOpenPlayer()
+                    }
                 },
                 onFolderOptions = { classSheetFor = it },
                 onBookOptions = { openMenu(it.book.id) },
@@ -510,12 +515,14 @@ private fun BookGrid(
                             entry.item,
                             cover = if (coverList) CoverSlot(state.covers[entry.item.book.id]) else null,
                             loaded = entry.item.book.id == state.loadedBookId,
-                            onOpen = if (entry.item.book.removed) {
-                                { bookmarkSheets.showBook(entry.item.book.id) }
-                            } else {
-                                {
-                                    viewModel.open(entry.item.book.id)
-                                    onOpenPlayer()
+                            onOpen = when {
+                                entry.item.book.removed -> { { bookmarkSheets.showBook(entry.item.book.id) } }
+                                entry.item.book.unsupportedFormat != null -> { { onBookOptions(entry.item.book.id) } }
+                                else -> {
+                                    {
+                                        viewModel.open(entry.item.book.id)
+                                        onOpenPlayer()
+                                    }
                                 }
                             },
                             onOptions = { onBookOptions(entry.item.book.id) },
@@ -537,13 +544,15 @@ private fun BookGrid(
                     entry.item,
                     cover = state.covers[entry.item.book.id].takeIf { state.showCovers },
                     loaded = entry.item.book.id == state.loadedBookId,
-                    // Quitado: nada que reproducir; abre sus marcadores.
-                    onOpen = if (entry.item.book.removed) {
-                        { bookmarkSheets.showBook(entry.item.book.id) }
-                    } else {
-                        {
-                            viewModel.open(entry.item.book.id)
-                            onOpenPlayer()
+                    // Quitado: nada que reproducir; abre sus marcadores. Formato no admitido: su menú (Abrir con…).
+                    onOpen = when {
+                        entry.item.book.removed -> { { bookmarkSheets.showBook(entry.item.book.id) } }
+                        entry.item.book.unsupportedFormat != null -> { { onBookOptions(entry.item.book.id) } }
+                        else -> {
+                            {
+                                viewModel.open(entry.item.book.id)
+                                onOpenPlayer()
+                            }
                         }
                     },
                     onOptions = { onBookOptions(entry.item.book.id) },
@@ -706,7 +715,7 @@ private fun BookCard(item: LibraryItem, cover: String?, loaded: Boolean, onOpen:
     val book = item.book
     val title = book.displayTitle
     val status = item.status
-    val unavailable = book.inaccessible || book.removed
+    val unavailable = !book.playable
     val meta = cardMeta(item)
     val accent = c.accent
     Column(
@@ -749,6 +758,7 @@ internal fun cardMeta(item: LibraryItem): String {
     return when {
         book.removed -> unavailableMeta(item)
         book.inaccessible -> stringResource(R.string.book_missing)
+        book.unsupportedFormat != null -> stringResource(R.string.book_unsupported, book.unsupportedFormat)
         item.status == LibraryFilter.FINISHED -> stringResource(R.string.book_finished, formatDuration(book.totalDurationMs))
         item.status == LibraryFilter.NOT_STARTED -> stringResource(R.string.book_not_started, formatDuration(book.totalDurationMs))
         else -> stringResource(R.string.book_progress, (item.progress * 100).roundToInt(), formatDuration(item.remainingMs))
@@ -824,7 +834,7 @@ private fun BookListRow(item: LibraryItem, cover: CoverSlot?, loaded: Boolean, o
     val t = LectorTheme.type
     val book = item.book
     val title = book.displayTitle
-    val unavailable = book.inaccessible || book.removed
+    val unavailable = !book.playable
     val author = book.author?.takeIf { it.isNotBlank() }
     ListDivider()
     Row(

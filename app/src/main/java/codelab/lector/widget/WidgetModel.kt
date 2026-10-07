@@ -73,7 +73,7 @@ suspend fun loadWidgetModel(context: Context, app: AppContainer): WidgetModel {
 
 private suspend fun lastBook(app: AppContainer): WidgetBook? {
     val id = app.playbackSettings.lastBookId() ?: return null
-    val book = app.database.books().get(id)?.takeIf { !it.removed } ?: return null
+    val book = app.database.books().get(id)?.takeIf { !it.removed && it.unsupportedFormat == null } ?: return null
     val timeline = app.database.bookTimeline(id)
     val position = book.positionFile?.let(timeline::indexOfFile)?.takeIf { it >= 0 }
         ?.let { timeline.toBook(FilePosition(it, book.positionMs)) } ?: 0L

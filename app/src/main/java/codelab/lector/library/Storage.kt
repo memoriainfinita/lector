@@ -33,11 +33,14 @@ fun isScannableDir(dir: File) = !dir.name.startsWith(".") && dir.name != "Androi
 
 data class AudioFolder(val dir: File, val audioFiles: Int)
 
-/** Archivos de audio dentro de [dir] y sus subcarpetas, sin ocultos ni `Android/`. */
+/**
+ * Archivos de audio dentro de [dir] y sus subcarpetas, sin ocultos ni `Android/`. Sin mp4 ni webm: sin
+ * leerlos no se sabe si son vídeo, y una carpeta de vídeos no debe salir como carpeta de audio.
+ */
 fun countAudioFiles(dir: File): Int = dir.listFiles().orEmpty().sumOf { f ->
     when {
         f.isDirectory -> if (isScannableDir(f)) countAudioFiles(f) else 0
-        !f.name.startsWith(".") && extensionOf(f.name) in AudioExtensions -> 1
+        !f.name.startsWith(".") && extensionOf(f.name).let { it in AudioExtensions && it !in VideoContainerExtensions } -> 1
         else -> 0
     }
 }

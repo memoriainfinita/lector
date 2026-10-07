@@ -35,6 +35,7 @@ import codelab.lector.AppContainer
 import codelab.lector.R
 import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.LibraryItem
+import codelab.lector.data.db.playable
 import codelab.lector.library.NaturalOrder
 import codelab.lector.library.bookFolders
 import codelab.lector.library.displayPath
@@ -83,7 +84,7 @@ class MergeBooksViewModel(private val app: AppContainer, bookId: String, storage
             val folders = bookFolders(items.map { it.book })
             val folder = listingFolder(book, folders)
             val books = items
-                .filter { !it.book.inaccessible && !it.book.removed && listingFolder(it.book, folders) == folder }
+                .filter { it.book.playable && listingFolder(it.book, folders) == folder }
                 .sortedWith(compareBy(NaturalOrder) { it.book.path })
             val covers = books.mapNotNull { item -> app.covers.file(item.book.id).takeIf { it.exists() }?.let { item.book.id to it.path } }.toMap()
             _state.update { it.copy(folder = displayPath(folder, storageRoots), books = books, covers = covers) }

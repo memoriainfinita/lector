@@ -28,6 +28,7 @@
 #     am start -n codelab.lector/.debug.PlaybackActivity --es open <id> --ez play false
 #     Con la app parada, ese primer "open" puede perderse y quedar cargado el libro anterior: comprobar
 #     en el minirreproductor qué libro hay antes de saltar o marcar (así se movió un libro real).
+#     Si "open" falla (libro no admitido), sigue cargado el anterior: un PLAY_PAUSE después lo reanuda.
 #   - Arrastrar una barra de Escuchando con input motionevent DOWN/MOVE/UP salta al soltar: copia antes.
 #   - Las posiciones cambian con la orientación y con la sesión de escucha (la fila de filtros
 #     sube cuando no está "Seguir escuchando").

@@ -60,8 +60,8 @@ fun skipAmountMs(seconds: Int, speed: Float, divideBySpeed: Boolean): Long =
 fun previousBookmarkTarget(bookmarkPositions: List<Long>, bookMs: Long, thresholdMs: Long = BookTimeline.RestartThresholdMs): Long? =
     bookmarkPositions.filter { it < bookMs - thresholdMs }.maxOrNull()
 
-/** Siguiente libro: el que sigue por ruta en orden natural, saltando los inaccesibles. */
+/** Siguiente libro: el que sigue por ruta en orden natural, saltando los inaccesibles y los de formato no admitido. */
 fun nextBook(current: Book, all: List<Book>): Book? =
-    all.filter { !it.inaccessible && it.id != current.id }
+    all.filter { !it.inaccessible && it.unsupportedFormat == null && it.id != current.id }
         .sortedWith(compareBy(NaturalOrder) { it.path })
         .firstOrNull { NaturalOrder.compare(it.path, current.path) > 0 }

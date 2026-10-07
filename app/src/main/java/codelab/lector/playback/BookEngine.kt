@@ -95,6 +95,8 @@ class BookEngine(
         }
         save()
         val b = db.books().get(bookId) ?: return holder.fail(PlaybackError.Failed("book not found"))
+        // La Biblioteca no lo ofrece; esto cubre lo que llegue por otro camino (un marcador, el coche).
+        b.unsupportedFormat?.let { return holder.fail(PlaybackError.Failed("unsupported format: $it")) }
         val fs = db.books().files(bookId)
         val dir = baseDirOf(b, fs)
         if (fs.isEmpty() || fs.any { !File(dir, it.relativePath).isFile }) {

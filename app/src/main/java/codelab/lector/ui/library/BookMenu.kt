@@ -105,8 +105,11 @@ fun BookMenuSheet(item: LibraryItem, cover: String?, viewModel: LibraryViewModel
                 MenuRow(stringResource(R.string.view_cover), close { actions.onCover(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_image))
                 if (hasFiles) {
                     MenuRow(stringResource(R.string.go_to_folder), close { actions.onFolder(book.path) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_folder))
-                    MenuRow(stringResource(R.string.split_book), close { actions.onSplit(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_split), enabled = fileCount > 1)
-                    MenuRow(stringResource(R.string.merge_with_books), close { actions.onMerge(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_merge))
+                    // Formato no admitido: nada que separar ni unir, no se reproduce.
+                    if (book.unsupportedFormat == null) {
+                        MenuRow(stringResource(R.string.split_book), close { actions.onSplit(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_split), enabled = fileCount > 1)
+                        MenuRow(stringResource(R.string.merge_with_books), close { actions.onMerge(book.id) }, Modifier.fillMaxWidth(), painterResource(R.drawable.ic_merge))
+                    }
                     // Una carpeta que es un libro sale en Carpetas como fila de libro: su clase se cambia aquí.
                     // No en un libro de archivos sueltos o unido, cuya ruta es la carpeta que lo contiene.
                     if (isBookFolder) {
@@ -178,13 +181,15 @@ private fun MenuHeader(item: LibraryItem, cover: String?, showCover: Boolean, vi
             Text(title, style = t.row.copy(fontWeight = FontWeight.SemiBold), color = c.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (byline.isNotEmpty()) Text(byline, style = t.body.copy(fontSize = 13.sp), color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
-                stringResource(
-                    R.string.book_menu_times,
-                    formatDuration(item.positionInBookMs),
-                    formatDuration(book.totalDurationMs),
-                    (item.progress * 100).roundToInt(),
-                    size?.let(::formatSize) ?: "…",
-                ),
+                // Formato no admitido: sin duración leída; el formato y el tamaño.
+                book.unsupportedFormat?.let { stringResource(R.string.book_unsupported, it) + " · " + (size?.let(::formatSize) ?: "…") }
+                    ?: stringResource(
+                        R.string.book_menu_times,
+                        formatDuration(item.positionInBookMs),
+                        formatDuration(book.totalDurationMs),
+                        (item.progress * 100).roundToInt(),
+                        size?.let(::formatSize) ?: "…",
+                    ),
                 style = t.meta,
                 color = c.textSecondary,
             )

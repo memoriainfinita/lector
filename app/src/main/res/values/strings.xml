@@ -99,6 +99,7 @@
     <string name="book_not_started">not started · %1$s</string>
     <string name="book_finished">finished · %1$s</string>
     <string name="book_missing">not found</string>
+    <string name="book_unsupported">unsupported · %1$s</string>
     <plurals name="folder_sessions">
         <item quantity="one">%d session</item>
         <item quantity="other">%d sessions</item>

@@ -51,6 +51,7 @@ import codelab.lector.bookmarks.BookmarkGroup
 import codelab.lector.bookmarks.BookmarkRow
 import codelab.lector.bookmarks.bookmarksText
 import codelab.lector.data.db.Book
+import codelab.lector.data.db.playable
 import codelab.lector.data.db.BookmarkKind
 import codelab.lector.data.db.TagUse
 import codelab.lector.library.displayTitle
@@ -103,9 +104,6 @@ internal fun BookmarkFilter.matches(row: BookmarkRow): Boolean {
 
 internal fun List<BookmarkGroup>.filtered(filter: BookmarkFilter) =
     map { it.copy(rows = it.rows.filter(filter::matches)) }.filter { it.rows.isNotEmpty() }
-
-/** Libro que se puede reproducir: sus archivos están. */
-internal val Book.playable: Boolean get() = !inaccessible && !removed
 
 @Composable
 fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch: () -> Unit, onManageTags: () -> Unit) {

@@ -6,10 +6,33 @@ import codelab.lector.data.db.WorkUnit
 /** Archivo que por sí solo parece un libro completo, no una parte. */
 const val LongFileMs = 3 * 3_600_000L
 
-/** Subcarpeta de disco: "CD1", "disc 2", "Parte 3"… al final del nombre. */
-private val DiscName = Regex("""(?i)(^|[\s\-_.(\[])(cd|disc|disk|disco|parte|part)[\s\-_.]*\d+\s*[)\]]?\s*$""")
+/**
+ * Subcarpeta de disco: "CD1", "disc 2", "Disc 1 of 3", "(Disco 2)", "Parte 3", "Part 1 of 2". Con texto
+ * detrás del número, solo cd / disc / disk / disco y tras un separador ("CD1 - El comienzo"): "Part 2 -
+ * El regreso" suele ser un libro de una serie, no un disco.
+ */
+private val DiscName = Regex("""(?i)(?:^|[\s\-_.(\[])(?:cd|disc|disk|disco)[\s\-_.]*(\d+)(?:\s*(?:of|de)\s*\d+)?\s*[)\]]?\s*(?:$|[-–—:_.(\[].*$)""")
+private val PartName = Regex("""(?i)(?:^|[\s\-_.(\[])(?:parte|part)[\s\-_.]*(\d+)(?:\s*(?:of|de)\s*\d+)?\s*[)\]]?\s*$""")
 
-fun isDiscFolder(name: String) = DiscName.containsMatchIn(name)
+/** Número de una subcarpeta de disco; null si no lo es. */
+fun discNumber(name: String): Int? = (DiscName.find(name) ?: PartName.find(name))?.groupValues?.get(1)?.toIntOrNull()
+
+fun isDiscFolder(name: String) = discNumber(name) != null
+
+/**
+ * Orden de los archivos de un libro: por nombre, en orden natural, si todos llevan número y distinto
+ * ("01 - Prólogo", "Part02"). Si no ("Prólogo", "1984 - Epílogo" y "1984 - Prólogo"), por disco y pista
+ * de las etiquetas, si todos las tienen y no se repiten. Si tampoco, por nombre.
+ */
+internal fun orderFiles(files: List<ScannedFile>): List<ScannedFile> {
+    val byName = files.sortedWith(compareBy(NaturalOrder) { it.name })
+    if (files.size < 2) return byName
+    val digits = files.map { stemOf(it.name).filter(Char::isDigit) }
+    if (digits.none(String::isEmpty) && digits.toSet().size == digits.size) return byName
+    val keys = files.map { f -> f.meta.trackNumber?.let { (f.meta.discNumber ?: 1) to it } }
+    if (keys.any { it == null } || keys.toSet().size != keys.size) return byName
+    return files.sortedWith(compareBy<ScannedFile> { it.meta.discNumber ?: 1 }.thenBy { it.meta.trackNumber }.thenBy(NaturalOrder) { it.name })
+}
 
 /** Regla de la carpeta o de su ancestro más cercano. */
 fun ruleFor(path: String, rules: List<FolderRule>): FolderRule? =
@@ -30,7 +53,7 @@ fun detectBooks(root: ScannedFolder, rules: List<FolderRule>): List<DetectedBook
     fun visit(folder: ScannedFolder) {
         val rule = ruleFor(folder.path, rules)
         val discs = folder.subfolders.filter { isDiscFolder(it.name) && it.files.isNotEmpty() }
-            .sortedWith(compareBy(NaturalOrder) { it.name })
+            .sortedWith(compareBy<ScannedFolder> { discNumber(it.name) }.thenBy(NaturalOrder) { it.name })
         when (rule?.workUnit) {
             WorkUnit.FILE -> {
                 val shared = folder.files.size > 1
@@ -55,10 +78,8 @@ fun detectBooks(root: ScannedFolder, rules: List<FolderRule>): List<DetectedBook
 }
 
 private fun partsWithDiscs(folder: ScannedFolder, discs: List<ScannedFolder>): List<BookPart> =
-    folder.files.sortedWith(compareBy(NaturalOrder) { it.name }).map { BookPart(it.name, it) } +
-        discs.flatMap { d ->
-            d.files.sortedWith(compareBy(NaturalOrder) { it.name }).map { BookPart("${d.name}/${it.name}", it) }
-        }
+    orderFiles(folder.files).map { BookPart(it.name, it) } +
+        discs.flatMap { d -> orderFiles(d.files).map { BookPart("${d.name}/${it.name}", it) } }
 
 /** Imágenes de la carpeta, de sus discos y de sus subcarpetas sin audio ("Scans", "Artwork"…), en ese orden. */
 private fun coverCandidates(folder: ScannedFolder, discs: List<ScannedFolder>): List<String> {
@@ -126,7 +147,7 @@ private fun groupLoose(folder: ScannedFolder): List<DetectedBook> {
     // 4. El resto: uno por archivo.
     singles += loose - stemGroups.flatten().toSet()
 
-    val books = groups.map { it.sortedWith(compareBy(NaturalOrder) { f -> f.name }) }
+    val books = groups.map(::orderFiles)
         .partition { it.size > 1 }
         .let { (multi, one) -> singles += one.flatten(); multi }
 

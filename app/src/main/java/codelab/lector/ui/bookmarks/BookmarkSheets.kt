@@ -66,6 +66,7 @@ import codelab.lector.bookmarks.BookmarkRow
 import codelab.lector.bookmarks.BookmarkStore
 import codelab.lector.container
 import codelab.lector.data.db.BookmarkKind
+import codelab.lector.data.db.playable
 import codelab.lector.ui.components.CheckBox
 import codelab.lector.ui.components.LectorSheet
 import codelab.lector.ui.components.ListDivider
@@ -506,7 +507,7 @@ private fun BookBookmarksSheet(
     val book by produceState<codelab.lector.data.db.Book?>(null, bookId) { value = app.database.books().get(bookId) }
     val playing by app.playback.state.collectAsStateWithLifecycle()
     val here = playing?.takeIf { it.bookId == bookId }?.positionMs
-    val playable = book?.let { !it.inaccessible && !it.removed } == true
+    val playable = book?.playable == true
     val normal = rows.count { it.bookmark.kind == BookmarkKind.NORMAL }
 
     LectorSheet(onDismiss, scrollable = false) {

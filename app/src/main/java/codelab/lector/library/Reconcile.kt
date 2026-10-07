@@ -271,6 +271,7 @@ fun DetectedBook.toBook(existing: Book?, now: Long, newId: () -> String, newBook
         coverSource = coverSource,
         inaccessible = false,
         removed = false,
+        unsupportedFormat = parts.firstNotNullOfOrNull { it.file.meta.unsupported },
     )
 }
 

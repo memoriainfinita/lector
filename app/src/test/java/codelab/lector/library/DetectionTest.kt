@@ -11,6 +11,7 @@ import codelab.lector.data.db.FileMeta
 import codelab.lector.data.db.FolderRule
 import codelab.lector.data.db.OnFinish
 import codelab.lector.data.db.WorkUnit
+import codelab.lector.data.db.playable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -20,12 +21,16 @@ import org.junit.Test
 /** Casos sacados de la biblioteca real del usuario (2026-10-03). */
 class DetectionTest {
 
-    private fun file(dir: String, name: String, album: String? = null, chapters: Int = 0, durationMs: Long = 3_600_000, size: Long = 1) =
+    private fun file(
+        dir: String, name: String, album: String? = null, chapters: Int = 0, durationMs: Long = 3_600_000, size: Long = 1,
+        track: Int? = null, disc: Int? = null, unsupported: String? = null,
+    ) =
         ScannedFile(
             "$dir/$name", name,
             FileMeta(
                 path = "$dir/$name", sizeBytes = size, modifiedAt = 0, durationMs = durationMs, album = album,
                 chapters = ChapterList(List(chapters) { ChapterInfo(it * 1000L, it * 1000L + 999, "c$it") }),
+                trackNumber = track, discNumber = disc, unsupported = unsupported,
             ),
         )
 
@@ -379,5 +384,72 @@ class DetectionTest {
         assertEquals("moved", r.matches[0].existing?.id)
         assertEquals(null, r.matches[1].existing)
         assertEquals(listOf("lost", "sdOut"), r.missing.map { it.id })
+    }
+
+    @Test
+    fun discFoldersWithTextAfterTheNumber() {
+        listOf(
+            "CD1", "CD 01", "Disc 1 of 2", "Disco 2 de 3", "CD1 - El comienzo", "Disc 3: The End", "(Disc 2)", "[CD3]",
+            "Parte 2", "Part 1 of 3", "guided meditations disc 1", "Introduction to Prana - CD1",
+        ).forEach { assertTrue(it, isDiscFolder(it)) }
+        listOf(
+            "Parte de guerra 3", "Abiding in Mindfulness, Volume 1", "Part 2 - El regreso", "Disco 1980s", "Discovery 2", "CD Collection",
+        ).forEach { assertTrue(it, !isDiscFolder(it)) }
+        assertEquals(2, discNumber("Disc 2 of 3 - Segunda parte"))
+        // Por número de disco, no por nombre: "Alfa - CD2" va detrás de "CD1".
+        val b = "$root/Libro"
+        val book = detectBooks(
+            folder(b, subs = listOf(folder("$b/Alfa - CD2", listOf(file("$b/Alfa - CD2", "01.mp3"))), folder("$b/CD1", listOf(file("$b/CD1", "01.mp3"))))),
+            emptyList(),
+        ).single()
+        assertEquals(listOf("CD1/01.mp3", "Alfa - CD2/01.mp3"), book.parts.map { it.relativePath })
+    }
+
+    @Test
+    fun filesWithoutNumbersFollowTrackTags() {
+        val d = "$root/Sin numeros"
+        fun names(vararg files: ScannedFile) = detectBooks(folder(d, files.toList()), emptyList()).single().parts.map { it.relativePath }
+        assertEquals(
+            listOf("Prólogo.mp3", "El regreso.mp3", "Final.mp3"),
+            names(file(d, "El regreso.mp3", album = "X", track = 2), file(d, "Final.mp3", album = "X", track = 3), file(d, "Prólogo.mp3", album = "X", track = 1)),
+        )
+        // El mismo número en todos los nombres no ordena: discos y pistas.
+        assertEquals(
+            listOf("1984 - Uno.mp3", "1984 - Dos.mp3", "1984 - Tres.mp3"),
+            names(
+                file(d, "1984 - Dos.mp3", album = "X", track = 2, disc = 1),
+                file(d, "1984 - Tres.mp3", album = "X", track = 1, disc = 2),
+                file(d, "1984 - Uno.mp3", album = "X", track = 1, disc = 1),
+            ),
+        )
+        // Nombres numerados mandan aunque las etiquetas digan otra cosa.
+        assertEquals(
+            listOf("01 Uno.mp3", "02 Dos.mp3"),
+            names(file(d, "02 Dos.mp3", album = "X", track = 1), file(d, "01 Uno.mp3", album = "X", track = 2)),
+        )
+        // Etiquetas incompletas o repetidas: por nombre.
+        assertEquals(listOf("Alfa.mp3", "Beta.mp3"), names(file(d, "Beta.mp3", album = "X", track = 1), file(d, "Alfa.mp3", album = "X")))
+        assertEquals(listOf("Alfa.mp3", "Beta.mp3"), names(file(d, "Beta.mp3", album = "X", track = 1), file(d, "Alfa.mp3", album = "X", track = 1)))
+    }
+
+    @Test
+    fun unsupportedFormatsBecomeBooksThatDoNotPlay() {
+        val d = "$root/Antiguos"
+        val books = detectBooks(
+            folder(
+                d,
+                listOf(
+                    file(d, "Viejo libro.wma", unsupported = "WMA"),
+                    file(d, "Otro.m4b", chapters = 3, unsupported = "ALAC"),
+                    file(d, "Bueno.mp3", chapters = 3),
+                ),
+            ),
+            emptyList(),
+        ).map { it.toBook(null, 0, { it.path }, 1f, CoverSource.NONE) }
+        assertEquals(mapOf("Bueno" to null, "Otro" to "ALAC", "Viejo libro" to "WMA"), books.associate { it.title to it.unsupportedFormat })
+        assertEquals(listOf("Bueno"), books.filter { it.playable }.map { it.title })
+        // El siguiente libro salta los que no se reproducen.
+        assertNull(codelab.lector.playback.nextBook(books.single { it.title == "Bueno" }, books))
+        assertTrue(isDiscFolder("CD1") && "wma" in AudioExtensions && "mka" in AudioExtensions)
     }
 }

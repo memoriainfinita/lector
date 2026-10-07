@@ -119,7 +119,7 @@ class PlaybackService : MediaLibraryService() {
             try {
                 if (!engine.loaded) {
                     app.playbackSettings.lastBookId()
-                        ?.takeIf { app.database.books().get(it)?.removed == false }
+                        ?.takeIf { app.database.books().get(it)?.let { b -> !b.removed && b.unsupportedFormat == null } == true }
                         ?.let { engine.open(it, play = false) }
                 }
             } finally {

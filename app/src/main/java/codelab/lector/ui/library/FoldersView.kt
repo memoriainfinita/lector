@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import codelab.lector.R
 import codelab.lector.data.db.LibraryItem
+import codelab.lector.data.db.playable
 import codelab.lector.library.FolderClass
 import codelab.lector.library.FolderContent
 import codelab.lector.library.FolderRow
@@ -186,6 +187,7 @@ private fun BookRowItem(item: LibraryItem, cover: String?, showCover: Boolean, l
     val status = item.status
     val meta = when {
         book.inaccessible -> stringResource(R.string.book_missing)
+        book.unsupportedFormat != null -> stringResource(R.string.book_unsupported, book.unsupportedFormat)
         status == LibraryFilter.FINISHED -> stringResource(R.string.book_row_finished, total)
         status == LibraryFilter.NOT_STARTED -> stringResource(R.string.book_row_not_started, total)
         item.bookmarkCount > 0 -> stringResource(
@@ -199,7 +201,7 @@ private fun BookRowItem(item: LibraryItem, cover: String?, showCover: Boolean, l
             .fillMaxWidth()
             .then(if (loaded) Modifier.background(c.surface.copy(alpha = 0.6f)) else Modifier)
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.listen_to, title), onClick = onOpen)
-            .alpha(if (book.inaccessible) 0.4f else 1f)
+            .alpha(if (book.inaccessible || book.unsupportedFormat != null) 0.4f else 1f)
             .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -214,7 +216,7 @@ private fun BookRowItem(item: LibraryItem, cover: String?, showCover: Boolean, l
                 overflow = TextOverflow.Ellipsis,
             )
             Text(meta, style = t.meta, color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (status == LibraryFilter.IN_PROGRESS && !book.inaccessible) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
+            if (status == LibraryFilter.IN_PROGRESS && book.playable) ProgressBar(item.progress, if (loaded) c.accent else c.textSecondary)
         }
         IconAction(painterResource(R.drawable.ic_more_vert), stringResource(R.string.book_options, title), onOptions, tint = c.textSecondary, iconSize = 20.dp)
     }

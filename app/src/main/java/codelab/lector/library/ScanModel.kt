@@ -3,7 +3,14 @@ package codelab.lector.library
 import codelab.lector.data.db.FileMeta
 import java.security.MessageDigest
 
-val AudioExtensions = setOf("mp3", "m4a", "m4b", "aac", "ogg", "oga", "opus", "flac", "wav")
+/** Formatos que este móvil no reproduce: salen en la Biblioteca como "formato no admitido", sin leerlos. */
+val UnsupportedExtensions = mapOf("wma" to "WMA", "aax" to "AAX", "aaxc" to "AAXC", "ape" to "APE")
+
+/** Contenedores que también pueden ser vídeo: solo cuentan si no lo llevan (FileMeta.hasVideo). */
+val VideoContainerExtensions = setOf("mp4", "webm")
+
+/** Extensiones de un archivo de libro: las que se reproducen, las de vídeo sin vídeo y las no admitidas. */
+val AudioExtensions = setOf("mp3", "m4a", "m4b", "aac", "ogg", "oga", "opus", "flac", "wav", "mka") + VideoContainerExtensions + UnsupportedExtensions.keys
 val ImageExtensions = setOf("jpg", "jpeg", "png", "webp")
 
 fun extensionOf(name: String) = name.substringAfterLast('.', "").lowercase()

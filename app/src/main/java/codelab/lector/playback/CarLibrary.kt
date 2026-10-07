@@ -81,7 +81,7 @@ class CarLibrary(private val context: Context, private val app: AppContainer) {
                     is LibraryEntry.FolderEntry -> e.items.filter { matchesSearch(it, terms, roots) }.ifEmpty { e.items }
                 }
             }
-            .filter { !it.book.removed }
+            .filter { !it.book.removed && it.book.unsupportedFormat == null }
         val covers = showCovers()
         return found.map { bookItem(it, covers) }
     }
@@ -142,7 +142,7 @@ class CarLibrary(private val context: Context, private val app: AppContainer) {
     private suspend fun continueItems(): List<MediaItem> {
         val covers = showCovers()
         return libraryItems()
-            .filter { it.status == LibraryFilter.IN_PROGRESS && !it.book.removed && !it.book.hiddenFromRecents && it.book.lastPlayedAt != null }
+            .filter { it.status == LibraryFilter.IN_PROGRESS && !it.book.removed && it.book.unsupportedFormat == null && !it.book.hiddenFromRecents && it.book.lastPlayedAt != null }
             .sortedByDescending { it.book.lastPlayedAt }
             .map { bookItem(it, covers) }
     }
