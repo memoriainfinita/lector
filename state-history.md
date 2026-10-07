@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-08 — Importar con libros en otras rutas: por contenido, no por duración
+
+**Qué cambió:** salió del TODO. Un libro importado que en el móvil nuevo está en otra ruta (o un libro de un archivo con la carpeta renombrada) no se reconectaba: la copia no llevaba tamaños, la importación guardaba `sizeBytes = 0` y el paso por contenido no lo veía. Ahora la copia lleva el tamaño de cada archivo, la importación lo guarda y el plan de Combinar también empareja por contenido.
+**Por qué:** no se amplió la búsqueda por duración a los libros importados fuera de las carpetas de la biblioteca. Con el contenido no hace falta, y emparejar solo por duración entre libros quitados puede pegar posición y marcadores a otro libro. Las copias anteriores, sin tamaños, siguen como antes: para pasar a un móvil nuevo, exportar de nuevo.
+
 ### 2026-10-07 — Biblioteca sin refrescar un libro perdido: era la prueba
 
 **Qué cambió:** salió del TODO. Un libro marcado inaccesible por la búsqueda al abrir seguía en la Biblioteca como disponible (menú completo, sin "no encontrado") hasta reiniciar.

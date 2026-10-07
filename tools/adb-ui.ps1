@@ -26,6 +26,8 @@
 #   - Tras force-stop o instalar, ningún libro está cargado: tocar su tarjeta (o "Seguir escuchando")
 #     lo carga y empieza a sonar. Antes, volumen a 0 y cargarlo en pausa:
 #     am start -n codelab.lector/.debug.PlaybackActivity --es open <id> --ez play false
+#     Con la app parada, ese primer "open" puede perderse y quedar cargado el libro anterior: comprobar
+#     en el minirreproductor qué libro hay antes de saltar o marcar (así se movió un libro real).
 #   - Arrastrar una barra de Escuchando con input motionevent DOWN/MOVE/UP salta al soltar: copia antes.
 #   - Las posiciones cambian con la orientación y con la sesión de escucha (la fila de filtros
 #     sube cuando no está "Seguir escuchando").

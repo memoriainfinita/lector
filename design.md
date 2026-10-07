@@ -254,7 +254,7 @@ Aprobado 2026-10-03. Código en `library/`; pantalla de depuración "LECTOR esca
 - Portadas: miniatura (lado mayor 1024) en almacenamiento de la app, de la imagen incrustada o, si no hay, de una imagen de carpeta (2026-10-07). Sitios, por orden: la carpeta del libro, sus discos y sus subcarpetas sin audio (`Scans/`, `Artwork/`…). Elección: cover / folder / front; si no, la que contiene cover o front; si no, la que lleva el nombre del libro (carpeta, título o archivo); si no, la primera por nombre. Nunca las que contienen "back" ni las miniaturas de Windows Media Player (`AlbumArtSmall`, `AlbumArt_{…}_Small`). En una carpeta con varios libros, solo la que lleva el nombre del libro
 - Caché `file_meta` por ruta: el escaneo rápido (al abrir) solo relee archivos con tamaño o fecha distintos; "Volver a buscar" relee todo y rehace portadas
 - Dos fases: recorrer y leer (progreso: encontrados y carpeta actual), después detectar, aplicar correcciones, reconciliar y guardar en una transacción. Los libros aparecen al terminar
-- Reconciliación: por firma; si no, por contenido (nombre y tamaño de cada archivo, sin carpetas: libro movido o carpeta renombrada; entre todos los libros, como la firma; no vale para los importados, sin tamaños) (2026-10-07); si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos, salvo los reagrupados (todos sus archivos siguen y son de otros libros): marcadores y posición pasan a esos libros y el antiguo se borra (Pantallas › Biblioteca › B)
+- Reconciliación: por firma; si no, por contenido (nombre y tamaño de cada archivo, sin carpetas: libro movido o carpeta renombrada; entre todos los libros, como la firma; los importados, con los tamaños de la copia desde el 2026-10-08) (2026-10-07); si no, por duración ±1 s entre los que no aparecen; los que faltan quedan inaccesibles con sus datos, salvo los reagrupados (todos sus archivos siguen y son de otros libros): marcadores y posición pasan a esos libros y el antiguo se borra (Pantallas › Biblioteca › B)
 - Carpetas candidatas para el primer arranque: niveles 1 y 2 con audio bajo cada almacenamiento
 
 ## Reproducción
@@ -515,7 +515,7 @@ Aprobado 2026-10-06 (lienzo `Settings-Data`, `Export-Sheet`, `Onboarding-Permiss
 
 - Entregas: A, pantalla Datos con las dos exportaciones y la fila de Ajustes activa; B, Elegir copia, resumen y Combinar, con pruebas en el ordenador; C, "Importar una copia de otro móvil" en el primer arranque
 - Copia completa: un `.json` con formato y versión, guardado con el selector de Android. Lleva:
-  - Libros: firma, título, nombre propio, autor, duración total, ruta y archivos con su duración; posición con su fecha, terminado, velocidad y sonido propio. Sin id, que cambia de un móvil a otro. La ruta no identifica: solo coloca al libro no encontrado en Carpetas y deja que el escaneo lo reconecte por duración, como a uno quitado aquí (decidido 2026-10-06)
+  - Libros: firma, título, nombre propio, autor, duración total, ruta y archivos con su duración y su tamaño; posición con su fecha, terminado, velocidad y sonido propio. Sin id, que cambia de un móvil a otro. La ruta no identifica: solo coloca al libro no encontrado en Carpetas y deja que el escaneo lo reconecte, como a uno quitado aquí (decidido 2026-10-06). El tamaño (desde 2026-10-08, campo `sizeBytes` opcional, sin cambio de versión: las copias anteriores se leen con 0) deja reconectar por contenido al libro que en el otro móvil está en otra ruta o con la carpeta renombrada
   - Marcadores con sus tags (por nombre) y posiciones de tramo (`segment_position`)
   - Correcciones (unir y separar), por firma: sin ellas los libros unidos o separados no se reconocen en el otro móvil
   - Ajustes de DataStore e idioma de la app, salvo los propios del móvil: último libro, libro en curso y última búsqueda
@@ -523,14 +523,14 @@ Aprobado 2026-10-06 (lienzo `Settings-Data`, `Export-Sheet`, `Onboarding-Permiss
 - Marcadores como texto: abre la hoja Exportar de Marcadores C con todos los marcadores (vista previa, Copiar, Guardar como .txt, Compartir)
 - Elegir copia: selector de Android y resumen previo en la tarjeta del lienzo: marcadores nuevos, ya existentes que se omiten, posiciones más recientes, libros no encontrados aquí; "Importar también los ajustes" apagado por defecto; Cancelar y Combinar
 - Combinar:
-  - Libro por firma y, si no, por duración ±1 s entre los no encontrados por firma, como la reconciliación del escaneo
+  - Libro por firma; si no, por contenido (copias con tamaños, 2026-10-08); si no, por duración ±1 s entre los no encontrados, como la reconciliación del escaneo
   - Marcador con un id que ya existe: se omite
   - Posición: gana la de fecha más reciente; con ella pasan velocidad, sonido propio y terminado, como al reagrupar (`carryOver`). Posiciones de tramo, la más reciente de cada una. Nombre propio solo si aquí no hay
   - Marcador de pausa: uno por libro, el más reciente
   - Tags por nombre, sin distinguir mayúsculas; se crean si no existen
   - Correcciones nuevas: se guardan y se lanza una búsqueda discreta para aplicarlas
   - Archivo que no es una copia de LECTOR o de una versión más nueva: aviso en la nota de la fila, sin tocar nada
-  - Libro no encontrado: entra como quitado, con sus marcadores; si sus archivos aparecen, el escaneo lo reconecta por firma o duración
+  - Libro no encontrado: entra como quitado, con sus marcadores; si sus archivos aparecen, el escaneo lo reconecta por firma, contenido o duración
   - Una sola transacción: entra todo o nada
   - Sin "Deshacer": el resumen ya confirma, como Unir
 

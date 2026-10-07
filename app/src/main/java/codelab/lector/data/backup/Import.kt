@@ -22,6 +22,7 @@ import codelab.lector.data.db.LectorDatabase
 import codelab.lector.data.db.SegmentPosition
 import codelab.lector.data.db.Tag
 import codelab.lector.library.DurationToleranceMs
+import codelab.lector.library.contentKey
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
@@ -65,16 +66,20 @@ data class ImportPlan(
 )
 
 /**
- * Libro por firma; si no, por duración ±1 s entre los de aquí que no ha tomado ninguna firma, como la
+ * Libro por firma; si no, por contenido ([contents]: id del libro de aquí → [contentKey]; la copia sin
+ * tamaños no tiene); si no, por duración ±1 s entre los de aquí que no ha tomado ninguno, como la
  * reconciliación del escaneo. Cada libro de aquí corresponde a uno solo de la copia.
  */
-fun planImport(backup: Backup, local: List<Book>, bookmarkIds: Set<String>): ImportPlan {
+fun planImport(backup: Backup, local: List<Book>, bookmarkIds: Set<String>, contents: Map<String, String> = emptyMap()): ImportPlan {
     val free = local.toMutableList()
     val byIdentity = backup.books.associateWith { b ->
         free.firstOrNull { it.identityKey == b.identityKey }?.also { free.remove(it) }
     }
+    val byContent = backup.books.filter { byIdentity[it] == null }.associateWith { b ->
+        contentKey(b.files.map { it.path to it.sizeBytes })?.let { key -> free.firstOrNull { contents[it.id] == key }?.also { free.remove(it) } }
+    }
     val matches = backup.books.map { b ->
-        val found = byIdentity[b] ?: free
+        val found = byIdentity[b] ?: byContent[b] ?: free
             .filter { abs(it.totalDurationMs - b.durationMs) <= DurationToleranceMs }
             .minByOrNull { abs(it.totalDurationMs - b.durationMs) }
             ?.also { free.remove(it) }
@@ -99,8 +104,11 @@ internal fun BackupBook.isNewerThan(local: Book): Boolean {
 class BackupImporter(private val db: LectorDatabase, private val settings: DataStore<Preferences>) {
 
     /** Plan contra la base de ahora. */
-    suspend fun plan(backup: Backup): ImportPlan =
-        planImport(backup, db.books().all(), db.bookmarks().observeAll().first().map { it.id }.toSet())
+    suspend fun plan(backup: Backup): ImportPlan {
+        val contents = db.books().allFiles().groupBy { it.bookId }
+            .mapNotNull { (id, files) -> contentKey(files.map { it.relativePath to it.sizeBytes })?.let { id to it } }.toMap()
+        return planImport(backup, db.books().all(), db.bookmarks().observeAll().first().map { it.id }.toSet(), contents)
+    }
 
     /**
      * Combinar (design.md › Ajustes › D), en una sola transacción. Devuelve cuántas correcciones se han
@@ -152,7 +160,7 @@ class BackupImporter(private val db: LectorDatabase, private val settings: DataS
                 eqBands = b.eqBands,
             ),
         )
-        db.books().upsertFiles(b.files.mapIndexed { i, f -> BookFile(bookId = id, relativePath = f.path, sortIndex = i, durationMs = f.durationMs, sizeBytes = 0) })
+        db.books().upsertFiles(b.files.mapIndexed { i, f -> BookFile(bookId = id, relativePath = f.path, sortIndex = i, durationMs = f.durationMs, sizeBytes = f.sizeBytes) })
         b.segments.forEach { db.segmentPositions().save(SegmentPosition(id, it.file, it.startMs, it.positionMs, it.updatedAt)) }
         return id
     }

@@ -46,7 +46,7 @@ data class BackupBook(
     val durationMs: Long,
     /**
      * Ruta en el móvil de origen. No identifica: coloca al libro no encontrado en Carpetas y deja que
-     * el escaneo lo reconecte por duración.
+     * el escaneo lo reconecte por contenido o por duración.
      */
     val path: String,
     /** Sus archivos, en orden. */
@@ -67,9 +67,13 @@ data class BackupBook(
     val bookmarks: List<BackupBookmark> = emptyList(),
 )
 
-/** Archivo de un libro: ruta relativa al libro y duración, para situar los marcadores sin sus archivos. */
+/**
+ * Archivo de un libro: ruta relativa al libro y duración, para situar los marcadores sin sus archivos. Con el
+ * tamaño, el libro se reconoce por contenido en otra ruta ([codelab.lector.library.contentKey]); 0 en copias
+ * anteriores.
+ */
 @Serializable
-data class BackupFile(val path: String, val durationMs: Long)
+data class BackupFile(val path: String, val durationMs: Long, val sizeBytes: Long = 0)
 
 @Serializable
 data class BackupSegment(val file: String, val startMs: Long, val positionMs: Long, val updatedAt: Long)
@@ -119,7 +123,7 @@ class BackupExporter(private val db: LectorDatabase, private val settings: DataS
         val bookmarks = db.bookmarks().observeAll().first().groupBy { it.bookId }
         val books = db.books().all().sortedBy { it.title.lowercase() }.map { book ->
             book.toBackup(
-                files = files[book.id].orEmpty().map { BackupFile(it.relativePath, it.durationMs) },
+                files = files[book.id].orEmpty().map { BackupFile(it.relativePath, it.durationMs, it.sizeBytes) },
                 segments = segments[book.id].orEmpty().map { BackupSegment(it.file, it.startMs, it.positionMs, it.updatedAt) },
                 bookmarks = bookmarks[book.id].orEmpty().sortedBy { it.createdAt }.map { b ->
                     BackupBookmark(b.id, b.file, b.positionMs, b.title, b.note, b.kind, b.createdAt, b.updatedAt, tags[b.id].orEmpty().sorted())

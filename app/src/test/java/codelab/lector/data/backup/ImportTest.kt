@@ -14,6 +14,7 @@ import codelab.lector.data.db.CorrectionType
 import codelab.lector.data.db.LectorDatabase
 import codelab.lector.data.db.LectorDatabase_Impl
 import codelab.lector.data.db.SegmentPosition
+import codelab.lector.library.contentKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -125,6 +126,38 @@ class ImportTest {
         val plan = planImport(backup(listOf(backupBook("sig-x"), backupBook("sig-a"))), local, emptySet())
         // "sig-x" tiene la misma duración, pero "a" es de "sig-a" por firma.
         assertEquals(listOf(null, "a"), plan.matches.map { it.local?.id })
+    }
+
+    @Test
+    fun planMatchesByContentBeforeDuration() {
+        val sized = backupBook("sig-x").copy(files = listOf(BackupFile("01.mp3", 1_800_000, 700), BackupFile("02.mp3", 1_800_000, 800)))
+        val local = listOf(
+            // Misma duración, otros archivos: sin el contenido se emparejaría por duración.
+            book("lookalike", identityKey = "other-1"),
+            // Los mismos archivos en otra carpeta y con la duración leída algo distinta.
+            book("here", identityKey = "other-2", durationMs = 3_605_000),
+        )
+        val contents = mapOf(
+            "lookalike" to contentKey(listOf("01.mp3" to 1L, "02.mp3" to 2L))!!,
+            "here" to contentKey(listOf("CD1/01.mp3" to 700L, "CD1/02.mp3" to 800L))!!,
+        )
+        assertEquals(listOf("here"), planImport(backup(listOf(sized)), local, emptySet(), contents).matches.map { it.local?.id })
+        // Copia sin tamaños: solo duración.
+        assertEquals(listOf("lookalike"), planImport(backup(listOf(backupBook("sig-x"))), local, emptySet(), contents).matches.map { it.local?.id })
+    }
+
+    @Test
+    fun fileSizesTravelInTheBackupAndOlderBackupsReadWithout() = runTest {
+        val sized = backupBook("absent").copy(files = listOf(BackupFile("01.mp3", 1_800_000, 700), BackupFile("02.mp3", 1_800_000, 800)))
+        val text = BackupJson.encodeToString(Backup.serializer(), backup(listOf(sized)))
+        val read = (readBackup(text) as BackupRead.Ok).backup
+        assertEquals(listOf(700L, 800L), read.books.single().files.map { it.sizeBytes })
+        val older = (readBackup(text.replace(Regex(",\\s*\"sizeBytes\": \\d+"), "")) as BackupRead.Ok).backup
+        assertEquals(listOf(0L, 0L), older.books.single().files.map { it.sizeBytes })
+
+        val imp = importer(this)
+        imp.combine(read, imp.plan(read), now = 1_000)
+        assertEquals(listOf(700L, 800L), db.books().files(db.books().all().single().id).map { it.sizeBytes })
     }
 
     @Test
