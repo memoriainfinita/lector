@@ -29,6 +29,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 private const val LogTag = "LectorScan"
+private val Mp4Extensions = setOf("m4b", "m4a", "mp4")
+private const val BigReadBytes = 100L * 1024 * 1024
 
 data class ScanState(
     val running: Boolean = false,
@@ -55,6 +57,8 @@ class LibraryScanner(
     val state: StateFlow<ScanState> = _state.asStateFlow()
     private var job: Job? = null
     private val readers = Semaphore(4)
+    /** Un mp4 largo (15 h) ocupa 10–60 MB al leer su índice: de uno en uno, o varios agotan la memoria. */
+    private val bigReaders = Semaphore(1)
 
     /**
      * Rápido: solo relee lo que cambió. Completo ([full]): relee todo y rehace las portadas.
@@ -262,12 +266,17 @@ class LibraryScanner(
     private suspend fun meta(file: File, cache: Map<String, FileMeta>, seen: MutableSet<String>, fresh: MutableSet<FileMeta>): FileMeta {
         seen += file.path
         val cached = cache[file.path]
-        if (cached != null && cached.sizeBytes == file.length() && cached.modifiedAt == file.lastModified() && cached.readVersion >= MetaReadVersion) return cached
+        // Sin duración y en un formato admitido es una lectura fallida: se vuelve a intentar.
+        val failed = cached != null && cached.durationMs <= 0 && cached.unsupported == null
+        if (cached != null && !failed && cached.sizeBytes == file.length() && cached.modifiedAt == file.lastModified() && cached.readVersion >= MetaReadVersion) return cached
         fun unread(unsupported: String? = null) =
             FileMeta(path = file.path, sizeBytes = file.length(), modifiedAt = file.lastModified(), durationMs = 0, unsupported = unsupported, readVersion = MetaReadVersion)
         // Un formato no admitido no se lee: Media3 no lo entiende.
         val read = UnsupportedExtensions[extensionOf(file.name)]?.let(::unread)
-            ?: runCatching { reader.read(file) }.getOrElse { Log.w(LogTag, "cannot read ${file.path}", it); unread() }
+            ?: runCatching {
+                if (extensionOf(file.name) in Mp4Extensions && file.length() > BigReadBytes) bigReaders.withPermit { reader.read(file) }
+                else reader.read(file)
+            }.getOrElse { Log.w(LogTag, "cannot read ${file.path}", it); unread() }
         fresh += read
         return read
     }
