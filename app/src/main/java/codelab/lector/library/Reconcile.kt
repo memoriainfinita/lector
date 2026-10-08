@@ -185,7 +185,7 @@ fun DetectedBook.contentKey(): String? = contentKey(parts.map { it.file.name to 
 /**
  * Por firma entre todos los libros (uno movido desde una carpeta quitada se reconecta); si no, por
  * contenido ([contents]: id del libro → [contentKey]) también entre todos; si no, por duración ±1 s
- * entre los que no han aparecido. Solo los de [folders] entran por duración y quedan como perdidos:
+ * entre los que no han aparecido, solo si las dos se conocen (mayores que 0). Solo los de [folders] entran por duración y quedan como perdidos:
  * los de una carpeta quitada no se tocan.
  */
 fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<String>, contents: Map<String, String> = emptyMap()): Reconciliation {
@@ -199,8 +199,9 @@ fun reconcile(detected: List<DetectedBook>, existing: List<Book>, folders: List<
     }
     unmatched.retainAll { book -> folders.any { isInside(book.path, it) } }
     val matches = detected.map { d ->
+        // Sin duración (formato no admitido, archivo sin leer) no hay con qué comparar.
         val found = byIdentity[d] ?: byContent[d] ?: unmatched
-            .filter { abs(it.totalDurationMs - d.durationMs) <= DurationToleranceMs }
+            .filter { d.durationMs > 0 && it.totalDurationMs > 0 && abs(it.totalDurationMs - d.durationMs) <= DurationToleranceMs }
             .minByOrNull { abs(it.totalDurationMs - d.durationMs) }
             ?.also { unmatched.remove(it) }
         Match(d, found)

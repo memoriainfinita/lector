@@ -273,6 +273,18 @@ class DetectionTest {
     }
 
     @Test
+    fun unknownDurationsDoNotReconcile() {
+        // Un formato no admitido no se lee (duración 0); un libro desaparecido sin leer, tampoco.
+        val d = "$root/ape"
+        val detected = detectBooks(folder(d, listOf(file(d, "a.ape", durationMs = 0))), emptyList())
+        fun book(id: String, duration: Long) =
+            Book(id = id, identityKey = "$id-key", totalDurationMs = duration, path = "$root/old/$id.m4b", title = id, addedAt = 0, speed = 1f)
+        val r = reconcile(detected, listOf(book("unread", 0), book("short", 400)), listOf(root))
+        assertNull(r.matches.single().existing)
+        assertEquals(listOf("unread", "short"), r.missing.map { it.id })
+    }
+
+    @Test
     fun movedBooksReconnectByContentBeforeDuration() {
         // "new/A.mp3" pasa a "finished/A.mp3": la firma cambia (lleva el nombre de la carpeta).
         val f = "$root/finished"
