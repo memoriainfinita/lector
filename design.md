@@ -289,9 +289,8 @@ Aprobado 2026-10-03. Código en `playback/`; pantalla de depuración "LECTOR rep
 - Sonido global en DataStore (preamplificación, ecualizador activado, bandas). Sonido propio en el libro; al activarlo copia el global, al desactivarlo vuelve al global y al reactivarlo copia de nuevo. Base de datos versión 2: `book.eqEnabled` (migración automática), porque la hoja tiene interruptor del ecualizador también en el sonido propio
 - Fundido de volumen del temporizador: con la pausa diferida, sobre el volumen del reproductor
 - Fuera: pausa diferida, auricular 1/2/3 y teclas asignables, reanudar al reconectar en 10 s, widgets, Android Auto, pantallas
-- Duración 0 en el escaneo: el reproductor la lee al cargar el archivo y se guarda en `book_file`, `book` y `file_meta`. Casos (2026-10-03): `00.12 The Heir of Caladan.m4b` y `00.13 Princess of Dune.m4b`, MP4 de ~1 GB con el índice (`moov`) al final
+- Duración 0 en el escaneo: el reproductor la lee al cargar el archivo y se guarda en `book_file`, `book` y `file_meta`. Casos (2026-10-03): `00.12 The Heir of Caladan.m4b` y `00.13 Princess of Dune.m4b`. Causa (2026-10-08): memoria agotada al leer varios m4b largos a la vez, no el índice (`moov`) al final; desde entonces los mp4 de más de 100 MB se leen de uno en uno y una lectura fallida se repite en la siguiente búsqueda (Escaneo)
 - `00.05 Mentats of Dune.m4b` no es audio: es un ZIP (cabecera `PK`) con el m4b dentro. Ningún extractor lo lee; error de reproducción
-- Pendiente: capítulos de los MP4 con el índice al final (el escaneo no los lee; Heir of Caladan sin capítulos en la base de datos, sin comprobar si los tiene)
 
 ## Pausa diferida
 
