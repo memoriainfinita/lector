@@ -5,11 +5,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#F58F00"
-        android:fillType="evenOdd"
-        android:pathData="M54.00,36.75C45.90,33.25 36.00,32.09 24.00,33.25V71.25C36.00,70.09 45.90,71.25 54.00,74.75Z M33.39,43.25V59.75L47.41,51.50Z" />
-    <path
-        android:fillColor="#EDE3D1"
-        android:pathData="M54.00,36.75C58.77,34.69 64.17,33.44 70.25,33.00V47.00L73.50,44.00L76.75,47.00V32.83C79.08,32.87 81.49,33.01 84.00,33.25V71.25C72.00,70.09 62.10,71.25 54.00,74.75Z" />
+    <!-- Logo a ×1,25 desde el centro (2026-10-08): en el lanzador se veía pequeño; las esquinas del libro
+         quedan algo cortadas por la máscara circular. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="1.25"
+        android:scaleY="1.25">
+        <path
+            android:fillColor="#F58F00"
+            android:fillType="evenOdd"
+            android:pathData="M54.00,36.75C45.90,33.25 36.00,32.09 24.00,33.25V71.25C36.00,70.09 45.90,71.25 54.00,74.75Z M33.39,43.25V59.75L47.41,51.50Z" />
+        <path
+            android:fillColor="#EDE3D1"
+            android:pathData="M54.00,36.75C58.77,34.69 64.17,33.44 70.25,33.00V47.00L73.50,44.00L76.75,47.00V32.83C79.08,32.87 81.49,33.01 84.00,33.25V71.25C72.00,70.09 62.10,71.25 54.00,74.75Z" />
+    </group>
 </vector>
