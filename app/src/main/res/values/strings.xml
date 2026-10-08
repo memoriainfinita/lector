@@ -30,6 +30,8 @@
     <string name="onboarding_start">Start</string>
     <string name="onboarding_permission_body">Reads the audiobooks in your folders. It needs access to your files. It does not use the internet.</string>
     <string name="onboarding_grant">Grant permission</string>
+    <string name="onboarding_denied">Access was denied. Allow it in Android settings.</string>
+    <string name="onboarding_open_settings">Open settings</string>
     <string name="onboarding_import">Import a backup from another phone</string>
     <string name="onboarding_searching">Looking for folders with audio…</string>
     <string name="onboarding_found">Folders with audio found</string>

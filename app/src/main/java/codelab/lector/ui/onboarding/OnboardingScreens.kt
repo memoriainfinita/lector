@@ -22,6 +22,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -78,7 +81,7 @@ class OnboardingImportViewModel(app: AppContainer) : ViewModel() {
 
 /**
  * Permiso: "Dar permiso" abre el ajuste de acceso a todos los archivos (Android 11+) o pide la
- * lectura clásica (8–10; denegada para siempre, la ficha de la app). Al volver a la app con el
+ * lectura clásica (8–10; denegada para siempre, aviso y "Abrir ajustes" con la ficha de la app). Al volver a la app con el
  * acceso concedido, [onGranted]. "Importar una copia de otro móvil": selector de Android y resumen
  * en una hoja, con los ajustes activados de entrada (el móvil nuevo no tiene nada que perder).
  */
@@ -95,11 +98,13 @@ fun OnboardingPermissionScreen(viewModel: OnboardingImportViewModel, onGranted: 
         if (hasStorageAccess(context)) onGranted()
         onPauseOrDispose {}
     }
+    // Denegado para siempre: Android ya no pregunta. Se queda aquí con el aviso y el botón abre los ajustes.
+    var blocked by rememberSaveable { mutableStateOf(false) }
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         when {
             granted -> onGranted()
             activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_EXTERNAL_STORAGE) ->
-                openAppDetails(context)
+                blocked = true
         }
     }
     Column(Modifier.fillMaxSize().padding(start = 28.dp, end = 28.dp, bottom = 32.dp)) {
@@ -107,12 +112,18 @@ fun OnboardingPermissionScreen(viewModel: OnboardingImportViewModel, onGranted: 
         Text(stringResource(R.string.app_name), style = t.secondary.copy(letterSpacing = 0.2.em), color = c.accent)
         Text(stringResource(R.string.onboarding_welcome), style = t.headline.copy(lineHeight = 34.sp), color = c.text, modifier = Modifier.padding(top = 14.dp))
         Text(stringResource(R.string.onboarding_permission_body), style = t.row.copy(lineHeight = 22.sp), color = c.textSecondary, modifier = Modifier.padding(top = 14.dp))
+        if (blocked) {
+            Text(stringResource(R.string.onboarding_denied), style = t.row.copy(lineHeight = 22.sp), color = c.text, modifier = Modifier.padding(top = 14.dp))
+        }
         Spacer(Modifier.weight(1f))
         HeroButton(
-            stringResource(R.string.onboarding_grant),
+            stringResource(if (blocked) R.string.onboarding_open_settings else R.string.onboarding_grant),
             {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) openAllFilesAccess(context)
-                else request.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                when {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> openAllFilesAccess(context)
+                    blocked -> openAppDetails(context)
+                    else -> request.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
             },
             Modifier.fillMaxWidth(),
             fill = true,
