@@ -1,5 +1,6 @@
 package codelab.lector.library
 
+import android.util.Log
 import codelab.lector.data.db.Book
 import codelab.lector.data.db.BookFile
 import codelab.lector.data.db.BookmarkKind
@@ -26,6 +27,8 @@ import kotlinx.coroutines.sync.withPermit
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+
+private const val LogTag = "LectorScan"
 
 data class ScanState(
     val running: Boolean = false,
@@ -264,7 +267,7 @@ class LibraryScanner(
             FileMeta(path = file.path, sizeBytes = file.length(), modifiedAt = file.lastModified(), durationMs = 0, unsupported = unsupported, readVersion = MetaReadVersion)
         // Un formato no admitido no se lee: Media3 no lo entiende.
         val read = UnsupportedExtensions[extensionOf(file.name)]?.let(::unread)
-            ?: runCatching { reader.read(file) }.getOrElse { unread() }
+            ?: runCatching { reader.read(file) }.getOrElse { Log.w(LogTag, "cannot read ${file.path}", it); unread() }
         fresh += read
         return read
     }
