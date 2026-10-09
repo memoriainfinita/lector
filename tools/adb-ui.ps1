@@ -6,11 +6,11 @@
 # y buscar "SecurityException" en la salida.
 #
 # Antes de probar, en este orden:
-#   1. Copia de la base de datos y de los ajustes: adb shell am force-stop codelab.lector, y
-#      adb exec-out run-as codelab.lector cat databases/lector.db (y -wal, -shm) y
+#   1. Copia de la base de datos y de los ajustes: adb shell am force-stop io.github.memoriainfinita.lector, y
+#      adb exec-out run-as io.github.memoriainfinita.lector cat databases/lector.db (y -wal, -shm) y
 #      files/datastore/settings.preferences_pb a archivos locales. No abrir esa copia con SQLite:
 #      integra el -wal y la deja distinta. Al terminar, restaurarla con adb push a
-#      /data/local/tmp y run-as codelab.lector cp.
+#      /data/local/tmp y run-as io.github.memoriainfinita.lector cp.
 #   2. Volumen multimedia a 0 si algo puede sonar: input keyevent KEYCODE_VOLUME_DOWN repetido
 #      (cmd media_session volume --set no funciona en este móvil). Anotar el valor de antes con
 #      dumpsys audio (STREAM_MUSIC, streamVolume) y devolverlo al final.
@@ -25,7 +25,7 @@
 #     (así se abrió "Borrar del móvil" de un libro real); localizar por texto exacto con TapText.
 #   - Tras force-stop o instalar, ningún libro está cargado: tocar su tarjeta (o "Seguir escuchando")
 #     lo carga y empieza a sonar. Antes, volumen a 0 y cargarlo en pausa:
-#     am start -n codelab.lector/.debug.PlaybackActivity --es open <id> --ez play false
+#     am start -n io.github.memoriainfinita.lector/codelab.lector.debug.PlaybackActivity --es open <id> --ez play false
 #     Con la app parada, ese primer "open" puede perderse y quedar cargado el libro anterior: comprobar
 #     en el minirreproductor qué libro hay antes de saltar o marcar (así se movió un libro real).
 #     Si "open" falla (libro no admitido), sigue cargado el anterior: un PLAY_PAUSE después lo reanuda.
@@ -92,12 +92,12 @@ function Texts { Nodes | Where-Object { $_.text -or $_.desc } | ForEach-Object {
 # Consulta la base de datos del móvil sobre una copia aparte (nunca sobre la copia de seguridad).
 function Db([string]$sql) {
     $d = Join-Path $env:TEMP 'lector-probe'; New-Item -ItemType Directory -Force $d | Out-Null
-    foreach ($f in 'lector.db','lector.db-wal','lector.db-shm') { Remove-Item "$d\$f" -ErrorAction SilentlyContinue; cmd /c "adb exec-out run-as codelab.lector cat databases/$f > `"$d\$f`" 2>nul" }
+    foreach ($f in 'lector.db','lector.db-wal','lector.db-shm') { Remove-Item "$d\$f" -ErrorAction SilentlyContinue; cmd /c "adb exec-out run-as io.github.memoriainfinita.lector cat databases/$f > `"$d\$f`" 2>nul" }
     python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); [print(r) for r in c.execute(sys.argv[2])]" "$d\lector.db" $sql
 }
 
 # Estado de la sesión de LECTOR: PLAYING / PAUSED y posición dentro del archivo, en ms.
 function State {
-    (adb shell dumpsys media_session | Select-String -Context 0,8 'package=codelab.lector' | Out-String) -split "`n" |
+    (adb shell dumpsys media_session | Select-String -Context 0,8 'package=io.github.memoriainfinita.lector' | Out-String) -split "`n" |
         Select-String -Pattern 'state=[A-Z]+\(\d+\), position=\d+' | Select-Object -First 1 | ForEach-Object { $_.Matches[0].Value }
 }

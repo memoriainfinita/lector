@@ -11,17 +11,31 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "codelab.lector"
+        applicationId = "io.github.memoriainfinita.lector"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
+    }
+
+    // Release key from Gradle properties (GRADLE_USER_HOME/gradle.properties), never from the repo.
+    // Without them the release APK comes out unsigned.
+    val releaseStoreFile = providers.gradleProperty("lectorStoreFile").orNull
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.gradleProperty("lectorStorePassword").get()
+                keyAlias = providers.gradleProperty("lectorKeyAlias").get()
+                keyPassword = providers.gradleProperty("lectorKeyPassword").get()
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
         }
     }
 

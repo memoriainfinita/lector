@@ -56,7 +56,7 @@ import codelab.lector.ui.theme.LectorTheme
 /**
  * Solo depuración: abre libros de la biblioteca y prueba el motor de reproducción.
  * Por adb (el móvil no admite toques inyectados):
- * `am start -n codelab.lector/.debug.PlaybackActivity --es open <bookId> | --es action <PlayerAction> | --el jump <ms>`
+ * `am start -n io.github.memoriainfinita.lector/codelab.lector.debug.PlaybackActivity --es open <bookId> | --es action <PlayerAction> | --el jump <ms>`
  */
 class PlaybackActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

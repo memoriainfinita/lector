@@ -4,6 +4,11 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-10 — Release con clave propia y applicationId para publicar
+
+**Qué cambió:** la release dejó de firmarse con la clave de depuración y el applicationId pasó de `codelab.lector` a `io.github.memoriainfinita.lector` (el paquete Kotlin sigue en `codelab.lector`). La release ya no se instala encima de la de depuración conservando los datos, y las órdenes `am start -n` llevan el nombre de clase completo.
+**Por qué:** preparar la publicación en GitHub. Una release pública firmada con la clave de depuración no se puede actualizar de forma fiable, y cambiar firma o applicationId después obliga a desinstalar. El formato `io.github.<usuario>` no depende de tener dominio.
+
 ### 2026-10-09 — Ya no se reinstala la release tras las pruebas
 
 **Qué cambió:** al cerrar las pruebas por adb se volvía a instalar la release después de copiar datos con la de depuración. Retirado.
