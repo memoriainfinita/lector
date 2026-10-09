@@ -33,6 +33,10 @@ android {
     }
 
     buildTypes {
+        // Debug with the same key, so it installs over the release keeping its data (run-as needs debug).
+        debug {
+            if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
+        }
         release {
             isMinifyEnabled = false
             if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")

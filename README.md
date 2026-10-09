@@ -1,4 +1,4 @@
-# LECTOR
+# lector
 
 *Lector*, Latin for reader.
 
@@ -8,13 +8,13 @@ A minimal audiobook player for Android, with covers, bookmarks with notes and ta
 ![platform](https://img.shields.io/badge/platform-Android_8.0+-lightgrey)
 ![stack](https://img.shields.io/badge/Kotlin-Jetpack_Compose-7f52ff)
 
-**Download:** the APK is in the [releases](https://github.com/memoriainfinita/LECTOR/releases).
+**Download:** the APK is in the [releases](https://github.com/memoriainfinita/lector/releases).
 
-![LECTOR library in the dark theme: a grid of covers with Continue listening on top](docs/lector-demo.png)
+![lector library in the dark theme: a grid of covers with Continue listening on top](docs/lector-demo.png)
 
 ## Library
 
-LECTOR finds the books in the folders you choose. A book can be a folder, a single file, files with the same album, or files with the same name and a number. Disc subfolders ("CD1", "Disc 1 of 3") become one book.
+lector finds the books in the folders you choose. A book can be a folder, a single file, files with the same album, or files with the same name and a number. Disc subfolders ("CD1", "Disc 1 of 3") become one book.
 
 - Grid of covers, with Continue listening on top. Pinch to change from 1 to 3 columns, or a list with covers
 - Filters (started, not started, finished), sort, and search inside the library
