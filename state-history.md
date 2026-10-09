@@ -4,6 +4,16 @@ Lo que salió de `state.md`. Se escribe solo si explica por qué las cosas son c
 
 Más reciente arriba.
 
+### 2026-10-09 — Ya no se reinstala la release tras las pruebas
+
+**Qué cambió:** al cerrar las pruebas por adb se volvía a instalar la release después de copiar datos con la de depuración. Retirado.
+**Por qué:** a petición del usuario: no alternar versiones. En el móvil principal queda la de depuración hasta que pida la release.
+
+### 2026-10-08 — m4b largos con duración 0
+
+**Qué cambió:** salió del TODO, resuelto.
+**Por qué:** memoria agotada (256 MB por app) al leer varios m4b largos a la vez en la búsqueda, y el fallo se guardaba en caché como duración 0 sin repetirse. Se descartó antes el índice (moov) al final del archivo: Heir of Caladan lo tiene y se leía bien.
+
 ### 2026-10-08 — Datos desde el nombre de carpeta, reader.txt, OPF y NFO: descartados
 
 **Qué cambió:** salieron del TODO, decidido por el usuario.
