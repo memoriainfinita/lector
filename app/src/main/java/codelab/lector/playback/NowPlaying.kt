@@ -22,6 +22,8 @@ data class NowPlaying(
     val segmentStartMs: Long,
     val segmentEndMs: Long,
     val hasChapters: Boolean,
+    /** Libro marcado como terminado (al llegar al final o a mano). */
+    val finished: Boolean,
     /** Todos los tramos del libro: marcas de la barra y lista de capítulos. */
     val segments: List<Segment>,
     val isPlaying: Boolean,

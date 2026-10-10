@@ -608,11 +608,17 @@ class BookEngine(
         val b = book ?: return
         clearMemory()
         when (finishActionFor(db.folders().ruleFor(b.path))) {
+            // Sin pasar a otro libro se pausa: Media3 deja playWhenReady al llegar al final, y el botón
+            // seguía en pausa (hacían falta dos toques para volver a empezar).
             FinishAction.FINISH_THEN_NEXT -> {
+                if (!prefs.autoNextBook) exo.pause()
                 setFinished(b, true)
                 if (prefs.autoNextBook) nextBook(play = true)
             }
-            FinishAction.FINISH -> setFinished(b, true)
+            FinishAction.FINISH -> {
+                exo.pause()
+                setFinished(b, true)
+            }
             FinishAction.RESTART -> {
                 exo.pause()
                 seekToBook(0)
@@ -625,6 +631,7 @@ class BookEngine(
         db.books().setFinished(b.id, finished)
         if (book?.id == b.id) book = b.copy(finished = finished)
         save()
+        publish()
     }
 
     // ---- Estado publicado ----
@@ -652,6 +659,7 @@ class BookEngine(
                 segmentStartMs = seg?.startMs ?: 0,
                 segmentEndMs = seg?.endMs ?: 0,
                 hasChapters = timeline.hasChapters,
+                finished = b.finished,
                 segments = timeline.segments,
                 isPlaying = exo.isPlaying,
                 playWhenReady = exo.playWhenReady,

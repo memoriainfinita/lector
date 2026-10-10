@@ -62,6 +62,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,6 +96,9 @@ private enum class PlayerSheet { MENU, SPEED, SOUND, CHAPTERS, SLEEP }
 
 /** Marco de la portada del lienzo (358 × 411) mientras no hay imagen. */
 private const val CoverRatio = 358f / 411f
+
+/** "Explicit liber." solo en el final: la posición guardada puede quedar un poco antes del total. */
+private const val ExplicitMarginMs = 1_500L
 
 /** Escuchando (design.md › Decisiones de diseño: reproductor A). */
 @Composable
@@ -570,7 +574,10 @@ private fun Bars(np: NowPlaying, onJump: (Long) -> Unit, onChapters: () -> Unit,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (np.hasChapters) {
+                // Colofón de copista al terminar escuchando hasta el final, en el color de la rúbrica.
+                if (np.finished && segmentDrag == null && np.positionMs >= np.durationMs - ExplicitMarginMs) {
+                    Text("Explicit liber.", style = t.secondary.copy(fontStyle = FontStyle.Italic), color = c.accent, maxLines = 1)
+                } else if (np.hasChapters) {
                     Text(stringResource(R.string.chapter_short, np.segmentIndex + 1), style = t.secondary, color = c.accent)
                     Text(np.segmentTitle, style = t.secondary, color = c.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     Icon(painterResource(R.drawable.ic_chevron_down), stringResource(R.string.chapters), Modifier.size(14.dp), tint = c.textSecondary)
