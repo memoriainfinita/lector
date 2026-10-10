@@ -178,7 +178,7 @@ fun BookmarksScreen(viewModel: BookmarksViewModel, onBack: () -> Unit, onSearch:
         ExportSheet(
             subtitle,
             shown.map { it.book.displayTitle to it.rows },
-            safeFileName(stringResource(R.string.bookmarks_file_name, "LECTOR")),
+            safeFileName(stringResource(R.string.bookmarks_file_name, "lector")),
             onDismiss = { exporting = false },
         )
     }

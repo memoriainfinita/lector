@@ -5,7 +5,7 @@
         <activity
             android:name=".debug.CatalogActivity"
             android:exported="true"
-            android:label="LECTOR catálogo"
+            android:label="lector catálogo"
             android:taskAffinity="codelab.lector.catalog">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -15,7 +15,7 @@
         <activity
             android:name=".debug.ScanActivity"
             android:exported="true"
-            android:label="LECTOR escaneo"
+            android:label="lector escaneo"
             android:taskAffinity="codelab.lector.scan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,7 +25,7 @@
         <activity
             android:name=".debug.PlaybackActivity"
             android:exported="true"
-            android:label="LECTOR reproducción"
+            android:label="lector reproducción"
             android:launchMode="singleTop"
             android:taskAffinity="codelab.lector.playback">
             <intent-filter>

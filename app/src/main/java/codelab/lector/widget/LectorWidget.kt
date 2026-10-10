@@ -226,7 +226,7 @@ private fun Empty(c: LectorColors, modifier: GlanceModifier) {
         Image(ImageProvider(R.drawable.ic_lector_logo), null, GlanceModifier.size(36.dp))
         Spacer(GlanceModifier.width(12.dp))
         Column {
-            Text("LECTOR", style = TextStyle(color = color(c.text), fontSize = 15.sp, fontWeight = FontWeight.Medium))
+            Text("lector", style = TextStyle(color = color(c.text), fontSize = 15.sp, fontWeight = FontWeight.Medium))
             Text(context.getString(R.string.widget_empty), style = TextStyle(color = color(c.textSecondary), fontSize = 12.sp))
         }
     }

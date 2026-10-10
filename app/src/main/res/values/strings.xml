@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">LECTOR</string>
+    <string name="app_name" translatable="false">lector</string>
     <string name="undo">Undo</string>
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
@@ -114,7 +114,7 @@
     <string name="folder_class_episodes">Episodes</string>
     <string name="scanning_found">Searching for books… %1$d found</string>
     <string name="library_empty_title">No books yet</string>
-    <string name="library_empty_body">LECTOR looks for the audiobooks inside and sorts them by book.</string>
+    <string name="library_empty_body">lector looks for the audiobooks inside and sorts them by book.</string>
     <string name="add_folder">Add folder</string>
     <string name="listen_to">Listen to %1$s</string>
     <string name="book_options">Options for %1$s</string>
@@ -163,7 +163,7 @@
     <string name="hidden_from_recents">Removed from recents</string>
     <string name="rename">Rename</string>
     <string name="name">Name</string>
-    <string name="rename_note">Only changes the name in LECTOR. The folder and files are not touched.</string>
+    <string name="rename_note">Only changes the name in lector. The folder and files are not touched.</string>
     <string name="save">Save</string>
     <string name="open_with">Open with…</string>
     <string name="delete_from_phone">Delete from phone</string>
@@ -238,8 +238,8 @@
     <string name="import_settings_too">Also import settings</string>
     <string name="merge_backup">Merge</string>
     <string name="backup_unreadable">Could not read the file</string>
-    <string name="backup_not_valid">Not a LECTOR backup</string>
-    <string name="backup_newer">From a newer version of LECTOR</string>
+    <string name="backup_not_valid">Not a lector backup</string>
+    <string name="backup_newer">From a newer version of lector</string>
     <string name="backup_merged">Backup merged</string>
     <string name="backup_merge_failed">Could not merge the backup</string>
     <string name="settings_system">System</string>
@@ -247,7 +247,7 @@
     <string name="keep_screen_off_note">Opens the Android battery setting</string>
     <string name="permissions">Permissions</string>
     <string name="about">About</string>
-    <string name="about_version">LECTOR %1$s</string>
+    <string name="about_version">lector %1$s</string>
     <string name="theme_change_by_time">Change by time</string>
     <string name="light_at">Light at</string>
     <string name="dark_at">Dark at</string>

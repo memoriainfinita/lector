@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:fontFamily="sans-serif-medium"
-        android:text="LECTOR"
+        android:text="lector"
         android:textColor="#EDEDED"
         android:textSize="15sp" />
 </LinearLayout>

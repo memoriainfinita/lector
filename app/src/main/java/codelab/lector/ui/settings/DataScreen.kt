@@ -80,7 +80,7 @@ fun DataScreen(viewModel: DataViewModel, onBack: () -> Unit) {
         if (uri != null) viewModel.export(context, uri)
     }
     val choose = rememberBackupPicker(viewModel.import)
-    val fileName = safeFileName(stringResource(R.string.backup_file_name, "LECTOR", LocalDate.now().toString()))
+    val fileName = safeFileName(stringResource(R.string.backup_file_name, "lector", LocalDate.now().toString()))
 
     SettingsPage(stringResource(R.string.settings_data), onBack) {
         SectionHeader(stringResource(R.string.export))
@@ -111,7 +111,7 @@ fun DataScreen(viewModel: DataViewModel, onBack: () -> Unit) {
         ExportSheet(
             "${shown.sumOf { it.rows.size }}",
             shown.map { it.book.displayTitle to it.rows },
-            safeFileName(stringResource(R.string.bookmarks_file_name, "LECTOR")),
+            safeFileName(stringResource(R.string.bookmarks_file_name, "lector")),
             onDismiss = { exportingText = false },
         )
     }

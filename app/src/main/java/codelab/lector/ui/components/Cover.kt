@@ -3,20 +3,25 @@ package codelab.lector.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,13 +84,35 @@ fun BookCover(
         } else {
             Spacer(Modifier.size(0.dp))
         }
-        Text(
-            title,
-            style = titleStyle.copy(fontWeight = FontWeight.SemiBold, lineHeight = titleStyle.fontSize * 1.12f),
-            color = ink,
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis,
-        )
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val style = fitWords(title, titleStyle.copy(fontWeight = FontWeight.SemiBold), constraints.maxWidth)
+            Text(
+                title,
+                style = style.copy(lineHeight = style.fontSize * 1.12f, hyphens = Hyphens.Auto),
+                color = ink,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * Baja la letra hasta que la palabra más ancha cabe en una línea: en miniaturas, una palabra larga
+ * se partía por letras ("Wonderla / nd"). Mínimo 8 sp; si aun así no cabe, se divide con guion.
+ */
+@Composable
+private fun fitWords(text: String, style: TextStyle, maxWidth: Int): TextStyle {
+    val measurer = rememberTextMeasurer()
+    return remember(text, style, maxWidth) {
+        val words = text.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        var size = style.fontSize.value
+        while (size > 8f) {
+            val widest = words.maxOfOrNull { measurer.measure(it, style.copy(fontSize = size.sp), softWrap = false, maxLines = 1).size.width } ?: 0
+            if (widest <= maxWidth) break
+            size -= 1f
+        }
+        style.copy(fontSize = size.sp)
     }
 }
 

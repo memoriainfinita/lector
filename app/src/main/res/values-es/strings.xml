@@ -113,7 +113,7 @@
     <string name="folder_class_episodes">Episodios</string>
     <string name="scanning_found">Buscando libros… %1$d encontrados</string>
     <string name="library_empty_title">Aún no hay libros</string>
-    <string name="library_empty_body">LECTOR busca los audiolibros dentro y los ordena por libro.</string>
+    <string name="library_empty_body">lector busca los audiolibros dentro y los ordena por libro.</string>
     <string name="add_folder">Añadir carpeta</string>
     <string name="listen_to">Escuchar %1$s</string>
     <string name="book_options">Opciones de %1$s</string>
@@ -162,7 +162,7 @@
     <string name="hidden_from_recents">Quitado de recientes</string>
     <string name="rename">Renombrar</string>
     <string name="name">Nombre</string>
-    <string name="rename_note">Solo cambia el nombre en LECTOR. La carpeta y los archivos no se tocan.</string>
+    <string name="rename_note">Solo cambia el nombre en lector. La carpeta y los archivos no se tocan.</string>
     <string name="save">Guardar</string>
     <string name="open_with">Abrir con…</string>
     <string name="delete_from_phone">Borrar del móvil</string>
@@ -237,8 +237,8 @@
     <string name="import_settings_too">Importar también los ajustes</string>
     <string name="merge_backup">Combinar</string>
     <string name="backup_unreadable">No se pudo leer el archivo</string>
-    <string name="backup_not_valid">No es una copia de LECTOR</string>
-    <string name="backup_newer">De una versión más nueva de LECTOR</string>
+    <string name="backup_not_valid">No es una copia de lector</string>
+    <string name="backup_newer">De una versión más nueva de lector</string>
     <string name="backup_merged">Copia combinada</string>
     <string name="backup_merge_failed">No se pudo combinar la copia</string>
     <string name="settings_system">Sistema</string>
@@ -246,7 +246,7 @@
     <string name="keep_screen_off_note">Abre el ajuste de batería de Android</string>
     <string name="permissions">Permisos</string>
     <string name="about">Acerca de</string>
-    <string name="about_version">LECTOR %1$s</string>
+    <string name="about_version">lector %1$s</string>
     <string name="theme_change_by_time">Cambiar por hora</string>
     <string name="light_at">Claro a las</string>
     <string name="dark_at">Oscuro a las</string>
