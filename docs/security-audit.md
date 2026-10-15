@@ -4,7 +4,8 @@
 |-------|-------|
 | Fecha | 2026-10-15 |
 | Commit | `ef26614` |
-| Método | Revisión estática del código. Sin compilar, sin pruebas en dispositivo |
+| Método | Revisión estática del código y del APK publicado. Sin pruebas en dispositivo |
+| APK | `lector-1.0.0.apk` de la release `v1.0.0` (tag en `042c3ad`; `main` solo añade un commit de docs) |
 
 ## Alcance
 
@@ -91,9 +92,32 @@
 - Inclusión concreta de `databases/` no confirmada en la documentación consultada
 - Decisión pendiente: mantener, excluir con `dataExtractionRules`, o `allowBackup="false"` dejando solo la copia propia de Ajustes › Datos
 
+## APK publicado (`v1.0.0`)
+
+Analizado con androguard 4.1.4.
+
+- SHA-256 `a19b7533b0b4d927c1505ba75223b13c416294006694d0e5d0d008c430d2a19c`, igual al digest publicado por GitHub
+- Firma APK v2; certificado `CN=memoriainfinita, O=memoriainfinita`, SHA-256 `B5:4A:38:6D:9F:D0:01:60:08:EC:98:1C:55:C6:ED:ED:A1:D6:42:6A:F0:84:74:51:45:73:12:0D:71:F4:11:BF`
+- Sin `debuggable`, sin `testOnly`
+- Sin clases `codelab.lector.debug`: las actividades de H3 no están en la release
+- `allowBackup` sin declarar: confirma H7
+- Sin `usesCleartextTraffic` ni `networkSecurityConfig`
+- Permisos del manifiesto fusionado:
+  - Propios: `MANAGE_EXTERNAL_STORAGE`, `READ_EXTERNAL_STORAGE`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `WAKE_LOCK`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+  - Añadidos por librerías: `ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED`, `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
+  - Sin `INTERNET`
+- Componentes exportados añadidos por librerías, todos protegidos por permiso de sistema:
+  - `BluetoothValidationActivity` (`BLUETOOTH_PRIVILEGED`)
+  - `GlanceRemoteViewsService` (`BIND_REMOTEVIEWS`)
+  - `SystemJobService` (`BIND_JOB_SERVICE`)
+  - `DiagnosticsReceiver`, `ProfileInstallReceiver` (`DUMP`)
+- Componentes exportados sin permiso: los mismos del código fuente (`MainActivity`, `PlaybackService`, `MediaButtonReceiver`, `LectorWidgetReceiver`, `CoverProvider`)
+- URLs en el DEX: solo de librerías (mensajes de error, enlaces a incidencias)
+- Sin patrones de claves o tokens en el DEX; sin keystores ni `local.properties` en el APK
+
 ## Sin problemas encontrados
 
-- Sin permiso `INTERNET` ni código de red
+- Sin permiso `INTERNET` ni código de red (confirmado en el APK)
 - Historial git sin claves, contraseñas, tokens, IPs ni rutas personales
 - Firma leída de propiedades de Gradle del usuario, fuera del repo
 - `CoverProvider`: solo lectura, nombre `[A-Za-z0-9-]+\.jpg`, un segmento, sin traversal
@@ -111,10 +135,10 @@
 
 ## Sin verificar
 
-- Manifiesto fusionado: no compilado; no comprobado que ninguna dependencia añada `INTERNET`
 - Checksum de `gradle/wrapper/gradle-wrapper.jar` frente al oficial de Gradle 9.8.0: el proxy de la sesión bloqueó `downloads.gradle.org`. SHA-256 local: `238e777fcddd7e34f9708186085def2abd6e08e658505b38718d79d74c21abd5`
 - Avisos de seguridad de dependencias: búsqueda web sin resultados para Media3 1.11.1; `api.osv.dev` bloqueado por el proxy
 - Entorno de la auditoría sin Android SDK ni acceso a Google Maven: sin build, Lint ni tests
+- Bytecode del APK: solo inventario de strings, sin decompilar ni comparar con el código fuente
 
 ## Cobertura frente a OWASP MASVS
 
@@ -123,7 +147,7 @@
 | STORAGE | H1, H7. Sin pruebas en dispositivo |
 | CRYPTO | No aplica: la app no cifra datos |
 | AUTH | No aplica: sin cuentas |
-| NETWORK | Sin permiso `INTERNET`; falta el manifiesto fusionado |
+| NETWORK | Sin permiso `INTERNET`, confirmado en el APK |
 | PLATFORM | H3, H4, H6; proveedores, intents y widget revisados |
 | CODE | H1, H2; dependencias sin escanear |
 | RESILIENCE | No revisado; `isMinifyEnabled = false` |
@@ -134,7 +158,6 @@ Referencia: [OWASP MAS checklist](https://devguide.owasp.org/04-design/03-mas-ch
 ## Pendiente en local
 
 - [ ] Comparar el SHA-256 del wrapper con `https://services.gradle.org/distributions/gradle-9.8.0-wrapper.jar.sha256`
-- [ ] Compilar release y revisar el manifiesto fusionado (`app/build/intermediates/merged_manifests/`), buscando `INTERNET` y componentes exportados añadidos por librerías
 - [ ] `./gradlew lint` y revisar las categorías de seguridad del informe
 - [ ] Escanear dependencias con `osv-scanner` sobre `gradle/libs.versions.toml`
 - [ ] Analizar el APK release con [MobSF](https://github.com/MobSF/Mobile-Security-Framework-MobSF)
