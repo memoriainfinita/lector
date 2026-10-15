@@ -28,6 +28,7 @@
 | H3 | Baja | APK debug firmado con la clave de release | Lectura de configuración |
 | H4 | Informativo | Cualquier app instalada navega la biblioteca | Lectura de código |
 | H5 | Informativo | `MANAGE_EXTERNAL_STORAGE` | Lectura del manifiesto |
+| H7 | Informativo | Auto Backup de Android activo por defecto | Lectura del manifiesto y documentación Android |
 
 ### H1. Borrado de archivos fuera del libro
 
@@ -80,6 +81,16 @@
 - Decisión de diseño: sin SAF por rendimiento, sin Google Play
 - Amplifica H1 y H6
 
+### H7. Auto Backup de Android
+
+- `AndroidManifest.xml` no declara `allowBackup` ni `dataExtractionRules`; `allowBackup` vale `true` por defecto ([Auto Backup](https://developer.android.com/identity/data/autobackup))
+- Con `targetSdk` 37, el sistema copia los directorios internos de la app al Google Drive del usuario, salvo caché y `noBackupFilesDir`
+- Datos afectados: `lector.db` (biblioteca, rutas, posiciones, marcadores con notas), DataStore `settings`, portadas
+- Cifrado de extremo a extremo con el bloqueo de pantalla en Android 9+
+- No es acceso de terceros: los datos quedan en la cuenta del propio usuario
+- Inclusión concreta de `databases/` no confirmada en la documentación consultada
+- Decisión pendiente: mantener, excluir con `dataExtractionRules`, o `allowBackup="false"` dejando solo la copia propia de Ajustes › Datos
+
 ## Sin problemas encontrados
 
 - Sin permiso `INTERNET` ni código de red
@@ -101,5 +112,34 @@
 ## Sin verificar
 
 - Manifiesto fusionado: no compilado; no comprobado que ninguna dependencia añada `INTERNET`
-- Checksum de `gradle/wrapper/gradle-wrapper.jar` frente al oficial de Gradle 9.8.0: el proxy de la sesión bloqueó `services.gradle.org`
-- Avisos de seguridad de dependencias: búsqueda sin resultados para Media3 1.11.1; no consultadas NVD ni GitHub Advisory Database
+- Checksum de `gradle/wrapper/gradle-wrapper.jar` frente al oficial de Gradle 9.8.0: el proxy de la sesión bloqueó `downloads.gradle.org`. SHA-256 local: `238e777fcddd7e34f9708186085def2abd6e08e658505b38718d79d74c21abd5`
+- Avisos de seguridad de dependencias: búsqueda web sin resultados para Media3 1.11.1; `api.osv.dev` bloqueado por el proxy
+- Entorno de la auditoría sin Android SDK ni acceso a Google Maven: sin build, Lint ni tests
+
+## Cobertura frente a OWASP MASVS
+
+| Categoría | Estado |
+|-----------|--------|
+| STORAGE | H1, H7. Sin pruebas en dispositivo |
+| CRYPTO | No aplica: la app no cifra datos |
+| AUTH | No aplica: sin cuentas |
+| NETWORK | Sin permiso `INTERNET`; falta el manifiesto fusionado |
+| PLATFORM | H3, H4, H6; proveedores, intents y widget revisados |
+| CODE | H1, H2; dependencias sin escanear |
+| RESILIENCE | No revisado; `isMinifyEnabled = false` |
+| PRIVACY | H4, H7; logs solo con rutas (3 llamadas a `Log.w`) |
+
+Referencia: [OWASP MAS checklist](https://devguide.owasp.org/04-design/03-mas-checklist)
+
+## Pendiente en local
+
+- [ ] Comparar el SHA-256 del wrapper con `https://services.gradle.org/distributions/gradle-9.8.0-wrapper.jar.sha256`
+- [ ] Compilar release y revisar el manifiesto fusionado (`app/build/intermediates/merged_manifests/`), buscando `INTERNET` y componentes exportados añadidos por librerías
+- [ ] `./gradlew lint` y revisar las categorías de seguridad del informe
+- [ ] Escanear dependencias con `osv-scanner` sobre `gradle/libs.versions.toml`
+- [ ] Analizar el APK release con [MobSF](https://github.com/MobSF/Mobile-Security-Framework-MobSF)
+- [ ] Reproducir H1 en dispositivo con un libro de prueba y una copia manipulada
+- [ ] Reproducir H2 importando `theme_light_at` fuera de 0..86399
+- [ ] Reproducir H6 con un `MediaController` desde una app de prueba
+- [ ] Confirmar qué incluye Auto Backup (H7): `adb shell bmgr backupnow io.github.memoriainfinita.lector` y revisar el conjunto de copia
+- [ ] Tests de entradas malformadas en `ImportTest.kt` (rutas con `..`, absolutas, ajustes fuera de rango) y para `parseCue`
